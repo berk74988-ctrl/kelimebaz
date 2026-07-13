@@ -1,0 +1,102 @@
+@use '../../../styles/variables' as v;
+
+// Tahta ve klavye ölçüleri ekranla birlikte küçülür → telefonda da tam sığar.
+.game {
+  --tile-size: clamp(48px, min(15vw, 8.2dvh), 62px);
+  --tile-gap: clamp(4px, 1.2vw, 6px);
+  --key-h: clamp(44px, 7.2dvh, 58px);
+
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: v.$space-2;
+  padding: v.$space-2 v.$space-2 v.$space-3;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: v.$space-2;
+  padding-bottom: v.$space-2;
+  border-bottom: 1px solid var(--border);
+}
+
+.titles {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+
+  h1 {
+    font-size: clamp(18px, 5vw, 22px);
+    font-weight: 800;
+    letter-spacing: 2px;
+  }
+
+  p {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+}
+
+.icon {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--surface-2);
+  }
+}
+
+// Mesaj yeri sabit yükseklikte → tahta zıplamaz
+.toast-slot {
+  height: 30px;
+  display: grid;
+  place-items: center;
+}
+
+.toast {
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 20px;
+  color: var(--on-toast);
+  background: var(--toast-bg);
+  animation: pop-in 0.18s ease;
+}
+
+app-board {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+}
+
+.reopen {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--key-h) * 3 + 40px);
+  transform: translateX(-50%);
+  padding: 9px 18px;
+  font-size: 12.5px;
+  font-weight: 800;
+  border-radius: 20px;
+  color: var(--on-toast);
+  background: var(--toast-bg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}

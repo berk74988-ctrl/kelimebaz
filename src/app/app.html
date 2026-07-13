@@ -1,1 +1,5 @@
-﻿<app-title-screen />
+@if (view() === 'title') {
+  <app-title-screen (play)="play($event)" />
+} @else {
+  <app-game [mode]="mode()" (exit)="exit()" />
+}

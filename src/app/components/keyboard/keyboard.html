@@ -1,0 +1,24 @@
+<div class="keyboard" role="group" aria-label="Klavye">
+  @for (row of rows; track $index) {
+    <div class="krow">
+      @for (key of row; track key) {
+        <button
+          type="button"
+          class="key"
+          [class.wide]="isWide(key)"
+          [class.correct]="stateOf(key) === 'correct'"
+          [class.present]="stateOf(key) === 'present'"
+          [class.absent]="stateOf(key) === 'absent'"
+          [attr.aria-label]="key === 'SİL' ? 'Sil' : key"
+          (click)="press(key)"
+        >
+          @if (key === 'SİL') {
+            <span aria-hidden="true">⌫</span>
+          } @else {
+            {{ key }}
+          }
+        </button>
+      }
+    </div>
+  }
+</div>

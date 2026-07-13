@@ -1,13 +1,13 @@
 @use './variables' as v;
 
 // =============================================================
-// KELİMEBAZ — Global reset + CSS değişkenleri
-// Bu dosya YALNIZCA styles.scss'ten bir kez import edilir
-// (:root bloğu tekrarlanmasın diye bileşenlerde kullanılmaz).
+// KELİMEBAZ — Global reset + tema jetonları
+// Bu dosya YALNIZCA styles.scss'ten bir kez import edilir.
+// Tema <html data-theme="dark|light"> ile değişir (ThemeService).
 // =============================================================
 
-// --- Çalışma zamanı renk değişkenleri (tema değiştirmeye açık) ---
-:root {
+:root,
+:root[data-theme='dark'] {
   --bg: #{v.$bg};
   --surface: #{v.$surface};
   --surface-2: #{v.$surface-2};
@@ -19,15 +19,57 @@
   --correct: #{v.$correct};
   --present: #{v.$present};
   --absent: #{v.$absent};
+  --on-correct: #062012;
+  --on-present: #2a1d05;
+  --on-absent: #{v.$text};
+
+  --tile-bg: transparent;
+  --tile-border: #{v.$border};
+  --tile-border-filled: #55617a;
+
+  --key-bg: #{v.$surface-2};
 
   --accent: #{v.$accent};
-  --accent-2: #{v.$accent-2};
   --danger: #{v.$danger};
 
+  --backdrop: rgba(6, 9, 16, 0.72);
+  --toast-bg: #{v.$text};
+  --on-toast: #{v.$bg};
+
+  --radius-sm: #{v.$radius-sm};
   --radius: #{v.$radius};
   --radius-lg: #{v.$radius-lg};
 
   color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --surface-2: #e8eaef;
+  --border: #d3d6de;
+
+  --text: #131720;
+  --text-muted: #667085;
+
+  --correct: #4caf82;
+  --present: #d9a441;
+  --absent: #9aa2b1;
+  --on-correct: #ffffff;
+  --on-present: #ffffff;
+  --on-absent: #ffffff;
+
+  --tile-bg: transparent;
+  --tile-border: #cdd2dc;
+  --tile-border-filled: #8b93a3;
+
+  --key-bg: #dfe2e9;
+
+  --backdrop: rgba(20, 24, 33, 0.45);
+  --toast-bg: #131720;
+  --on-toast: #ffffff;
+
+  color-scheme: light;
 }
 
 // --- Reset ---
@@ -51,6 +93,13 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+
+  // Mobilde çift dokunuşla yakınlaşmayı ve seçim vurgusunu engelle
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 img,
@@ -91,7 +140,6 @@ a {
   border-radius: 4px;
 }
 
-// Hareket azaltma tercihine saygı
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

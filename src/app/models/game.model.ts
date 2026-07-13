@@ -1,42 +1,56 @@
-/**
- * KELİMEBAZ — Temel oyun tipleri.
- * Oyun mantığı geliştikçe burası genişler.
- */
+/** KELİMEBAZ — oyun tipleri */
 
 /** Bir harfin tahmin sonrası durumu. */
 export type LetterState =
-  | 'correct' // harf doğru, yeri de doğru
-  | 'present' // harf kelimede var, yeri yanlış
-  | 'absent' // harf kelimede yok
+  | 'correct' // 🟩 harf doğru, yeri doğru
+  | 'present' // 🟨 harf kelimede var, yeri yanlış
+  | 'absent' // ⬜ harf kelimede yok
   | 'empty'; // henüz değerlendirilmedi
 
-/** Tahmin edilen tek bir harf kutusu. */
+/** Tahtadaki tek bir harf kutusu. */
 export interface Tile {
   letter: string;
   state: LetterState;
 }
 
-/** Tek bir tahmin satırı. */
-export type Guess = Tile[];
+/** Değerlendirilmiş tek bir tahmin satırı. */
+export interface Guess {
+  word: string;
+  tiles: Tile[];
+}
 
 /** Oyunun genel durumu. */
-export type GameStatus = 'idle' | 'playing' | 'won' | 'lost';
+export type GameStatus = 'playing' | 'won' | 'lost';
 
-/** Bir oyun turunun tamamı. */
-export interface GameState {
+/** Oyun modu. */
+export type GameMode = 'daily' | 'practice';
+
+/** localStorage'a yazılan oyun durumu. */
+export interface SavedGame {
+  mode: GameMode;
+  dayIndex: number; // günlük modda hangi güne ait (serbest modda -1)
   answer: string;
-  guesses: Guess[];
-  currentRow: number;
+  guesses: string[];
   status: GameStatus;
 }
 
-/** Oyun ayarları. */
-export interface GameConfig {
-  wordLength: number;
-  maxAttempts: number;
+/** Oyuncu istatistikleri. */
+export interface Stats {
+  played: number;
+  won: number;
+  currentStreak: number;
+  maxStreak: number;
+  /** distribution[i] = (i+1) tahminde kazanılan oyun sayısı */
+  distribution: number[];
 }
 
-export const DEFAULT_CONFIG: GameConfig = {
-  wordLength: 5,
-  maxAttempts: 6,
+export const EMPTY_STATS: Stats = {
+  played: 0,
+  won: 0,
+  currentStreak: 0,
+  maxStreak: 0,
+  distribution: [0, 0, 0, 0, 0, 0],
 };
+
+export const WORD_LENGTH = 5;
+export const MAX_ATTEMPTS = 6;

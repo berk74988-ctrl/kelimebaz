@@ -1,6 +1,15 @@
 <main class="title-screen">
+  <button
+    class="theme"
+    type="button"
+    [attr.aria-label]="theme.theme() === 'dark' ? 'Aydınlık moda geç' : 'Karanlık moda geç'"
+    (click)="theme.toggle()"
+  >
+    {{ theme.theme() === 'dark' ? '☀️' : '🌙' }}
+  </button>
+
   <section class="card">
-    <p class="eyebrow">Kelime Oyunu</p>
+    <p class="eyebrow">Türkçe Kelime Oyunu</p>
 
     <h1 class="logo" [attr.aria-label]="title()">
       @for (ch of title().split(''); track $index) {
@@ -8,10 +17,29 @@
       }
     </h1>
 
-    <p class="tagline">{{ tagline() }}</p>
+    <p class="tagline">
+      5 harfli gizli kelimeyi <b>6 tahminde</b> bul.<br />
+      🟩 doğru yerde · 🟨 kelimede var · ⬜ yok
+    </p>
 
-    <button class="start" type="button" (click)="start()">Başla</button>
+    <div class="modes">
+      <button class="btn primary" type="button" (click)="play.emit('daily')">
+        <span class="btn-t">Günün Kelimesi</span>
+        <span class="btn-s">#{{ dayNo() }} · herkese aynı</span>
+      </button>
 
-    <p class="meta">{{ wordLength() }} harf · {{ wordCount() }} kelime · v0.1.0</p>
+      <button class="btn ghost" type="button" (click)="play.emit('practice')">
+        <span class="btn-t">Serbest Oyna</span>
+        <span class="btn-s">rastgele kelime</span>
+      </button>
+    </div>
+
+    @if (stats.played > 0) {
+      <p class="meta">
+        {{ stats.played }} oyun · %{{ statsService.winRate() }} kazanma · 🔥 {{ stats.currentStreak }} seri
+      </p>
+    } @else {
+      <p class="meta">{{ wordCount() }} kelimelik havuz</p>
+    }
   </section>
 </main>

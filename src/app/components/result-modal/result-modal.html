@@ -1,0 +1,44 @@
+<div class="backdrop" (click)="close.emit()">
+  <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+    <button class="x" type="button" aria-label="Kapat" (click)="close.emit()">✕</button>
+
+    @if (status() === 'won') {
+      <p class="emoji" aria-hidden="true">🎉</p>
+      <h2 class="head win">Tebrikler!</h2>
+      <p class="sub">Kelimeyi {{ attempts() }}/{{ maxAttempts }} tahminde buldun.</p>
+    } @else {
+      <p class="emoji" aria-hidden="true">😔</p>
+      <h2 class="head lose">Bu sefer olmadı</h2>
+      <p class="sub">Haklar bitti. Doğru kelime:</p>
+      <p class="answer">{{ answer() }}</p>
+    }
+
+    <section class="stats" aria-label="İstatistikler">
+      <div class="grid">
+        <div class="stat"><b>{{ stats.played }}</b><span>Oynanan</span></div>
+        <div class="stat"><b>{{ statsService.winRate() }}%</b><span>Kazanma</span></div>
+        <div class="stat"><b>{{ stats.currentStreak }}</b><span>Seri</span></div>
+        <div class="stat"><b>{{ stats.maxStreak }}</b><span>En iyi seri</span></div>
+      </div>
+
+      <h3 class="dist-title">Tahmin dağılımı</h3>
+      <div class="dist">
+        @for (i of rows; track i) {
+          <div class="dist-row">
+            <span class="n">{{ i + 1 }}</span>
+            <div class="bar" [class.hit]="isWinRow(i)" [style.width.%]="barWidth(i)">
+              {{ stats.distribution[i] }}
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <div class="actions">
+      <button class="btn ghost" type="button" (click)="share()">
+        {{ copied() ? '✓ Kopyalandı' : '📋 Sonucu paylaş' }}
+      </button>
+      <button class="btn primary" type="button" (click)="playAgain.emit()">Yeni oyun</button>
+    </div>
+  </div>
+</div>

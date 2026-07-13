@@ -1,0 +1,68 @@
+@use '../../../styles/variables' as v;
+
+.keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0 4px;
+}
+
+.krow {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.key {
+  flex: 1 1 0;
+  min-width: 0;
+  height: var(--key-h);
+
+  display: grid;
+  place-items: center;
+
+  font-size: clamp(11px, 3.2vw, 14px);
+  font-weight: 800;
+  text-transform: uppercase;
+
+  color: var(--text);
+  background: var(--key-bg);
+  border-radius: var(--radius-sm);
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    transform 0.06s ease;
+
+  &:hover {
+    filter: brightness(1.12);
+  }
+
+  &:active {
+    transform: scale(0.94);
+  }
+
+  &.wide {
+    flex: 1.6 1 0;
+    font-size: clamp(10px, 2.6vw, 12px);
+  }
+
+  &.correct {
+    background: var(--correct);
+    color: var(--on-correct);
+  }
+
+  &.present {
+    background: var(--present);
+    color: var(--on-present);
+  }
+
+  &.absent {
+    background: var(--absent);
+    color: var(--on-absent);
+    opacity: 0.75;
+  }
+}

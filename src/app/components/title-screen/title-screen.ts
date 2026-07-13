@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
+import { GameMode } from '../../models/game.model';
+import { StatsService } from '../../services/stats.service';
+import { ThemeService } from '../../services/theme.service';
 import { WordService } from '../../services/word.service';
 
-/**
- * KELİMEBAZ — Başlık (giriş) ekranı.
- * Şimdilik yalnızca oyun adını gösterir; "Başla" ileride oyun ekranını açacak.
- */
+/** Giriş ekranı — oyun adı + mod seçimi. */
 @Component({
   selector: 'app-title-screen',
   imports: [],
@@ -14,14 +14,16 @@ import { WordService } from '../../services/word.service';
 })
 export class TitleScreen {
   private readonly words = inject(WordService);
+  protected readonly theme = inject(ThemeService);
+  protected readonly statsService = inject(StatsService);
+
+  readonly play = output<GameMode>();
 
   protected readonly title = signal('KELİMEBAZ');
-  protected readonly tagline = signal('Türkçe kelime bulmaca oyunu');
   protected readonly wordCount = signal(this.words.size);
-  protected readonly wordLength = signal(this.words.wordLength);
+  protected readonly dayNo = signal(this.words.dayIndex());
 
-  protected start(): void {
-    // TODO: oyun ekranı eklenince buradan yönlendirilecek.
-    console.info('[kelimebaz] Oyun ekranı henüz hazır değil.');
+  protected get stats() {
+    return this.statsService.stats();
   }
 }

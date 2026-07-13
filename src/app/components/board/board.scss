@@ -1,0 +1,124 @@
+@use '../../../styles/variables' as v;
+
+.board {
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  gap: var(--tile-gap);
+  justify-content: center;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(5, var(--tile-size));
+  gap: var(--tile-gap);
+
+  &.shake {
+    animation: shake 0.42s ease;
+  }
+
+  &.win .tile {
+    animation: bounce 0.6s ease;
+  }
+}
+
+.tile {
+  width: var(--tile-size);
+  height: var(--tile-size);
+  display: grid;
+  place-items: center;
+
+  font-size: calc(var(--tile-size) * 0.5);
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  user-select: none;
+
+  border: 2px solid var(--tile-border);
+  border-radius: var(--radius);
+  background: var(--tile-bg);
+  color: var(--text);
+
+  transition: border-color 0.1s ease;
+
+  // Harf yazılınca "pop"
+  &.filled {
+    border-color: var(--tile-border-filled);
+    animation: pop 0.12s ease;
+  }
+
+  // Tahmin gönderilince çevrilerek açılır
+  &.reveal {
+    animation: reveal 0.5s ease both;
+  }
+
+  &.correct {
+    background: var(--correct);
+    border-color: var(--correct);
+    color: var(--on-correct);
+  }
+
+  &.present {
+    background: var(--present);
+    border-color: var(--present);
+    color: var(--on-present);
+  }
+
+  &.absent {
+    background: var(--absent);
+    border-color: var(--absent);
+    color: var(--on-absent);
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes reveal {
+  0% {
+    transform: rotateX(0);
+  }
+  50% {
+    transform: rotateX(-90deg);
+  }
+  100% {
+    transform: rotateX(0);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(-16px);
+  }
+  60% {
+    transform: translateY(4px);
+  }
+}

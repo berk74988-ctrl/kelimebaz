@@ -1,0 +1,53 @@
+<div class="game">
+  <header class="bar">
+    <button class="icon" type="button" aria-label="Geri" (click)="exit.emit()">←</button>
+
+    <div class="titles">
+      <h1>KELİMEBAZ</h1>
+      <p>{{ mode() === 'daily' ? 'Günün Kelimesi' : 'Serbest Oyun' }}</p>
+    </div>
+
+    <button
+      class="icon"
+      type="button"
+      [attr.aria-label]="theme.theme() === 'dark' ? 'Aydınlık moda geç' : 'Karanlık moda geç'"
+      (click)="theme.toggle()"
+    >
+      {{ theme.theme() === 'dark' ? '☀️' : '🌙' }}
+    </button>
+  </header>
+
+  <div class="toast-slot" role="status" aria-live="polite">
+    @if (game.message()) {
+      <p class="toast">{{ game.message() }}</p>
+    }
+  </div>
+
+  <app-board
+    [rows]="game.board()"
+    [submitted]="game.rowIndex()"
+    [shakeKey]="game.invalidShake()"
+    [status]="game.status()"
+  />
+
+  <app-keyboard
+    [keyStates]="game.keyStates()"
+    (letter)="game.type($event)"
+    (enter)="onEnter()"
+    (backspace)="game.backspace()"
+  />
+
+  @if (game.isOver() && resultOpen()) {
+    <app-result-modal
+      [status]="game.status()"
+      [answer]="game.answer()"
+      [attempts]="game.rowIndex()"
+      (playAgain)="newGame()"
+      (close)="resultOpen.set(false)"
+    />
+  }
+
+  @if (game.isOver() && !resultOpen()) {
+    <button class="reopen" type="button" (click)="resultOpen.set(true)">Sonucu göster</button>
+  }
+</div>
