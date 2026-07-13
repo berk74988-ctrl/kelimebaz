@@ -140,12 +140,24 @@ a {
   border-radius: 4px;
 }
 
+/**
+ * HAREKET AZALTMA — işletim sisteminde "hareketi azalt" açıksa.
+ *
+ * Animasyonlar KAPANIR ama oyun bilgisi KAYBOLMAZ:
+ *  - Kutular çevrilmeden, doğrudan renkli görünür (renk sınıfları zaten uygulanıyor)
+ *  - Kademeli açılma gecikmeleri sıfırlanır → hepsi anında
+ *  - Klavye tuşları beklemeden renklenir
+ *  - Geçersiz kelimede sallanma olmaz; uyarı yazısı bilgiyi zaten veriyor
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important; // kademeli açılma beklemesi kalmasın
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important; // tuş renkleri anında gelsin
+    scroll-behavior: auto !important;
   }
 }

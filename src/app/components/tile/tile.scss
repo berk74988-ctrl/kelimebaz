@@ -18,20 +18,19 @@
   color: var(--text);
 
   transition: border-color 0.1s ease;
+
+  // Dönme sırasında arka yüz görünmesin, GPU'da pürüzsüz çalışsın
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 
-// --- Durum: harf girilmiş (henüz değerlendirilmedi) ---
+// --- Durum: harf girilmiş, henüz değerlendirilmedi ---
 :host(.filled) {
   border-color: var(--tile-border-filled);
   animation: pop 0.12s ease;
 }
 
-// --- Durum: değerlendirildi → çevrilerek açılır ---
-:host(.reveal) {
-  animation: reveal 0.5s ease both;
-}
-
-// --- Renk sınıfları ---
+// --- Durum: değerlendirildi → renkler (animasyon yoksa da doğru görünsün) ---
 :host(.correct) {
   background: var(--correct);
   border-color: var(--correct);
@@ -50,23 +49,63 @@
   color: var(--on-absent);
 }
 
+/**
+ * ÇEVİRME (flip) — gerçek bir "açılma":
+ * Kutu önce BOŞ görünümüyle 90°'ye döner (renk henüz yok),
+ * tam yarıda (görünmez anda) rengi alır, sonra geri döner.
+ * Böylece renk "ortaya çıkmış" gibi hissedilir; hazırdan gelmiş gibi değil.
+ */
+@mixin flip($name, $bg, $fg) {
+  @keyframes #{$name} {
+    0% {
+      transform: rotateX(0deg);
+      background: var(--tile-bg);
+      border-color: var(--tile-border-filled);
+      color: var(--text);
+    }
+    49.9% {
+      transform: rotateX(-90deg);
+      background: var(--tile-bg);
+      border-color: var(--tile-border-filled);
+      color: var(--text);
+    }
+    50% {
+      // kutu kenarından görünüyor → rengi tam burada değiştir
+      transform: rotateX(-90deg);
+      background: #{$bg};
+      border-color: #{$bg};
+      color: #{$fg};
+    }
+    100% {
+      transform: rotateX(0deg);
+      background: #{$bg};
+      border-color: #{$bg};
+      color: #{$fg};
+    }
+  }
+}
+
+@include flip(flip-correct, var(--correct), var(--on-correct));
+@include flip(flip-present, var(--present), var(--on-present));
+@include flip(flip-absent, var(--absent), var(--on-absent));
+
+:host(.reveal.correct) {
+  animation: flip-correct 0.55s ease both;
+}
+
+:host(.reveal.present) {
+  animation: flip-present 0.55s ease both;
+}
+
+:host(.reveal.absent) {
+  animation: flip-absent 0.55s ease both;
+}
+
 @keyframes pop {
   from {
     transform: scale(0.9);
   }
   to {
     transform: scale(1);
-  }
-}
-
-@keyframes reveal {
-  0% {
-    transform: rotateX(0);
-  }
-  50% {
-    transform: rotateX(-90deg);
-  }
-  100% {
-    transform: rotateX(0);
   }
 }

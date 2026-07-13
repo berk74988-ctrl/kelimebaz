@@ -37,10 +37,13 @@
   background: var(--key-bg);
   border-radius: var(--radius-sm);
 
+  // Renk geçişi GECİKMELİ: kutuların çevrilmesi bitmeden tuş renklenmesin.
+  // Son kutu 4×90ms gecikme + 550ms flip = ~910ms sonra açılıyor.
   transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    transform 0.06s ease;
+    background 0.28s ease 0.9s,
+    color 0.28s ease 0.9s,
+    transform 0.06s ease,
+    filter 0.15s ease;
 
   &:hover {
     filter: brightness(1.12);
