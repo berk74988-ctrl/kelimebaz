@@ -1,98 +1,174 @@
+<div align="center">
+
 # 🎯 Kelimebaz
 
-Türkçe kelime bulmaca oyunu. Angular ile geliştiriliyor.
+**Türkçe kelime bulmaca oyunu.** 5 harfli gizli kelimeyi 6 tahminde bul.
 
-> **Durum:** İskelet hazır — başlık ekranı çalışıyor, oyun mantığı henüz eklenmedi.
+### ▶️ [**Oyna: 34.158.136.9/berk/kelimebaz**](http://34.158.136.9/berk/kelimebaz/)
+
+![Kelimebaz](docs/screenshots/2-oyun.png)
+
+</div>
 
 ---
 
-## 🚀 Başlarken
+## Nasıl oynanır
 
-**Gereksinim:** Node.js 20+ ve npm
+Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
+
+| | Anlamı |
+| --- | --- |
+| 🟩 **Yeşil** | Harf doğru ve **doğru konumda** |
+| 🟨 **Sarı** | Harf kelimede **var** ama yeri yanlış |
+| ⬜ **Gri** | Harf kelimede **hiç yok** |
+
+**6 hakkın var.** Bitmeden bulursan kazanırsın; bulamazsan doğru kelime gösterilir.
+
+**İki mod:**
+- **Günün Kelimesi** — herkes aynı kelimeyi oynar, her gün yenilenir, günde bir hak
+- **Serbest Oyna** — rastgele kelime, sınırsız
+
+---
+
+## Ekran görüntüleri
+
+| Başlık ekranı | Kazanma |
+| --- | --- |
+| ![](docs/screenshots/1-baslik.png) | ![](docs/screenshots/3-kazanma.png) |
+
+| İstatistikler | Aydınlık tema |
+| --- | --- |
+| ![](docs/screenshots/4-istatistik.png) | ![](docs/screenshots/5-aydinlik-tema.png) |
+
+| Renk körü modu | Mobil |
+| --- | --- |
+| ![](docs/screenshots/6-renk-koru-modu.png) | <img src="docs/screenshots/7-mobil.png" width="260"> |
+
+---
+
+## Özellikler
+
+- 🎯 **Doğru renk mantığı** — harf tekrarlarında bile (Wordle klonlarının en sık hata yaptığı yer)
+- ⌨️ **Türkçe klavye** — 29 harf, `İ`/`I` ayrımı doğru; fiziksel klavye de çalışır
+- 📅 **Günün kelimesi** — tarihe göre deterministik, herkese aynı, geri sayımlı
+- 📊 **İstatistikler** — oynanan, kazanma %, seri, tahmin dağılımı
+- 📋 **Spoiler'sız paylaşım** — 🟩🟨⬜ emoji ızgarası
+- 🌙 **Karanlık + aydınlık tema** — sistem tercihine uyar
+- 👁 **Renk körü modu** — mavi/turuncu palet
+- ♿ **Erişilebilir** — sadece klavyeyle oynanabilir, ekran okuyucu her hamleyi okur
+- 📱 **Responsive** — 320px'den 4K'ya
+- 💾 **Kalıcı** — yarım oyun, istatistik ve tercihler `localStorage`'da
+- 🚫 **Backend yok** — kelime listesi JSON, tamamen istemci tarafı
+
+---
+
+## Kurulum
+
+**Gereksinim:** Node.js 20+
 
 ```bash
-npm install        # bağımlılıkları kur
-npm start          # geliştirme sunucusu (ng serve)
+git clone https://github.com/berk74988-ctrl/kelimebaz.git
+cd kelimebaz
+npm install
+
+npm start          # geliştirme sunucusu → http://localhost:4200
 ```
 
-Tarayıcıda **http://localhost:4200** adresini aç. Kaynak dosyaları değiştikçe sayfa otomatik yenilenir.
-
 ```bash
-npm run build      # üretim derlemesi -> dist/
+npm run build      # üretim derlemesi → dist/kelimebaz/browser/
 npm test           # birim testler
 ```
 
 ---
 
-## 📁 Proje yapısı
+## Teknoloji
+
+**Angular 22** — standalone bileşenler (NgModule yok), **signals** ile durum yönetimi, `OnPush`, TypeScript, SCSS.
+
+### Proje yapısı
 
 ```
-src/
-├── app/
-│   ├── components/          # standalone bileşenler (UI)
-│   │   └── title-screen/
-│   ├── services/            # iş mantığı, veri erişimi
-│   │   └── word.service.ts
-│   ├── models/              # TypeScript tipleri / arayüzler
-│   │   └── game.model.ts
-│   ├── data/                # statik veri (kelime havuzu)
-│   │   └── words.ts
-│   ├── app.ts               # kök bileşen
-│   └── app.config.ts        # uygulama sağlayıcıları
-├── styles/
-│   ├── _variables.scss      # renkler, ölçüler, tipografi (SCSS değişkenleri)
-│   └── _reset.scss          # global reset + :root CSS değişkenleri
-├── styles.scss              # global stil giriş noktası
-└── index.html
+src/app/
+├── core/                    # SAF mantık — Angular'a bağımsız, kolay test edilir
+│   ├── evaluate.ts          #   renk algoritması (oyunun kalbi)
+│   ├── share.ts             #   emoji ızgarası
+│   ├── a11y.ts              #   ekran okuyucu metinleri
+│   ├── clipboard.ts         #   panoya kopyalama (HTTP yedekli)
+│   └── turkish.ts           #   Türkçe büyük harf (i → İ)
+├── components/              # standalone bileşenler
+│   ├── board/  tile/  keyboard/  toast/
+│   ├── game/   title-screen/  error-screen/
+│   ├── result-modal/  stats-modal/  stats-panel/  countdown/
+├── services/                # durum ve kalıcılık (signals)
+│   ├── game.service.ts      #   oyun akışı
+│   ├── word.service.ts      #   kelime havuzu, günün kelimesi
+│   ├── stats.service.ts     #   istatistikler
+│   ├── theme.service.ts     #   koyu/açık tema
+│   └── contrast.service.ts  #   renk körü modu
+├── models/                  # TypeScript tipleri
+└── data/words.json          # kelime havuzu (205 kelime)
 ```
 
 ### Mimari notlar
 
-- **Standalone bileşenler** kullanılıyor — `NgModule` yok.
-- Bileşenler `ChangeDetectionStrategy.OnPush` ve **signal** tabanlı durum kullanır.
-- Renkler iki katmanlı: `_variables.scss` (SCSS, derleme zamanı) → `:root` CSS değişkenleri (çalışma zamanı, tema değişimine açık).
-- Bileşen stillerinde değişkenlere erişim:
-  ```scss
-  @use '../../../styles/variables' as v;
+**Renk mantığı `core/`'da, Angular'dan tamamen bağımsız.** İki geçişli algoritma:
 
-  .kutu {
-    padding: v.$space-3;
-    color: var(--text);
-  }
-  ```
+1. Önce **tam isabetler** (🟩) işaretlenir ve o harfler cevabın havuzundan **düşülür**
+2. Kalan harfler için havuzda hâlâ varsa 🟨, yoksa ⬜
+
+Bu sıra sayesinde bir harf **asla iki kez sayılmaz**. Örnek — cevap `KALEM`, tahmin `ARABA`: tahminde 3 A var ama cevapta 1 A → **sadece biri** sarı olur.
+
+**Renkler iki katmanlı:** `_variables.scss` (SCSS, derleme zamanı) → `:root` CSS değişkenleri (çalışma zamanı). Tema ve renk körü modu tek satır değişimiyle geçiş yapar — hiçbir bileşen yeniden çizilmez.
 
 ---
 
-## 🎨 Renk paleti
+## Test
 
-| Değişken | Renk | Kullanım |
-| --- | --- | --- |
-| `--correct` | `#4caf82` | Harf doğru, yeri doğru |
-| `--present` | `#d9a441` | Harf var, yeri yanlış |
-| `--absent` | `#3a4150` | Harf kelimede yok |
-| `--accent` | `#6c8cff` | Vurgu, butonlar |
-| `--bg` / `--surface` | `#10131a` / `#191e28` | Zemin ve kartlar |
+```bash
+npm test                     # 159 birim test
+npm run check:scenarios      # 22 uçtan uca senaryo × 3 tarayıcı
+npm run check:responsive     # 8 ekran boyutu
+npm run check:a11y           # klavye + ekran okuyucu + odak
+npm run check:contrast       # WCAG kontrast (4 mod)
+npm run check:share          # panoya kopyalama
+```
 
----
+Tüm kontroller hem yerelde hem **canlı sitede** çalıştırılıyor. Ayrıntılı checklist ve bulunan hatalar: **[TESTING.md](TESTING.md)**
 
-## 🗺️ Yol haritası
-
-- [x] Angular iskeleti, standalone yapı, global SCSS
-- [x] Başlık ekranı
-- [ ] Oyun tahtası (harf kutuları)
-- [ ] Ekran klavyesi + harf durumu renklendirme
-- [ ] Tahmin değerlendirme mantığı
-- [ ] Kelime havuzunu genişletme
-- [ ] Skor / istatistik ekranı
-
----
-
-## 🧰 Komutlar
-
-| Komut | Açıklama |
+| Katman | Sonuç |
 | --- | --- |
-| `npm start` | Geliştirme sunucusu (http://localhost:4200) |
-| `npm run build` | Üretim derlemesi |
-| `npm run watch` | Değişiklikleri izleyerek derle |
-| `npm test` | Birim testler |
-| `ng generate component components/ad` | Yeni bileşen üret |
+| Birim testler | ✅ 159/159 |
+| Senaryolar (Chromium + Firefox + WebKit) | ✅ 66/66 |
+| Responsive · Erişilebilirlik · Kontrast · Paylaşım | ✅ |
+
+---
+
+## Deploy
+
+Üretim derlemesi statik dosyalardan ibaret — herhangi bir statik barındırmaya konabilir.
+
+```bash
+npm run build
+# dist/kelimebaz/browser/ içeriğini sunucuya kopyala
+```
+
+Alt klasöre kuruluyorsa `base-href` gerekir. Bu proje `/berk/kelimebaz/` altında yayında, bu yüzden `angular.json`'ın **production** yapılandırmasına gömülü:
+
+```json
+"baseHref": "/berk/kelimebaz/"
+```
+
+Böylece düz `ng build` her zaman doğru yolu üretir.
+
+---
+
+## Yol haritası
+
+- [x] Oyun tahtası, Türkçe klavye, renk mantığı
+- [x] Kazanma / kaybetme, geçersiz kelime uyarıları
+- [x] Animasyonlar, responsive, karanlık mod
+- [x] İstatistikler, günün kelimesi, paylaşım
+- [x] Erişilebilirlik ve renk körü modu
+- [x] Uçtan uca test takımı, canlı deploy
+- [ ] Kelime havuzunu genişlet (şu an 205)
+- [ ] HTTPS (özel alan adı)
