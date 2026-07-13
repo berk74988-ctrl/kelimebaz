@@ -34,14 +34,27 @@ export interface SavedGame {
   status: GameStatus;
 }
 
-/** Oyuncu istatistikleri. */
+/**
+ * Oyuncu istatistikleri — localStorage şeması ("kelimebaz:stats").
+ *
+ * {
+ *   played: 12,                          // oynanan oyun
+ *   won: 9,                              // kazanılan oyun
+ *   currentStreak: 3,                    // şu anki kazanma serisi
+ *   maxStreak: 5,                        // en uzun seri
+ *   distribution: [1,2,3,2,1,0],         // kaçıncı tahminde kazanıldığı
+ *   lastWinAttempts: 4                   // son kazanılan oyun kaç tahminde (grafikte vurgulanır)
+ * }
+ */
 export interface Stats {
   played: number;
   won: number;
   currentStreak: number;
   maxStreak: number;
-  /** distribution[i] = (i+1) tahminde kazanılan oyun sayısı */
+  /** distribution[i] = (i+1). tahminde kazanılan oyun sayısı */
   distribution: number[];
+  /** Son kazanılan oyunun tahmin sayısı; hiç kazanılmadıysa null. */
+  lastWinAttempts: number | null;
 }
 
 export const EMPTY_STATS: Stats = {
@@ -50,6 +63,7 @@ export const EMPTY_STATS: Stats = {
   currentStreak: 0,
   maxStreak: 0,
   distribution: [0, 0, 0, 0, 0, 0],
+  lastWinAttempts: null,
 };
 
 export const WORD_LENGTH = 5;

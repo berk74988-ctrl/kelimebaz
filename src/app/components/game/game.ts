@@ -6,12 +6,13 @@ import { ThemeService } from '../../services/theme.service';
 import { Board } from '../board/board';
 import { Keyboard, TR_LETTERS } from '../keyboard/keyboard';
 import { ResultModal } from '../result-modal/result-modal';
+import { StatsModal } from '../stats-modal/stats-modal';
 import { Toast } from '../toast/toast';
 
-/** Oyun ekranı: başlık çubuğu + uyarı + tahta + klavye + sonuç ekranı. */
+/** Oyun ekranı: başlık çubuğu + uyarı + tahta + klavye + sonuç/istatistik ekranı. */
 @Component({
   selector: 'app-game',
-  imports: [Board, Keyboard, ResultModal, Toast],
+  imports: [Board, Keyboard, ResultModal, StatsModal, Toast],
   templateUrl: './game.html',
   styleUrl: './game.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,6 +26,9 @@ export class Game {
 
   /** Oyun bitse bile kullanıcı sonucu kapatıp tahtayı inceleyebilir. */
   protected readonly resultOpen = signal(true);
+
+  /** 📊 ile istenildiği an açılan istatistik ekranı. */
+  protected readonly statsOpen = signal(false);
 
   ngOnInit(): void {
     this.game.start(this.mode());

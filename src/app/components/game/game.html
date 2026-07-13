@@ -8,6 +8,10 @@
       <p>{{ game.mode() === 'daily' ? 'Günün Kelimesi' : 'Serbest Oyun' }}</p>
     </div>
 
+    <button class="icon" type="button" aria-label="İstatistikler" (click)="statsOpen.set(true)">
+      📊
+    </button>
+
     <button
       class="icon"
       type="button"
@@ -46,5 +50,9 @@
 
   @if (game.isOver() && !resultOpen()) {
     <button class="reopen" type="button" (click)="resultOpen.set(true)">Sonucu göster</button>
+  }
+
+  @if (statsOpen()) {
+    <app-stats-modal (close)="statsOpen.set(false)" />
   }
 </div>

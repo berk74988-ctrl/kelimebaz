@@ -1,0 +1,13 @@
+<div class="backdrop" (click)="close.emit()">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="İstatistikler" (click)="$event.stopPropagation()">
+    <button class="x" type="button" aria-label="Kapat" (click)="close.emit()">✕</button>
+
+    <h2 class="head">İstatistikler</h2>
+
+    <app-stats-panel [highlight]="highlight" />
+
+    @if (!statsService.isEmpty()) {
+      <button class="reset" type="button" (click)="resetStats()">İstatistikleri sıfırla</button>
+    }
+  </div>
+</div>

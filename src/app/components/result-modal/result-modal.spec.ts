@@ -66,9 +66,10 @@ describe('ResultModal — sonuç ekranı', () => {
     });
   });
 
-  it('istatistikler gösterilir', () => {
+  it('istatistik paneli gösterilir', () => {
+    // Paneli çizmek StatsPanel'in işi (kendi testleri var); burada
+    // sonuç ekranının onu yerleştirdiğini doğruluyoruz.
     const el = render('won').nativeElement as HTMLElement;
-    expect(el.querySelectorAll('.stat').length).toBe(4); // oynanan, kazanma, seri, en iyi seri
-    expect(el.querySelectorAll('.dist-row').length).toBe(6); // 6 tahmin satırı
+    expect(el.querySelector('app-stats-panel')).toBeTruthy();
   });
 });

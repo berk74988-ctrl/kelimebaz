@@ -1,0 +1,46 @@
+@if (statsService.isEmpty()) {
+  <!-- BOŞ DURUM: henüz hiç oyun bitmemiş -->
+  <div class="empty">
+    <p class="ico" aria-hidden="true">📊</p>
+    <p class="t">Henüz istatistik yok</p>
+    <p class="s">İlk oyununu bitir, sonuçların burada birikmeye başlasın.</p>
+  </div>
+} @else {
+  <div class="grid">
+    <div class="stat">
+      <b>{{ stats.played }}</b>
+      <span>Oynanan</span>
+    </div>
+    <div class="stat">
+      <b>{{ statsService.winRate() }}%</b>
+      <span>Kazanma</span>
+    </div>
+    <div class="stat">
+      <b>{{ stats.currentStreak }}</b>
+      <span>Seri</span>
+    </div>
+    <div class="stat">
+      <b>{{ stats.maxStreak }}</b>
+      <span>En iyi seri</span>
+    </div>
+  </div>
+
+  <h3 class="dist-title">Tahmin dağılımı</h3>
+
+  <div class="dist">
+    @for (i of rows; track i) {
+      <div class="dist-row">
+        <span class="n">{{ i + 1 }}</span>
+
+        @if (stats.distribution[i] > 0) {
+          <div class="bar" [class.hit]="isHighlighted(i)" [style.width.%]="barWidth(i)">
+            {{ stats.distribution[i] }}
+          </div>
+        } @else {
+          <!-- hiç kazanılmamış satır: ince boş çubuk -->
+          <div class="bar zero">0</div>
+        }
+      </div>
+    }
+  </div>
+}

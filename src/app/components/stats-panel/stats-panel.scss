@@ -1,0 +1,108 @@
+@use '../../../styles/variables' as v;
+
+// --- Boş durum ---
+.empty {
+  text-align: center;
+  padding: v.$space-4 v.$space-2;
+
+  .ico {
+    font-size: 34px;
+    line-height: 1;
+    opacity: 0.7;
+  }
+
+  .t {
+    margin-top: v.$space-2;
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .s {
+    margin-top: 4px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+}
+
+// --- Sayılar ---
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: v.$space-2;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+
+  b {
+    font-size: 22px;
+  }
+
+  span {
+    font-size: 10.5px;
+    line-height: 1.25;
+    color: var(--text-muted);
+  }
+}
+
+// --- Dağılım grafiği ---
+.dist-title {
+  margin: v.$space-4 0 v.$space-2;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.dist {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dist-row {
+  display: flex;
+  align-items: center;
+  gap: v.$space-2;
+
+  .n {
+    width: 12px;
+    flex: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 26px;
+  padding: 2px 7px;
+
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--on-absent);
+  background: var(--absent);
+  border-radius: 4px;
+
+  transition: width 0.45s ease;
+
+  // O tahmin sayısında hiç kazanılmamış
+  &.zero {
+    width: 26px;
+    opacity: 0.45;
+  }
+
+  // Son kazanılan oyunun satırı
+  &.hit {
+    background: var(--correct);
+    color: var(--on-correct);
+  }
+}
