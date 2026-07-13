@@ -1,0 +1,72 @@
+// Kutunun kendisi host elemanıdır (<app-tile>).
+:host {
+  display: grid;
+  place-items: center;
+
+  width: var(--tile-size);
+  height: var(--tile-size);
+
+  font-size: calc(var(--tile-size) * 0.5);
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  user-select: none;
+
+  border: 2px solid var(--tile-border);
+  border-radius: var(--radius);
+  background: var(--tile-bg);
+  color: var(--text);
+
+  transition: border-color 0.1s ease;
+}
+
+// --- Durum: harf girilmiş (henüz değerlendirilmedi) ---
+:host(.filled) {
+  border-color: var(--tile-border-filled);
+  animation: pop 0.12s ease;
+}
+
+// --- Durum: değerlendirildi → çevrilerek açılır ---
+:host(.reveal) {
+  animation: reveal 0.5s ease both;
+}
+
+// --- Renk sınıfları ---
+:host(.correct) {
+  background: var(--correct);
+  border-color: var(--correct);
+  color: var(--on-correct);
+}
+
+:host(.present) {
+  background: var(--present);
+  border-color: var(--present);
+  color: var(--on-present);
+}
+
+:host(.absent) {
+  background: var(--absent);
+  border-color: var(--absent);
+  color: var(--on-absent);
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes reveal {
+  0% {
+    transform: rotateX(0);
+  }
+  50% {
+    transform: rotateX(-90deg);
+  }
+  100% {
+    transform: rotateX(0);
+  }
+}

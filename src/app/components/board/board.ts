@@ -1,20 +1,28 @@
 import { ChangeDetectionStrategy, Component, effect, input, signal } from '@angular/core';
 import { GameStatus, Tile } from '../../models/game.model';
+import { LetterTile } from '../tile/tile';
 
-/** Oyun tahtası — 6 satır × 5 harf kutusu. */
+/**
+ * Oyun tahtası — 6 satır × 5 sütun CSS Grid.
+ * Tahta durumu dışarıdan bir signal (6×5 dizi) ile beslenir; kutuları <app-tile> çizer.
+ */
 @Component({
   selector: 'app-board',
-  imports: [],
+  imports: [LetterTile],
   templateUrl: './board.html',
   styleUrl: './board.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Board {
+  /** 6×5 tahta durumu. */
   readonly rows = input.required<Tile[][]>();
+
   /** Kaç satır gönderildi — bu satırlar açılma animasyonu alır. */
   readonly submitted = input.required<number>();
+
   /** Her geçersiz denemede artan sayaç — sallanma animasyonunu tetikler. */
   readonly shakeKey = input<number>(0);
+
   readonly status = input<GameStatus>('playing');
 
   protected readonly shaking = signal(false);

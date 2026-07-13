@@ -7,19 +7,12 @@
       [class.win]="isWinRow(r)"
     >
       @for (tile of row; track $index; let c = $index) {
-        <div
-          class="tile"
-          role="gridcell"
-          [class.filled]="tile.letter !== '' && tile.state === 'empty'"
-          [class.reveal]="r < submitted()"
-          [class.correct]="tile.state === 'correct'"
-          [class.present]="tile.state === 'present'"
-          [class.absent]="tile.state === 'absent'"
-          [style.animation-delay.ms]="r < submitted() ? c * 90 : 0"
-          [attr.aria-label]="tile.letter || 'boş'"
-        >
-          {{ tile.letter }}
-        </div>
+        <app-tile
+          [letter]="tile.letter"
+          [state]="tile.state"
+          [revealed]="r < submitted()"
+          [delay]="r < submitted() ? c * 90 : 0"
+        />
       }
     </div>
   }
