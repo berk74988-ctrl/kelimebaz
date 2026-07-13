@@ -117,14 +117,14 @@ export class GameService {
     const cur = this._current();
     if ([...cur].length >= WORD_LENGTH) return;
     this._current.set(cur + trUpper(letter));
-    this._message.set('');
+    this.clearMessage();
   }
 
   /** Son harfi sil. */
   backspace(): void {
     if (this.isOver()) return;
     this._current.set([...this._current()].slice(0, -1).join(''));
-    this._message.set('');
+    this.clearMessage();
   }
 
   /** Tahmini gönder. */
@@ -132,19 +132,21 @@ export class GameService {
     if (this.isOver()) return;
 
     const guess = this._current();
+
+    // Geçersiz tahminde satır KİLİTLENMEZ — uyarı verilir, oyuncu düzeltip tekrar dener.
     if ([...guess].length < WORD_LENGTH) {
-      this.reject('Yeterli harf yok');
+      this.reject('5 harf girin');
       return;
     }
     if (!this.wordService.isValid(guess)) {
-      this.reject('Kelime listede yok');
+      this.reject('Sözlükte yok');
       return;
     }
 
     const guesses = [...this._guesses(), guess];
     this._guesses.set(guesses);
     this._current.set('');
-    this._message.set('');
+    this.clearMessage();
 
     if (guess === this._answer()) {
       this._status.set('won');
@@ -176,9 +178,27 @@ export class GameService {
     return s === 'correct' ? '🟩' : s === 'present' ? '🟨' : '⬜';
   }
 
+  /** Uyarı kaç ms sonra kendiliğinden kaybolur. */
+  private static readonly MESSAGE_MS = 2000;
+  private msgTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** Tahmini reddet: uyarı göster + satırı salla. Satır KİLİTLENMEZ. */
   private reject(msg: string): void {
     this._message.set(msg);
     this._invalidShake.update((n) => n + 1);
+
+    // Birkaç saniye sonra uyarı kendiliğinden kaybolsun
+    if (this.msgTimer) clearTimeout(this.msgTimer);
+    this.msgTimer = setTimeout(() => this._message.set(''), GameService.MESSAGE_MS);
+  }
+
+  /** Uyarıyı hemen kaldır (oyuncu yazmaya devam edince). */
+  private clearMessage(): void {
+    if (this.msgTimer) {
+      clearTimeout(this.msgTimer);
+      this.msgTimer = null;
+    }
+    this._message.set('');
   }
 
   private toTiles(word: string, states: LetterState[]): Tile[] {

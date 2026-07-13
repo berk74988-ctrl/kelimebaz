@@ -6,11 +6,12 @@ import { ThemeService } from '../../services/theme.service';
 import { Board } from '../board/board';
 import { Keyboard, TR_LETTERS } from '../keyboard/keyboard';
 import { ResultModal } from '../result-modal/result-modal';
+import { Toast } from '../toast/toast';
 
-/** Oyun ekranı: başlık çubuğu + tahta + klavye + sonuç ekranı. */
+/** Oyun ekranı: başlık çubuğu + uyarı + tahta + klavye + sonuç ekranı. */
 @Component({
   selector: 'app-game',
-  imports: [Board, Keyboard, ResultModal],
+  imports: [Board, Keyboard, ResultModal, Toast],
   templateUrl: './game.html',
   styleUrl: './game.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

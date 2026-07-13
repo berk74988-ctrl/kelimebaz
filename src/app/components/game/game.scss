@@ -58,23 +58,6 @@
   }
 }
 
-// Mesaj yeri sabit yükseklikte → tahta zıplamaz
-.toast-slot {
-  height: 30px;
-  display: grid;
-  place-items: center;
-}
-
-.toast {
-  padding: 5px 14px;
-  font-size: 13px;
-  font-weight: 700;
-  border-radius: 20px;
-  color: var(--on-toast);
-  background: var(--toast-bg);
-  animation: pop-in 0.18s ease;
-}
-
 app-board {
   display: grid;
   place-items: center;

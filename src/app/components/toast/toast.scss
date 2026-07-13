@@ -1,0 +1,27 @@
+// Sabit yükseklikli yuva: mesaj gelip gidince tahta zıplamaz.
+:host {
+  display: grid;
+  place-items: center;
+  height: 30px;
+}
+
+.toast {
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: 20px;
+
+  color: var(--on-toast);
+  background: var(--toast-bg);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+
+  animation: pop-in 0.18s ease;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}

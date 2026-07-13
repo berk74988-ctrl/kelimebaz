@@ -61,7 +61,7 @@ describe('Game — fiziksel klavye', () => {
     type('ka');
     press('Enter');
     expect(game.rowIndex()).toBe(0);
-    expect(game.message()).toBe('Yeterli harf yok');
+    expect(game.message()).toBe('5 harf girin');
   });
 
   it('Enter geçerli kelimeyi onaylar → satır ilerler', () => {

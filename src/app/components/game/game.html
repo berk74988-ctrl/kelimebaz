@@ -17,11 +17,7 @@
     </button>
   </header>
 
-  <div class="toast-slot" role="status" aria-live="polite">
-    @if (game.message()) {
-      <p class="toast">{{ game.message() }}</p>
-    }
-  </div>
+  <app-toast [text]="game.message()" />
 
   <app-board
     [rows]="game.board()"

@@ -58,7 +58,7 @@ describe('Klavye girişi → tahta', () => {
     game.submit();
 
     expect(game.rowIndex()).toBe(0); // satır ilerlemedi
-    expect(game.message()).toBe('Yeterli harf yok');
+    expect(game.message()).toBe('5 harf girin');
   });
 
   it('ENTER listede olmayan kelimeyi kabul etmez', () => {
@@ -66,7 +66,7 @@ describe('Klavye girişi → tahta', () => {
     game.submit();
 
     expect(game.rowIndex()).toBe(0);
-    expect(game.message()).toBe('Kelime listede yok');
+    expect(game.message()).toBe('Sözlükte yok');
   });
 
   it('ENTER geçerli kelimeyi gönderir: satır ilerler ve kutular renklenir', () => {
