@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, HostListener, inject, input, output, signal } from '@angular/core';
+import { trUpper } from '../../core/turkish';
 import { GameMode } from '../../models/game.model';
 import { GameService } from '../../services/game.service';
 import { ThemeService } from '../../services/theme.service';
-import { trUpper } from '../../services/word.service';
 import { Board } from '../board/board';
 import { Keyboard, TR_LETTERS } from '../keyboard/keyboard';
 import { ResultModal } from '../result-modal/result-modal';

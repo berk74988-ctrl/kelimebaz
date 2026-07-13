@@ -1,11 +1,7 @@
 import { Injectable } from '@angular/core';
+import { trUpper } from '../core/turkish';
 import wordData from '../data/words.json';
 import { WORD_LENGTH } from '../models/game.model';
-
-/** Türkçe büyük harfe çevirir (i → İ, ı → I). */
-export function trUpper(s: string): string {
-  return s.toLocaleUpperCase('tr');
-}
 
 /**
  * Kelime havuzuna erişim: rastgele kelime, günün kelimesi, tahmin doğrulama.

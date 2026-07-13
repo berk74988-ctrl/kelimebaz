@@ -9,56 +9,17 @@ import {
   Tile,
   WORD_LENGTH,
 } from '../models/game.model';
+import { evaluateGuess, keyStatesFrom } from '../core/evaluate';
+import { trUpper } from '../core/turkish';
 import { StatsService } from './stats.service';
-import { trUpper, WordService } from './word.service';
+import { WordService } from './word.service';
 
 const SAVE_KEY = 'kelimebaz:game';
 
 /**
- * Bir tahmini cevaba göre değerlendirir.
- *
- * İKİ GEÇİŞLİ algoritma — harf tekrarlarında doğru sonuç verir:
- *  1) Önce tam isabetler (🟩) işaretlenir ve o harfler havuzdan düşülür.
- *  2) Kalan harfler için, havuzda hâlâ o harften varsa 🟨, yoksa ⬜.
- *
- * Örnek: cevap KEMAN, tahmin ELEMA →
- *  E(⬜, çünkü tek E zaten 3. sıradaki E'ye sayıldı) ... gibi durumlar doğru çıkar.
+ * Oyun durumu (signals) + akış.
+ * Renk mantığı burada DEĞİL — saf çekirdekte: core/evaluate.ts
  */
-export function evaluateGuess(guess: string, answer: string): LetterState[] {
-  const g = [...trUpper(guess)];
-  const a = [...trUpper(answer)];
-  const result: LetterState[] = Array(g.length).fill('absent');
-
-  // 1) Tam isabetler — kullanılan harfleri havuzdan düş
-  const pool = new Map<string, number>();
-  for (let i = 0; i < g.length; i++) {
-    if (g[i] === a[i]) {
-      result[i] = 'correct';
-    } else {
-      pool.set(a[i], (pool.get(a[i]) ?? 0) + 1);
-    }
-  }
-
-  // 2) Yer değiştirmiş harfler — yalnızca havuzda kaldığı kadar
-  for (let i = 0; i < g.length; i++) {
-    if (result[i] === 'correct') continue;
-    const left = pool.get(g[i]) ?? 0;
-    if (left > 0) {
-      result[i] = 'present';
-      pool.set(g[i], left - 1);
-    }
-  }
-
-  return result;
-}
-
-/** Klavye rengi asla geriye gitmez: correct > present > absent. */
-function strongerState(a: LetterState | undefined, b: LetterState): LetterState {
-  const rank: Record<LetterState, number> = { empty: 0, absent: 1, present: 2, correct: 3 };
-  if (!a) return b;
-  return rank[b] > rank[a] ? b : a;
-}
-
 @Injectable({ providedIn: 'root' })
 export class GameService {
   private readonly wordService = inject(WordService);
@@ -110,16 +71,8 @@ export class GameService {
     return rows;
   });
 
-  /** Klavyedeki her harfin bilinen en iyi durumu. */
-  readonly keyStates = computed<Record<string, LetterState>>(() => {
-    const map: Record<string, LetterState> = {};
-    for (const g of this.guesses()) {
-      for (const tile of g.tiles) {
-        map[tile.letter] = strongerState(map[tile.letter], tile.state);
-      }
-    }
-    return map;
-  });
+  /** Klavyedeki her harfin bilinen EN GÜÇLÜ durumu (yeşil asla geriye gitmez). */
+  readonly keyStates = computed<Record<string, LetterState>>(() => keyStatesFrom(this.guesses()));
 
   /** Kaçıncı satırdayız (animasyon gecikmeleri için). */
   readonly rowIndex = computed(() => this._guesses().length);
