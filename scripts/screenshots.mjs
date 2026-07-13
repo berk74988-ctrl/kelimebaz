@@ -106,8 +106,11 @@ console.log(`\nEkran görüntüleri → ${OUT}/\n`);
   const page = await ctx.newPage();
   await page.goto(TARGET, { waitUntil: 'networkidle' });
 
+  await page.waitForTimeout(1400); // açılış animasyonları otursun
+  await shot(page, '7-mobil-giris');
+
   await startGame(page, 'KALEM', ['KİTAP', 'ÇORBA', 'GÜNEŞ']);
-  await shot(page, '7-mobil');
+  await shot(page, '8-mobil-oyun');
 
   await ctx.close();
 }

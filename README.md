@@ -42,7 +42,7 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 
 | Renk körü modu | Mobil |
 | --- | --- |
-| ![](docs/screenshots/6-renk-koru-modu.png) | <img src="docs/screenshots/7-mobil.png" width="260"> |
+| ![](docs/screenshots/6-renk-koru-modu.png) | <img src="docs/screenshots/8-mobil-oyun.png" width="260"> |
 
 ---
 
