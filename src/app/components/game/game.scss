@@ -4,7 +4,8 @@
 .game {
   --tile-size: clamp(48px, min(15vw, 8.2dvh), 62px);
   --tile-gap: clamp(4px, 1.2vw, 6px);
-  --key-h: clamp(44px, 7.2dvh, 58px);
+  --key-h: clamp(46px, 7.2dvh, 58px);
+  --key-gap: clamp(3px, 1vw, 6px);
 
   min-height: 100dvh;
   display: grid;
