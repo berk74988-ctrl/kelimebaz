@@ -10,7 +10,8 @@
     "check:responsive": "node scripts/responsive-check.mjs",
     "check:share": "node scripts/share-check.mjs",
     "check:contrast": "node scripts/contrast-check.mjs",
-    "check:a11y": "node scripts/a11y-check.mjs"
+    "check:a11y": "node scripts/a11y-check.mjs",
+    "check:scenarios": "node scripts/scenarios-check.mjs"
   },
   "private": true,
   "packageManager": "npm@11.16.0",
