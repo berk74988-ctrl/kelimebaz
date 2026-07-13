@@ -23,14 +23,32 @@
     </p>
 
     <div class="modes">
-      <button class="btn primary" type="button" (click)="play.emit('daily')">
-        <span class="btn-t">Günün Kelimesi</span>
-        <span class="btn-s">#{{ dayNo() }} · herkese aynı</span>
-      </button>
+      @if (dailyDone()) {
+        <!-- BUGÜN OYNANDI: tekrar oynanamaz, sonuç + geri sayım gösterilir -->
+        <div class="done">
+          <p class="done-t">
+            {{ dailyWon() ? '✅ Bugünkü kelimeyi buldun' : '❌ Bugünkü kelimeyi bulamadın' }}
+            @if (dailyWon()) {
+              <span class="tries">{{ dailyTries() }}/6</span>
+            }
+          </p>
+          <app-countdown />
+        </div>
+
+        <button class="btn ghost" type="button" (click)="play.emit('daily')">
+          <span class="btn-t">Sonucu Gör</span>
+          <span class="btn-s">bugünün tahtası</span>
+        </button>
+      } @else {
+        <button class="btn primary" type="button" (click)="play.emit('daily')">
+          <span class="btn-t">Günün Kelimesi</span>
+          <span class="btn-s">#{{ dayNo() }} · herkese aynı</span>
+        </button>
+      }
 
       <button class="btn ghost" type="button" (click)="play.emit('practice')">
         <span class="btn-t">Serbest Oyna</span>
-        <span class="btn-s">rastgele kelime</span>
+        <span class="btn-s">rastgele kelime · sınırsız</span>
       </button>
     </div>
 

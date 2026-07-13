@@ -17,7 +17,10 @@
     }
 
     @if (isDaily()) {
-      <p class="note">Günün kelimesi yarın yenilenir. Hemen devam etmek istersen yeni oyun serbest moddan başlar.</p>
+      <div class="next">
+        <app-countdown />
+        <p class="note">Bugünün bulmacası bitti. Hemen devam etmek istersen "Yeni oyun" serbest moddan başlar.</p>
+      </div>
     }
 
     <section class="stats" aria-label="İstatistikler">

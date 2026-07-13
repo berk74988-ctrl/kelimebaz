@@ -1,0 +1,22 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.clock {
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums; // rakamlar zıplamasın
+  letter-spacing: 1px;
+  color: var(--text);
+}

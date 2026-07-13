@@ -9,12 +9,13 @@ import {
 } from '@angular/core';
 import { GameStatus, MAX_ATTEMPTS } from '../../models/game.model';
 import { GameService } from '../../services/game.service';
+import { Countdown } from '../countdown/countdown';
 import { StatsPanel } from '../stats-panel/stats-panel';
 
 /** Oyun bitince açılan sonuç ekranı: kazandın/kaybettin + istatistik + paylaş. */
 @Component({
   selector: 'app-result-modal',
-  imports: [StatsPanel],
+  imports: [StatsPanel, Countdown],
   templateUrl: './result-modal.html',
   styleUrl: './result-modal.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

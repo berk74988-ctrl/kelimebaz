@@ -41,6 +41,15 @@ export class WordService {
     return Math.max(0, Math.floor((today - start) / 86_400_000));
   }
 
+  /**
+   * Yeni kelimeye kalan süre (ms) — oyuncunun yerel gece yarısına kadar.
+   * Gün oyuncunun kendi saat diliminde döner.
+   */
+  msUntilNextDay(now = new Date()): number {
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+    return midnight.getTime() - now.getTime();
+  }
+
   /** Tahmin, havuzdaki geçerli bir kelime mi? */
   isValid(guess: string): boolean {
     return this.wordSet.has(trUpper(guess));

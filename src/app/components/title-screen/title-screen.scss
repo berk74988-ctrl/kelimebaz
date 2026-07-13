@@ -99,6 +99,33 @@
   gap: v.$space-2;
 }
 
+// Bugünün bulmacası bitti → sonuç + geri sayım
+.done {
+  padding: v.$space-3;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+
+  .done-t {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13.5px;
+    font-weight: 700;
+    margin-bottom: v.$space-3;
+  }
+
+  .tries {
+    padding: 1px 7px;
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--on-correct);
+    background: var(--correct);
+    border-radius: 20px;
+  }
+}
+
 .btn {
   display: flex;
   flex-direction: column;

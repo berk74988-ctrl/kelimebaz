@@ -81,24 +81,24 @@ export class GameService {
 
   // --- Oyun akışı ---
 
-  /** Yeni oyun başlat (kayıtlı oyun varsa onu sürdürür). */
+  /** Yeni oyun başlat (o modun kayıtlı oyunu varsa onu sürdürür). */
   start(mode: GameMode): void {
     this._mode.set(mode);
-    const saved = this.load();
+    const saved = this.load(mode);
 
-    if (saved && saved.mode === mode && this.isSameSession(saved, mode)) {
+    if (saved && this.isSameSession(saved, mode)) {
       this._answer.set(saved.answer);
       this._guesses.set(saved.guesses);
       this._status.set(saved.status);
       this._current.set('');
-      this._message.set('');
+      this.clearMessage();
       return;
     }
 
     this.reset(mode);
   }
 
-  /** Sıfırdan yeni oyun (serbest modda "tekrar oyna"). */
+  /** Sıfırdan yeni oyun. */
   reset(mode: GameMode = this._mode()): void {
     this._mode.set(mode);
     this._answer.set(
@@ -107,8 +107,24 @@ export class GameService {
     this._guesses.set([]);
     this._current.set('');
     this._status.set('playing');
-    this._message.set('');
+    this.clearMessage();
     this.save();
+  }
+
+  /**
+   * Bugünün günlük oyunu — oyunu BAŞLATMADAN durumunu okur.
+   * Başlık ekranı "bugünkü kelimeyi çözdün mü" bilgisini buradan alır.
+   */
+  dailySnapshot(): SavedGame | null {
+    const saved = this.load('daily');
+    if (!saved || saved.dayIndex !== this.wordService.dayIndex()) return null;
+    return saved;
+  }
+
+  /** Bugünün günlük bulmacası bitti mi? (bittiyse tekrar oynanamaz) */
+  dailyDone(): boolean {
+    const s = this.dailySnapshot();
+    return !!s && s.status !== 'playing';
   }
 
   /** Harf yaz. */
@@ -210,25 +226,39 @@ export class GameService {
     return saved.dayIndex === this.wordService.dayIndex(); // günlük oyun her gün sıfırlanır
   }
 
+  /**
+   * Her modun KENDİ kaydı vardır.
+   *
+   * Neden: tek anahtar kullanılsaydı, günlük bulmacayı bitirip serbest oyuna
+   * geçmek günlük kaydı EZERDİ. Sonra günlük moda dönünce oyun sıfırdan
+   * başlar ve aynı kelime tekrar oynanabilirdi — "günde tek oyun" kuralı kırılırdı.
+   */
+  private key(mode: GameMode): string {
+    return `${SAVE_KEY}:${mode}`;
+  }
+
   private save(): void {
+    const mode = this._mode();
     const data: SavedGame = {
-      mode: this._mode(),
-      dayIndex: this._mode() === 'daily' ? this.wordService.dayIndex() : -1,
+      mode,
+      dayIndex: mode === 'daily' ? this.wordService.dayIndex() : -1,
       answer: this._answer(),
       guesses: this._guesses(),
       status: this._status(),
     };
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+      localStorage.setItem(this.key(mode), JSON.stringify(data));
     } catch {
       /* depolama kapalıysa sessizce geç */
     }
   }
 
-  private load(): SavedGame | null {
+  private load(mode: GameMode): SavedGame | null {
     try {
-      const raw = localStorage.getItem(SAVE_KEY);
-      return raw ? (JSON.parse(raw) as SavedGame) : null;
+      const raw = localStorage.getItem(this.key(mode));
+      if (!raw) return null;
+      const saved = JSON.parse(raw) as SavedGame;
+      return saved.mode === mode ? saved : null;
     } catch {
       return null;
     }
