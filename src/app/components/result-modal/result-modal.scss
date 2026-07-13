@@ -73,6 +73,21 @@
   font-weight: 800;
   letter-spacing: 4px;
   color: var(--correct);
+
+  &.win {
+    font-size: 20px;
+    opacity: 0.85;
+  }
+}
+
+.note {
+  margin-top: v.$space-3;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
 }
 
 .stats {

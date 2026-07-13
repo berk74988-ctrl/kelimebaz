@@ -61,8 +61,15 @@ export class Game {
     }
   }
 
+  /**
+   * "Tekrar oyna" → her zaman TEMİZ ve YENİ bir kelimeyle başlar.
+   *
+   * Not: günlük modda reset yapmak aynı kelimeyi geri getirirdi (günün kelimesi
+   * tarihe bağlı). Bu yüzden tekrar oynarken serbest moda geçiyoruz — böylece
+   * oyuncu her seferinde yeni bir kelime alır. Günün kelimesi yarın yenilenir.
+   */
   protected newGame(): void {
-    this.game.reset();
+    this.game.reset('practice');
     this.resultOpen.set(false);
   }
 }

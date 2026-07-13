@@ -5,12 +5,19 @@
     @if (status() === 'won') {
       <p class="emoji" aria-hidden="true">🎉</p>
       <h2 class="head win">Tebrikler!</h2>
-      <p class="sub">Kelimeyi {{ attempts() }}/{{ maxAttempts }} tahminde buldun.</p>
+      <p class="sub">
+        Kelimeyi <b>{{ attempts() }}/{{ maxAttempts }}</b> tahminde buldun.
+      </p>
+      <p class="answer win">{{ answer() }}</p>
     } @else {
       <p class="emoji" aria-hidden="true">😔</p>
       <h2 class="head lose">Bu sefer olmadı</h2>
-      <p class="sub">Haklar bitti. Doğru kelime:</p>
+      <p class="sub">6 hakkın da bitti. Doğru kelime:</p>
       <p class="answer">{{ answer() }}</p>
+    }
+
+    @if (isDaily()) {
+      <p class="note">Günün kelimesi yarın yenilenir. Hemen devam etmek istersen yeni oyun serbest moddan başlar.</p>
     }
 
     <section class="stats" aria-label="İstatistikler">

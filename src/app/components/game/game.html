@@ -4,7 +4,8 @@
 
     <div class="titles">
       <h1>KELİMEBAZ</h1>
-      <p>{{ mode() === 'daily' ? 'Günün Kelimesi' : 'Serbest Oyun' }}</p>
+      <!-- servisten okunur: "tekrar oyna" serbest moda geçince başlık da güncellenir -->
+      <p>{{ game.mode() === 'daily' ? 'Günün Kelimesi' : 'Serbest Oyun' }}</p>
     </div>
 
     <button

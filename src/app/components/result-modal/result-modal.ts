@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { GameStatus, MAX_ATTEMPTS } from '../../models/game.model';
 import { GameService } from '../../services/game.service';
 import { StatsService } from '../../services/stats.service';
@@ -25,6 +33,9 @@ export class ResultModal {
   protected readonly copied = signal(false);
   protected readonly maxAttempts = MAX_ATTEMPTS;
   protected readonly rows = [0, 1, 2, 3, 4, 5];
+
+  /** Günlük modda oynanıyorsa "yarın yenilenir" notu gösterilir. */
+  protected readonly isDaily = computed(() => this.game.mode() === 'daily');
 
   protected get stats() {
     return this.statsService.stats();
