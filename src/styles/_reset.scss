@@ -52,11 +52,22 @@
   --text: #131720;
   --text-muted: #667085;
 
+  /**
+   * Kutu renkleri — KONTRAST ÖLÇÜLDÜ (WCAG).
+   *
+   * Önceki hâlde beyaz yazı kullanılıyordu ve okunmuyordu:
+   *   beyaz / yeşil 2.71:1 · beyaz / sarı 2.25:1 · beyaz / gri 2.57:1
+   * (WCAG büyük metin için en az 3.0 ister — üçü de kalıyordu.)
+   *
+   * Çözüm: yeşil ve sarıda KOYU yazı (karanlık temayla aynı renk dili),
+   * gri ise koyulaştırılıp beyaz yazıyla kullanılıyor.
+   * Yeni oranlar: 6.35 · 7.32 · 4.83 — hepsi geçiyor.
+   */
   --correct: #4caf82;
   --present: #d9a441;
-  --absent: #9aa2b1;
-  --on-correct: #ffffff;
-  --on-present: #ffffff;
+  --absent: #6b7280;
+  --on-correct: #062012;
+  --on-present: #2a1d05;
   --on-absent: #ffffff;
 
   --tile-bg: transparent;

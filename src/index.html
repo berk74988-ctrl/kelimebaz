@@ -8,6 +8,37 @@
   <meta name="theme-color" content="#10131a">
   <meta name="description" content="Kelimebaz — Türkçe kelime bulmaca oyunu.">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <!--
+    TEMAYI ANGULAR'DAN ÖNCE UYGULA.
+
+    Bu script olmadan sayfa önce varsayılan (koyu) temayla boyanır, sonra
+    Angular yüklenip aydınlık temaya geçer → gözle görülür bir KOYU FLAŞ olur.
+    Burada, daha ilk boyamadan önce doğru temayı yazıyoruz.
+
+    ThemeService ile aynı mantık: önce kayıtlı tercih, yoksa sistem teması.
+  -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('kelimebaz:theme');
+        var theme =
+          saved === 'light' || saved === 'dark'
+            ? saved
+            : window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark';
+
+        document.documentElement.dataset.theme = theme;
+
+        // Mobil tarayıcı çubuğu da temaya uysun
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', theme === 'light' ? '#f6f7fb' : '#10131a');
+      } catch (e) {
+        /* localStorage kapalıysa varsayılan tema kalır */
+      }
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>
