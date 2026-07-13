@@ -10,6 +10,7 @@ import {
   WORD_LENGTH,
 } from '../models/game.model';
 import { evaluateGuess, keyStatesFrom } from '../core/evaluate';
+import { buildShareText } from '../core/share';
 import { trUpper } from '../core/turkish';
 import { StatsService } from './stats.service';
 import { WordService } from './word.service';
@@ -175,24 +176,19 @@ export class GameService {
     this.save();
   }
 
-  /** Sonucu emoji ızgarası olarak paylaş metnine çevirir. */
+  /** Sonucu emoji ızgarası olarak paylaş metnine çevirir (harf içermez). */
   shareText(): string {
-    const head =
-      this._mode() === 'daily'
-        ? `Kelimebaz #${this.wordService.dayIndex()}`
-        : 'Kelimebaz (serbest)';
-    const score = this._status() === 'won' ? `${this._guesses().length}/${MAX_ATTEMPTS}` : `X/${MAX_ATTEMPTS}`;
-    const grid = this.guesses()
-      .map((g) => g.tiles.map((t) => this.emoji(t.state)).join(''))
-      .join('\n');
-    return `${head} ${score}\n\n${grid}`;
+    return buildShareText({
+      mode: this._mode(),
+      dayIndex: this.wordService.dayIndex(),
+      status: this._status(),
+      attempts: this._guesses().length,
+      maxAttempts: MAX_ATTEMPTS,
+      guesses: this.guesses(),
+    });
   }
 
   // --- Yardımcılar ---
-
-  private emoji(s: LetterState): string {
-    return s === 'correct' ? '🟩' : s === 'present' ? '🟨' : '⬜';
-  }
 
   /** Uyarı kaç ms sonra kendiliğinden kaybolur. */
   private static readonly MESSAGE_MS = 2000;

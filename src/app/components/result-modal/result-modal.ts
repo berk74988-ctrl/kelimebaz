@@ -7,6 +7,8 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { copyText, shareNative } from '../../core/clipboard';
+import { buildShareGrid } from '../../core/share';
 import { GameStatus, MAX_ATTEMPTS } from '../../models/game.model';
 import { GameService } from '../../services/game.service';
 import { Countdown } from '../countdown/countdown';
@@ -30,24 +32,27 @@ export class ResultModal {
   readonly playAgain = output<void>();
   readonly close = output<void>();
 
-  protected readonly copied = signal(false);
+  /** Paylaş butonunun geri bildirimi. */
+  protected readonly shareState = signal<'idle' | 'copied' | 'failed'>('idle');
   protected readonly maxAttempts = MAX_ATTEMPTS;
 
   /** Günlük modda "yarın yenilenir" notu gösterilir. */
   protected readonly isDaily = computed(() => this.game.mode() === 'daily');
 
+  /** Paylaşılacak emoji ızgarasının önizlemesi (harf içermez). */
+  protected readonly shareGrid = computed(() => buildShareGrid(this.game.guesses()));
+
+  /**
+   * Sonucu paylaş: önce cihazın yerel paylaşımını dener (mobil),
+   * olmazsa panoya kopyalar. Kopyalama HTTP'de de çalışır (yedek yöntem).
+   */
   protected async share(): Promise<void> {
     const text = this.game.shareText();
-    try {
-      if (navigator.share) {
-        await navigator.share({ text });
-        return;
-      }
-      await navigator.clipboard.writeText(text);
-      this.copied.set(true);
-      setTimeout(() => this.copied.set(false), 1800);
-    } catch {
-      /* kullanıcı iptal etti ya da izin yok — sessizce geç */
-    }
+
+    if (await shareNative(text)) return; // paylaşım penceresi açıldı
+
+    const ok = await copyText(text);
+    this.shareState.set(ok ? 'copied' : 'failed');
+    setTimeout(() => this.shareState.set('idle'), 2000);
   }
 }

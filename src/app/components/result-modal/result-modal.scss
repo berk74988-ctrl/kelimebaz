@@ -168,11 +168,26 @@
   }
 }
 
+// Paylaşılacak ızgaranın önizlemesi
+.preview {
+  margin-top: v.$space-4;
+  padding: v.$space-2;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.25;
+  letter-spacing: 2px;
+  text-align: center;
+  white-space: pre;
+
+  background: var(--surface-2);
+  border-radius: var(--radius);
+}
+
 .actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: v.$space-2;
-  margin-top: v.$space-4;
+  margin-top: v.$space-2;
 }
 
 .btn {
@@ -201,6 +216,19 @@
     background: var(--surface-2);
     color: var(--text);
     border: 1px solid var(--border);
+  }
+
+  // Kopyalama geri bildirimi
+  &.ok {
+    background: var(--correct);
+    border-color: var(--correct);
+    color: var(--on-correct);
+  }
+
+  &.err {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
   }
 }
 

@@ -28,10 +28,30 @@
       <app-stats-panel [highlight]="status() === 'won' ? attempts() : null" />
     </section>
 
+    <!-- Paylaşılacak ızgaranın önizlemesi — harf yok, spoiler yok -->
+    <pre class="preview" aria-label="Paylaşılacak sonuç">{{ shareGrid() }}</pre>
+
     <div class="actions">
-      <button class="btn ghost" type="button" (click)="share()">
-        {{ copied() ? '✓ Kopyalandı' : '📋 Sonucu paylaş' }}
+      <button
+        class="btn ghost"
+        type="button"
+        [class.ok]="shareState() === 'copied'"
+        [class.err]="shareState() === 'failed'"
+        (click)="share()"
+      >
+        @switch (shareState()) {
+          @case ('copied') {
+            ✓ Kopyalandı
+          }
+          @case ('failed') {
+            ✕ Kopyalanamadı
+          }
+          @default {
+            📋 Sonucu paylaş
+          }
+        }
       </button>
+
       <button class="btn primary" type="button" (click)="playAgain.emit()">Yeni oyun</button>
     </div>
   </div>
