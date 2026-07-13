@@ -1,0 +1,17 @@
+<main class="title-screen">
+  <section class="card">
+    <p class="eyebrow">Kelime Oyunu</p>
+
+    <h1 class="logo" [attr.aria-label]="title()">
+      @for (ch of title().split(''); track $index) {
+        <span class="tile" aria-hidden="true" [style.animation-delay.ms]="$index * 70">{{ ch }}</span>
+      }
+    </h1>
+
+    <p class="tagline">{{ tagline() }}</p>
+
+    <button class="start" type="button" (click)="start()">Başla</button>
+
+    <p class="meta">{{ wordLength() }} harf · {{ wordCount() }} kelime · v0.1.0</p>
+  </section>
+</main>

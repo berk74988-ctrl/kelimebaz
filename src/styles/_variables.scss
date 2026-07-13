@@ -1,0 +1,44 @@
+// =============================================================
+// KELİMEBAZ — Tasarım değişkenleri (SCSS)
+// Sadece değişken tanımlar; CSS çıktısı üretmez.
+// Bileşenlerde:  @use '../../styles/variables' as v;  →  color: v.$text;
+// =============================================================
+
+// --- Yüzeyler ---
+$bg: #10131a;
+$surface: #191e28;
+$surface-2: #222836;
+$border: #2e3646;
+
+// --- Metin ---
+$text: #eef2f7;
+$text-muted: #93a1b1;
+
+// --- Oyun durumu renkleri (kelime oyunu) ---
+$correct: #4caf82; // harf doğru, yeri doğru
+$present: #d9a441; // harf var, yeri yanlış
+$absent: #3a4150; // harf kelimede yok
+
+// --- Vurgu ---
+$accent: #6c8cff;
+$accent-2: #9d7bff;
+$danger: #e0625c;
+
+// --- Ölçüler ---
+$radius-sm: 8px;
+$radius: 12px;
+$radius-lg: 20px;
+
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 16px;
+$space-4: 24px;
+$space-5: 40px;
+
+// --- Tipografi ---
+$font: 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', sans-serif;
+$font-mono: 'JetBrains Mono', 'Consolas', ui-monospace, monospace;
+
+// --- Kırılma noktaları ---
+$mobile: 600px;
+$tablet: 900px;

@@ -1,0 +1,103 @@
+@use './variables' as v;
+
+// =============================================================
+// KELİMEBAZ — Global reset + CSS değişkenleri
+// Bu dosya YALNIZCA styles.scss'ten bir kez import edilir
+// (:root bloğu tekrarlanmasın diye bileşenlerde kullanılmaz).
+// =============================================================
+
+// --- Çalışma zamanı renk değişkenleri (tema değiştirmeye açık) ---
+:root {
+  --bg: #{v.$bg};
+  --surface: #{v.$surface};
+  --surface-2: #{v.$surface-2};
+  --border: #{v.$border};
+
+  --text: #{v.$text};
+  --text-muted: #{v.$text-muted};
+
+  --correct: #{v.$correct};
+  --present: #{v.$present};
+  --absent: #{v.$absent};
+
+  --accent: #{v.$accent};
+  --accent-2: #{v.$accent-2};
+  --danger: #{v.$danger};
+
+  --radius: #{v.$radius};
+  --radius-lg: #{v.$radius-lg};
+
+  color-scheme: dark;
+}
+
+// --- Reset ---
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: v.$font;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+// Hareket azaltma tercihine saygı
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
