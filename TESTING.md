@@ -111,6 +111,18 @@ Ayrıca **birim testte** bir değişmez (invariant) doğrulanıyor:
 - [x] Metinde **hiç harf yok** (spoiler yok)
 - [x] **HTTP üzerinde bile** panoya kopyalanıyor (yedek yöntem)
 
+### Harf ve sözlük sistemi (`check:dictionary`)
+- [x] Ekran klavyesinde **29 harfin hepsi** var ve tahtaya yazılıyor
+- [x] Türkçe fiziksel klavyede 29 harfin hepsi tuşlanıyor
+- [x] **Türkçe olmayan klavyede** (US QWERTY) `Ç Ğ Ö Ş Ü İ` tuşlanabiliyor (`event.code` konum eşlemesi)
+- [x] `i` → `İ`, `Shift+I` → `I` (noktasız) ayrımı doğru
+- [x] Oyuncu **istediği harf dizisini** yazabiliyor; doğrulama sadece ENTER'da
+- [x] Çekimli biçimler kabul: `GELDİ` `OLSUN` `BABAM` `YERDE` `EVDEN` `ALDIM` `YOKTU` `ADINI` `MUSUN`
+- [x] Uydurma diziler reddediliyor: `ZZZZZ` `ABCDE` `AAAAA` `ÇÇÇÇÇ`
+- [x] Yazım hataları reddediliyor: `ALDİM` `SİMDİ` `DEGİL`
+- [x] Kural dışı türetmeler reddediliyor: `MORAN` (isim + fiil eki), `JETER`
+- [x] İngilizce özel adlar reddediliyor: `PETER` `FROST`
+
 ---
 
 ## 🐛 Geliştirme sırasında bulunan ve düzeltilen hatalar
@@ -129,6 +141,11 @@ Ayrıca **birim testte** bir değişmez (invariant) doğrulanıyor:
 | 10 | **Renk körleri oynayamıyordu** — bilgi sadece yeşil/sarı ayrımında | Erişilebilirlik denetimi |
 | 11 | **Çift ENTER** → yanlış "5 harf girin" uyarısı | Kenar durum incelemesi |
 | 12 | **Bozuk kelime listesi** oyunu çökertiyordu | Kenar durum incelemesi |
+| 13 | **Frekans listesi üzerine yazılıyordu** — korpus `şimdi`/`Şimdi`/`ŞİMDİ` satırlarını ayrı tutar ve sıklığa göre azalan sıralıdır; `Map.set` ile en *nadir* varyant kazanıyordu. `ŞİMDİ`nin sayısı 500.000 yerine **2** görünüyordu, bu da hem eşik denetimini hem yazım hatası oranını çürütüyordu. Toplama yapılacak şekilde düzeltildi | Sözlük testi (`SİMDİ` kabul ediliyordu) |
+| 14 | **Fiil ekleri isim köküne yapışıyordu** — `MOR`+`-an` → `MORAN`, `JET`+`-er` → `JETER` sözlüğe sızıyordu. Köklere sözcük türü etiketi eklendi | Kabul edilenlerin gözden geçirilmesi |
+| 15 | **Ek sırası denetlenmiyordu** — `MOR`+`-a`(hâl)+`-n`(iyelik) gibi imkânsız türetmeler geçiyordu. Türkçede sıra kök→çoğul→iyelik→hâl; ihlal eden çözümlemeler elendi | Kabul edilenlerin gözden geçirilmesi |
+| 16 | **Ek-fiil yalnızca fiile geliyordu** — `YOKTU` `ZORDU` `GÜNDÜ` `BENSE` haksız yere reddediliyordu; ek-fiil isme de gelir | Reddedilenlerin sıklığa göre incelenmesi |
+| 17 | **Türkçe olmayan klavyede 6 harf yazılamıyordu** — US QWERTY'de `Ç Ğ Ö Ş Ü İ` tuşu yok; `event.code` konum eşlemesi eklendi | Alfabe denetimi |
 
 ---
 

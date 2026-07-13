@@ -14,7 +14,7 @@ import { ContrastService } from '../../services/contrast.service';
 import { GameService } from '../../services/game.service';
 import { ThemeService } from '../../services/theme.service';
 import { Board } from '../board/board';
-import { Keyboard, TR_LETTERS } from '../keyboard/keyboard';
+import { Keyboard, TR_KEY_POSITIONS, TR_LETTERS } from '../keyboard/keyboard';
 import { ResultModal } from '../result-modal/result-modal';
 import { StatsModal } from '../stats-modal/stats-modal';
 import { Toast } from '../toast/toast';
@@ -130,10 +130,20 @@ export class Game {
       return;
     }
 
+    // 1) Türkçe klavye: tuşun kendisi zaten doğru harfi verir
     const ch = trUpper(e.key);
     if ([...ch].length === 1 && TR_LETTERS.has(ch)) {
       e.preventDefault();
       this.onLetter(ch);
+      return;
+    }
+
+    // 2) Türkçe olmayan klavye: harf üretemeyen tuşlar için KONUMA bak.
+    //    US klavyede ';' tuşu Türkçe düzende Ş'nin yerindedir → Ş yaz.
+    const byPosition = TR_KEY_POSITIONS[e.code];
+    if (byPosition) {
+      e.preventDefault();
+      this.onLetter(byPosition);
     }
   }
 

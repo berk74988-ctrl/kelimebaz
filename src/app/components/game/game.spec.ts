@@ -45,6 +45,45 @@ describe('Game — fiziksel klavye', () => {
     expect(game.currentGuess()).toBe('İI');
   });
 
+  it('Türkçe klavyede alfabenin 29 harfi de yazılabilir', () => {
+    // Türkçe düzende her harf event.key olarak doğrudan gelir.
+    for (const ch of 'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ') {
+      game.reset('practice');
+      press(ch.toLocaleLowerCase('tr'));
+      expect(game.currentGuess()).toBe(ch);
+    }
+  });
+
+  describe('Türkçe olmayan fiziksel klavye (US QWERTY)', () => {
+    /**
+     * US klavyede Ç, Ğ, Ö, Ş, Ü tuşu YOKTUR — o konumlar noktalama üretir.
+     * Oyun event.code ile fiziksel KONUMA bakıp Türkçe-Q düzenindeki harfi
+     * yazmalı; yoksa bu oyuncular alfabenin 6 harfini hiç kullanamaz.
+     */
+    const US_KEYS: [string, string, string][] = [
+      ['Semicolon', ';', 'Ş'],
+      ['Quote', "'", 'İ'],
+      ['BracketLeft', '[', 'Ğ'],
+      ['BracketRight', ']', 'Ü'],
+      ['Comma', ',', 'Ö'],
+      ['Period', '.', 'Ç'],
+    ];
+
+    for (const [code, key, expected] of US_KEYS) {
+      it(`${code} tuşu (key="${key}") → ${expected}`, () => {
+        press(key, { code });
+        expect(game.currentGuess()).toBe(expected);
+      });
+    }
+
+    it('Türkçe klavyede konum eşlemesi devreye girmez', () => {
+      // Türkçe klavyede aynı fiziksel tuş zaten "ş" üretir. key geçerli bir
+      // Türkçe harfse konuma hiç bakılmamalı — yoksa çift yazım olurdu.
+      press('ş', { code: 'Semicolon' });
+      expect(game.currentGuess()).toBe('Ş');
+    });
+  });
+
   it('5 harften fazlası yazılamaz', () => {
     type('kalem');
     press('x'); // 6. harf denemesi

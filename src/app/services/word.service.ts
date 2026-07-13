@@ -28,9 +28,13 @@ export class WordService {
     .filter((w) => [...w].length === WORD_LENGTH);
 
   /**
-   * Geçerli tahmin sözlüğü.
-   * Kompakt biçimde saklanır (boşlukla ayrılmış tek metin) — 5.500 kelimeyi
-   * JSON dizisi olarak tutmak gereksiz yer kaplardı.
+   * Geçerli tahmin sözlüğü — 12 binin üzerinde kelime.
+   *
+   * Kompakt biçimde saklanır (boşlukla ayrılmış tek metin); JSON dizisi olarak
+   * tutmak her kelime için fazladan tırnak + virgül demek olurdu.
+   *
+   * İçeriği scripts/build-dictionary.mjs üretir: açık kaynak sözlükler +
+   * biçimbilim süzgecinden geçirilmiş çekimli biçimler (GELDİ, OLSUN, BABAM...).
    */
   private readonly validWords: ReadonlySet<string> = new Set(
     (validData.words as string).split(' ').filter(Boolean),
@@ -95,5 +99,18 @@ export class WordService {
    */
   isValid(guess: string): boolean {
     return this.validWords.has(trUpper(guess));
+  }
+
+  /**
+   * Bu harfi içeren en az bir geçerli kelime var mı?
+   *
+   * "Alfabenin tamamı destekleniyor" demek, harfin klavyede GÖRÜNMESİ değil,
+   * onunla gerçekten kelime kurulabilmesi demektir. Sözlük bir harfi hiç
+   * içermiyorsa o tuş ölüdür — bu yüzden ölçülüyor.
+   */
+  hasLetter(letter: string): boolean {
+    const ch = trUpper(letter);
+    for (const w of this.validWords) if (w.includes(ch)) return true;
+    return false;
   }
 }

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { LetterState } from '../../models/game.model';
 
-/** Türkçe klavye düzeni — 29 harf (Q, W, X yok). */
+/** Türkçe klavye düzeni — alfabenin 29 harfinin tamamı (Q, W, X yok). */
 export const TR_ROWS: readonly (readonly string[])[] = [
   ['E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'Ğ', 'Ü'],
   ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ş', 'İ'],
@@ -12,6 +12,35 @@ export const TR_ROWS: readonly (readonly string[])[] = [
 export const TR_LETTERS = new Set(
   TR_ROWS.flat().filter((k) => k !== 'ENTER' && k !== 'SİL'),
 );
+
+/**
+ * TÜRKÇE OLMAYAN FİZİKSEL KLAVYELER İÇİN TUŞ KONUMU EŞLEMESİ.
+ *
+ * Sorun: İngilizce (US QWERTY) klavyesi olan bir oyuncu Ç, Ğ, Ö, Ş, Ü
+ * harflerini ÜRETEMEZ — o tuşlar `event.key` olarak `;`, `'`, `[`, `]`,
+ * `,`, `.` döner. Oyunun 29 harfi de desteklemesi için bu yetmez.
+ *
+ * Çözüm: `event.code` fiziksel TUŞ KONUMUNU verir, düzenden bağımsız olarak.
+ * Türkçe-Q düzeninde o konumlarda hangi harf varsa onu yazıyoruz:
+ *
+ *        [ ]        →  Ğ Ü
+ *        ; '        →  Ş İ
+ *        , .        →  Ö Ç
+ *
+ * Bu eşleme SADECE `event.key` geçerli bir Türkçe harf vermediğinde devreye
+ * girer — yani gerçek Türkçe klavyede hiç çalışmaz, orada `key` zaten doğru.
+ *
+ * Not: I ve İ ayrımı `key` üzerinden zaten çözülür — `i` → İ, `Shift+I` → I
+ * (Türkçe yerelde 'I'.toLocaleUpperCase('tr') === 'I', noktasız kalır).
+ */
+export const TR_KEY_POSITIONS: Readonly<Record<string, string>> = {
+  BracketLeft: 'Ğ',
+  BracketRight: 'Ü',
+  Semicolon: 'Ş',
+  Quote: 'İ',
+  Comma: 'Ö',
+  Period: 'Ç',
+};
 
 @Component({
   selector: 'app-keyboard',
