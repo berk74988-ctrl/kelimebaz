@@ -12,7 +12,9 @@
     "check:contrast": "node scripts/contrast-check.mjs",
     "check:a11y": "node scripts/a11y-check.mjs",
     "check:scenarios": "node scripts/scenarios-check.mjs",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "node scripts/screenshots.mjs",
+    "check:dictionary": "node scripts/dictionary-check.mjs",
+    "build:dictionary": "node scripts/build-dictionary.mjs"
   },
   "private": true,
   "packageManager": "npm@11.16.0",

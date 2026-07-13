@@ -57,7 +57,7 @@
         {{ stats.played }} oyun · %{{ statsService.winRate() }} kazanma · 🔥 {{ stats.currentStreak }} seri
       </p>
     } @else {
-      <p class="meta">{{ wordCount() }} kelimelik havuz</p>
+      <p class="meta">{{ wordCount().toLocaleString('tr') }} kelimelik Türkçe sözlük</p>
     }
   </section>
 </main>

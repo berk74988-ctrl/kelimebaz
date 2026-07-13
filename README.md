@@ -48,6 +48,7 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 
 ## Özellikler
 
+- 📚 **5.500+ kelimelik Türkçe sözlük** — istediğin kelimeyi deneyebilirsin
 - 🎯 **Doğru renk mantığı** — harf tekrarlarında bile (Wordle klonlarının en sık hata yaptığı yer)
 - ⌨️ **Türkçe klavye** — 29 harf, `İ`/`I` ayrımı doğru; fiziksel klavye de çalışır
 - 📅 **Günün kelimesi** — tarihe göre deterministik, herkese aynı, geri sayımlı
@@ -106,7 +107,9 @@ src/app/
 │   ├── theme.service.ts     #   koyu/açık tema
 │   └── contrast.service.ts  #   renk körü modu
 ├── models/                  # TypeScript tipleri
-└── data/words.json          # kelime havuzu (205 kelime)
+├── data/
+│   ├── words.json           # CEVAPLAR — elle seçilmiş 230 kelime
+│   └── valid-words.json     # GEÇERLİ TAHMİNLER — 5.520 kelime
 ```
 
 ### Mimari notlar
@@ -170,5 +173,5 @@ Böylece düz `ng build` her zaman doğru yolu üretir.
 - [x] İstatistikler, günün kelimesi, paylaşım
 - [x] Erişilebilirlik ve renk körü modu
 - [x] Uçtan uca test takımı, canlı deploy
-- [ ] Kelime havuzunu genişlet (şu an 205)
+- [x] Sözlüğü genişlet (205 → 5.520 kelime)
 - [ ] HTTPS (özel alan adı)

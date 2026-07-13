@@ -1,42 +1,65 @@
 import { Injectable } from '@angular/core';
 import { trUpper } from '../core/turkish';
-import wordData from '../data/words.json';
+import answerData from '../data/words.json';
+import validData from '../data/valid-words.json';
 import { WORD_LENGTH } from '../models/game.model';
 
 /**
- * Kelime havuzuna erişim: rastgele kelime, günün kelimesi, tahmin doğrulama.
- * Havuz JSON'dan derleme zamanında gelir — backend yok.
+ * Kelime havuzlarına erişim.
+ *
+ * İKİ AYRI LİSTE VAR — bu ayrım oyunun adil olmasını sağlar:
+ *
+ *   1) CEVAPLAR (words.json) — gizli kelime buradan seçilir.
+ *      Elle seçilmiş, herkesin bildiği kelimeler. Gizli kelime asla
+ *      "EBCET" gibi obskür bir şey olmaz.
+ *
+ *   2) GEÇERLİ TAHMİNLER (valid-words.json) — 5.500+ Türkçe kelime.
+ *      Oyuncu SÖZLÜKTEKİ HERHANGİ bir kelimeyi deneyebilir; tahminin
+ *      cevap havuzunda olmasına gerek yok. Böylece harf elemek için
+ *      istediği kombinasyonu deneyebilir.
+ *
+ * Her iki liste de derleme zamanında paketlenir — backend yok.
  */
 @Injectable({ providedIn: 'root' })
 export class WordService {
-  /** Havuzdaki tüm kelimeler (büyük harf, 5 harfli). */
-  private readonly words: readonly string[] = (wordData.words as string[])
+  /** Gizli kelimelerin seçildiği havuz. */
+  private readonly answers: readonly string[] = (answerData.words as string[])
     .map(trUpper)
     .filter((w) => [...w].length === WORD_LENGTH);
 
-  /** Hızlı arama için küme. */
-  private readonly wordSet = new Set(this.words);
+  /**
+   * Geçerli tahmin sözlüğü.
+   * Kompakt biçimde saklanır (boşlukla ayrılmış tek metin) — 5.500 kelimeyi
+   * JSON dizisi olarak tutmak gereksiz yer kaplardı.
+   */
+  private readonly validWords: ReadonlySet<string> = new Set(
+    (validData.words as string).split(' ').filter(Boolean),
+  );
 
+  /** Cevap havuzundaki kelime sayısı. */
   get size(): number {
-    return this.words.length;
+    return this.answers.length;
+  }
+
+  /** Kabul edilen toplam tahmin sayısı. */
+  get dictionarySize(): number {
+    return this.validWords.size;
   }
 
   /**
-   * Kelime havuzu kullanılabilir mi?
+   * Oyun başlatılabilir mi?
    *
-   * Havuz derleme zamanında paketlenir, yani "indirilemedi" diye bir durum yok.
-   * Ama JSON bozulur ya da geçerli 5 harfli kelime kalmazsa havuz BOŞ olabilir —
-   * o hâlde oyun başlatılamaz. Uygulama bunu kontrol edip hata ekranı gösterir;
-   * aksi hâlde undefined bir kelimeyle çökerdi.
+   * Listeler derleme zamanında paketlenir, yani "indirilemedi" diye bir durum
+   * yok. Ama JSON bozulursa havuz boş kalabilir — o hâlde oyun başlatılamaz.
    */
   get isReady(): boolean {
-    return this.words.length > 0;
+    return this.answers.length > 0;
   }
 
   /** Rastgele bir cevap kelimesi (serbest mod). */
   randomWord(): string {
     if (!this.isReady) return '';
-    return this.words[Math.floor(Math.random() * this.words.length)];
+    return this.answers[Math.floor(Math.random() * this.answers.length)];
   }
 
   /**
@@ -45,7 +68,7 @@ export class WordService {
    */
   wordOfTheDay(date = new Date()): string {
     if (!this.isReady) return '';
-    return this.words[this.dayIndex(date) % this.words.length];
+    return this.answers[this.dayIndex(date) % this.answers.length];
   }
 
   /** Sabit bir başlangıç gününden bu yana geçen gün sayısı. */
@@ -64,8 +87,13 @@ export class WordService {
     return midnight.getTime() - now.getTime();
   }
 
-  /** Tahmin, havuzdaki geçerli bir kelime mi? */
+  /**
+   * Tahmin geçerli bir Türkçe kelime mi?
+   *
+   * Cevap havuzunda olmasına GEREK YOK — sözlükte olması yeterli.
+   * (Cevaplar da sözlüğe dahildir; sözlük üretilirken garanti altına alınır.)
+   */
   isValid(guess: string): boolean {
-    return this.wordSet.has(trUpper(guess));
+    return this.validWords.has(trUpper(guess));
   }
 }

@@ -23,7 +23,7 @@ export class TitleScreen {
   readonly play = output<GameMode>();
 
   protected readonly title = signal('KELİMEBAZ');
-  protected readonly wordCount = signal(this.words.size);
+  protected readonly wordCount = signal(this.words.dictionarySize);
   protected readonly dayNo = signal(this.words.dayIndex());
 
   /** Bugünün günlük bulmacası bitti mi? */
