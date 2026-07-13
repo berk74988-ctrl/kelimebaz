@@ -11,13 +11,14 @@
     <button
       class="icon"
       type="button"
+      [class.active]="contrast.high()"
       [attr.aria-pressed]="contrast.high()"
       [attr.aria-label]="
         contrast.high() ? 'Yüksek kontrast modunu kapat' : 'Yüksek kontrast (renk körü) modunu aç'
       "
       (click)="contrast.toggle()"
     >
-      {{ contrast.high() ? '👁️' : '👁' }}
+      👁
     </button>
 
     <button class="icon" type="button" aria-label="İstatistikleri göster" (click)="statsOpen.set(true)">
@@ -51,11 +52,12 @@
     [status]="game.status()"
   />
 
+  <!-- Ekran klavyesi de fiziksel klavyeyle AYNI yoldan geçer (kilit dahil) -->
   <app-keyboard
     [keyStates]="game.keyStates()"
-    (letter)="game.type($event)"
+    (letter)="onLetter($event)"
     (enter)="onEnter()"
-    (backspace)="game.backspace()"
+    (backspace)="onBackspace()"
   />
 
   @if (game.isOver() && resultOpen()) {

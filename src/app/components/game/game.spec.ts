@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { Game } from './game';
 import { GameService } from '../../services/game.service';
 
@@ -99,17 +100,25 @@ describe('Game — fiziksel klavye', () => {
   });
 
   it('oyun bitince klavye girişi yok sayılır', () => {
-    // 6 hak da yanlış kullanılırsa oyun biter
+    // Not: tahmin gönderilince kutular çevrilirken giriş KİLİTLENİR.
+    // Bu yüzden her tahminden sonra animasyonun bitmesini beklemeliyiz.
+    vi.useFakeTimers();
+
     const wrong = ['KİTAP', 'ÇORBA', 'DENİZ', 'GÜNEŞ', 'MASAL', 'TAVUK'];
     for (const w of wrong) {
       if (game.isOver()) break;
       type(w.toLocaleLowerCase('tr'));
       press('Enter');
+      vi.advanceTimersByTime(1000); // açılma animasyonu bitsin, kilit açılsın
+      fixture.detectChanges();
     }
+
     expect(game.isOver()).toBe(true);
 
     const before = game.currentGuess();
     type('kal');
-    expect(game.currentGuess()).toBe(before); // hiçbir şey yazılmadı
+    expect(game.currentGuess()).toBe(before); // oyun bitti, hiçbir şey yazılmadı
+
+    vi.useRealTimers();
   });
 });

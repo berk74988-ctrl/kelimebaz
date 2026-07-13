@@ -68,10 +68,18 @@
   font-size: 17px;
   border-radius: var(--radius-sm);
   color: var(--text);
-  transition: background 0.15s ease;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease;
 
   &:hover {
     background: var(--surface-2);
+  }
+
+  // Açık/kapalı durumu belli olsun (renk körü modu gibi anahtarlar)
+  &.active {
+    background: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
   }
 }
 

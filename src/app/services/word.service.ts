@@ -21,8 +21,21 @@ export class WordService {
     return this.words.length;
   }
 
+  /**
+   * Kelime havuzu kullanılabilir mi?
+   *
+   * Havuz derleme zamanında paketlenir, yani "indirilemedi" diye bir durum yok.
+   * Ama JSON bozulur ya da geçerli 5 harfli kelime kalmazsa havuz BOŞ olabilir —
+   * o hâlde oyun başlatılamaz. Uygulama bunu kontrol edip hata ekranı gösterir;
+   * aksi hâlde undefined bir kelimeyle çökerdi.
+   */
+  get isReady(): boolean {
+    return this.words.length > 0;
+  }
+
   /** Rastgele bir cevap kelimesi (serbest mod). */
   randomWord(): string {
+    if (!this.isReady) return '';
     return this.words[Math.floor(Math.random() * this.words.length)];
   }
 
@@ -31,6 +44,7 @@ export class WordService {
    * Aynı gün içinde her zaman aynı sonucu döndürür.
    */
   wordOfTheDay(date = new Date()): string {
+    if (!this.isReady) return '';
     return this.words[this.dayIndex(date) % this.words.length];
   }
 

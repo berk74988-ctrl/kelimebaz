@@ -1,4 +1,6 @@
-@if (view() === 'title') {
+@if (!ready()) {
+  <app-error-screen />
+} @else if (view() === 'title') {
   <app-title-screen (play)="play($event)" />
 } @else {
   <app-game [mode]="mode()" (exit)="exit()" />

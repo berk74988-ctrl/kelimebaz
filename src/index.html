@@ -2,12 +2,28 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8">
-  <title>Kelimebaz — Türkçe Kelime Oyunu</title>
-  <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#10131a">
-  <meta name="description" content="Kelimebaz — Türkçe kelime bulmaca oyunu.">
+
+  <title>Kelimebaz — Türkçe Kelime Oyunu</title>
+  <meta name="description" content="5 harfli gizli Türkçe kelimeyi 6 tahminde bul. Her gün yeni bir kelime, sınırsız serbest oyun.">
+  <base href="/">
+
+  <!-- Simge: SVG (keskin, temaya uyumlu), eski tarayıcılar için .ico yedeği -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="favicon.svg">
+
+  <!-- Mobil tarayıcı çubuğu (aşağıdaki script temaya göre günceller) -->
+  <meta name="theme-color" content="#10131a">
+
+  <!-- Link paylaşıldığında güzel görünsün -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Kelimebaz — Türkçe Kelime Oyunu">
+  <meta property="og:description" content="5 harfli gizli Türkçe kelimeyi 6 tahminde bul.">
+  <meta property="og:locale" content="tr_TR">
+  <meta name="twitter:card" content="summary">
+
+  <meta name="color-scheme" content="dark light">
 
   <!--
     TEMAYI ANGULAR'DAN ÖNCE UYGULA.
@@ -16,10 +32,11 @@
     Angular yüklenip aydınlık temaya geçer → gözle görülür bir KOYU FLAŞ olur.
     Burada, daha ilk boyamadan önce doğru temayı yazıyoruz.
 
-    ThemeService ile aynı mantık: önce kayıtlı tercih, yoksa sistem teması.
+    Aynı şey yüksek kontrast (renk körü) modu için de geçerli.
   -->
   <script>
     (function () {
+      var root = document.documentElement;
       try {
         var saved = localStorage.getItem('kelimebaz:theme');
         var theme =
@@ -29,13 +46,16 @@
               ? 'light'
               : 'dark';
 
-        document.documentElement.dataset.theme = theme;
+        root.dataset.theme = theme;
 
-        // Mobil tarayıcı çubuğu da temaya uysun
+        if (localStorage.getItem('kelimebaz:contrast') === '1') {
+          root.dataset.contrast = 'high';
+        }
+
         var meta = document.querySelector('meta[name="theme-color"]');
         if (meta) meta.setAttribute('content', theme === 'light' ? '#f6f7fb' : '#10131a');
       } catch (e) {
-        /* localStorage kapalıysa varsayılan tema kalır */
+        root.dataset.theme = 'dark'; // depolama kapalıysa varsayılan
       }
     })();
   </script>

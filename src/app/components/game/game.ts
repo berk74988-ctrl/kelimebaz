@@ -47,9 +47,56 @@ export class Game {
    */
   protected readonly announcement = signal('');
 
+  /**
+   * Kutular çevrilirken giriş KİLİTLİ.
+   *
+   * Neden: ENTER'a hızlıca iki kez basınca ikinci basış boş satırı
+   * onaylamaya çalışıyor ve "5 harf girin" uyarısı çıkıyordu. Ayrıca
+   * animasyon sürerken yazılan harfler yarım açılmış kutuların üstüne
+   * biniyordu. Kilit, açılma bitene kadar girişi durdurur.
+   */
+  private readonly locked = signal(false);
+  private lockTimer: ReturnType<typeof setTimeout> | null = null;
+
   ngOnInit(): void {
     this.game.start(this.mode());
     this.resultOpen.set(this.game.isOver());
+  }
+
+  ngOnDestroy(): void {
+    if (this.lockTimer) clearTimeout(this.lockTimer);
+  }
+
+  /** Kutuların açılma animasyonu ne kadar sürüyor. */
+  private revealMs(): number {
+    // Hareket azaltma açıksa animasyon anlık → kilitlemeye gerek yok
+    const reduced =
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return 0;
+
+    // son kutu: 4 × 90ms gecikme + 550ms çevirme
+    return 950;
+  }
+
+  private lockInput(): void {
+    const ms = this.revealMs();
+    if (ms === 0) return;
+
+    this.locked.set(true);
+    if (this.lockTimer) clearTimeout(this.lockTimer);
+    this.lockTimer = setTimeout(() => this.locked.set(false), ms);
+  }
+
+  // --- Giriş (ekran klavyesi ve fiziksel klavye buradan geçer) ---
+
+  protected onLetter(letter: string): void {
+    if (this.locked()) return;
+    this.game.type(letter);
+  }
+
+  protected onBackspace(): void {
+    if (this.locked()) return;
+    this.game.backspace();
   }
 
   /** Fiziksel klavye desteği (masaüstü). */
@@ -79,24 +126,28 @@ export class Game {
     }
     if (e.key === 'Backspace') {
       e.preventDefault();
-      this.game.backspace();
+      this.onBackspace();
       return;
     }
 
     const ch = trUpper(e.key);
     if ([...ch].length === 1 && TR_LETTERS.has(ch)) {
       e.preventDefault();
-      this.game.type(ch);
+      this.onLetter(ch);
     }
   }
 
   protected onEnter(): void {
+    if (this.locked()) return; // çift onaylamayı engelle
+
     const before = this.game.rowIndex();
     this.game.submit();
     const after = this.game.rowIndex();
 
     if (after > before) {
-      // Tahmin kabul edildi → sonucu ekran okuyucuya duyur
+      // Tahmin kabul edildi → açılma bitene kadar girişi kilitle
+      this.lockInput();
+
       const guess = this.game.guesses()[after - 1];
       this.announcement.set(guessAnnouncement(guess, after));
     } else if (this.game.message()) {
