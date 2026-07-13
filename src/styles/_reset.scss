@@ -84,6 +84,9 @@
 html,
 body {
   height: 100%;
+  // Hiçbir ekranda yatay kaydırma olmasın
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {

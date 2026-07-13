@@ -1,26 +1,43 @@
 @use '../../../styles/variables' as v;
 
-// Tahta ve klavye ölçüleri ekranla birlikte küçülür → telefonda da tam sığar.
+/**
+ * DÜZEN STRATEJİSİ
+ *
+ * Ekran = başlık + uyarı + tahta (esner) + klavye.
+ * Klavye grid'in son satırı ve yükseklik 100dvh olduğu için MOBİLDE
+ * kendiliğinden en altta sabit kalır — position:fixed gerekmez
+ * (fixed olsaydı mobil adres çubuğu açılıp kapandığında zıplardı).
+ *
+ * Öncelik sırası dar ekranda:
+ *   1) Klavye tuşları asla 44px'in altına inmez (parmakla basılabilirlik)
+ *   2) Tahta kalan alana göre KÜÇÜLÜR
+ * Böylece hiçbir zaman taşma/kaydırma olmaz.
+ */
 .game {
-  --tile-size: clamp(48px, min(15vw, 8.2dvh), 62px);
-  --tile-gap: clamp(4px, 1.2vw, 6px);
-  --key-h: clamp(46px, 7.2dvh, 58px);
+  // Mobil temel ölçüler — ekranın hem genişliğine hem yüksekliğine bakar
+  --tile-size: clamp(40px, min(15.5vw, 7.6dvh), 62px);
+  --tile-gap: clamp(4px, 1.1vw, 6px);
+  --key-h: clamp(46px, 7dvh, 58px);
   --key-gap: clamp(3px, 1vw, 6px);
 
   min-height: 100dvh;
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
-  gap: v.$space-2;
-  padding: v.$space-2 v.$space-2 v.$space-3;
+  grid-template-rows: auto auto 1fr auto; // başlık / uyarı / tahta / klavye
+  gap: 6px;
+
+  // Çentikli telefonlarda alt çubuğun altına girmesin
+  padding: 8px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+
   max-width: 640px;
   margin: 0 auto;
+  overflow-x: hidden; // yatay kaydırmaya karşı güvenlik ağı
 }
 
 .bar {
   display: flex;
   align-items: center;
   gap: v.$space-2;
-  padding-bottom: v.$space-2;
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -30,7 +47,7 @@
   text-align: center;
 
   h1 {
-    font-size: clamp(18px, 5vw, 22px);
+    font-size: clamp(17px, 5vw, 22px);
     font-weight: 800;
     letter-spacing: 2px;
   }
@@ -58,10 +75,11 @@
   }
 }
 
+// Tahta kalan alanı doldurur ve ortalanır
 app-board {
   display: grid;
   place-items: center;
-  min-height: 0;
+  min-height: 0; // grid içinde küçülebilsin (taşmayı önler)
 }
 
 .reopen {
@@ -78,9 +96,49 @@ app-board {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
-@keyframes pop-in {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
+/* ---------- TABLET (≥640px) ---------- */
+@media (min-width: 640px) {
+  .game {
+    --tile-size: clamp(52px, 7.4dvh, 64px);
+    --tile-gap: 7px;
+    --key-h: clamp(50px, 7dvh, 58px);
+    --key-gap: 6px;
+
+    gap: 10px;
+    padding: 14px 16px 18px;
+  }
+
+  .bar {
+    padding-bottom: 10px;
+  }
+}
+
+/* ---------- MASAÜSTÜ (≥900px) ---------- */
+@media (min-width: 900px) {
+  .game {
+    --tile-size: clamp(56px, 7.6dvh, 66px);
+    --tile-gap: 8px;
+    --key-h: 56px;
+    --key-gap: 7px;
+
+    gap: 14px;
+    padding: 20px 16px 24px;
+  }
+
+  .titles h1 {
+    font-size: 24px;
+  }
+}
+
+/* ---------- Kısa ekranlar (yatay telefon, küçük dizüstü) ---------- */
+@media (max-height: 620px) {
+  .game {
+    --tile-size: clamp(34px, 6.4dvh, 48px);
+    gap: 4px;
+    padding: 6px 8px 8px;
+  }
+
+  .bar {
+    padding-bottom: 4px;
   }
 }
