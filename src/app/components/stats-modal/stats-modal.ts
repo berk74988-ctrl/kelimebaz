@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  output,
+  viewChild,
+} from '@angular/core';
 import { StatsService } from '../../services/stats.service';
 import { StatsPanel } from '../stats-panel/stats-panel';
 
@@ -10,10 +18,17 @@ import { StatsPanel } from '../stats-panel/stats-panel';
   styleUrl: './stats-modal.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class StatsModal {
+export class StatsModal implements AfterViewInit {
   protected readonly statsService = inject(StatsService);
 
   readonly close = output<void>();
+
+  private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
+
+  /** Açılınca odağı modala taşı — klavye kullanıcısı sayfada kaybolmasın. */
+  ngAfterViewInit(): void {
+    this.dialog()?.nativeElement.focus();
+  }
 
   /** Grafikte son kazanılan oyunun satırı vurgulanır. */
   protected get highlight(): number | null {

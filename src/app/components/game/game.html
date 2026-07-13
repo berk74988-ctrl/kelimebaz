@@ -1,6 +1,6 @@
 <div class="game">
   <header class="bar">
-    <button class="icon" type="button" aria-label="Geri" (click)="exit.emit()">←</button>
+    <button class="icon" type="button" aria-label="Başlık ekranına dön" (click)="exit.emit()">←</button>
 
     <div class="titles">
       <h1>KELİMEBAZ</h1>
@@ -8,7 +8,19 @@
       <p>{{ game.mode() === 'daily' ? 'Günün Kelimesi' : 'Serbest Oyun' }}</p>
     </div>
 
-    <button class="icon" type="button" aria-label="İstatistikler" (click)="statsOpen.set(true)">
+    <button
+      class="icon"
+      type="button"
+      [attr.aria-pressed]="contrast.high()"
+      [attr.aria-label]="
+        contrast.high() ? 'Yüksek kontrast modunu kapat' : 'Yüksek kontrast (renk körü) modunu aç'
+      "
+      (click)="contrast.toggle()"
+    >
+      {{ contrast.high() ? '👁️' : '👁' }}
+    </button>
+
+    <button class="icon" type="button" aria-label="İstatistikleri göster" (click)="statsOpen.set(true)">
       📊
     </button>
 
@@ -21,6 +33,14 @@
       {{ theme.theme() === 'dark' ? '☀️' : '🌙' }}
     </button>
   </header>
+
+  <!--
+    EKRAN OKUYUCU CANLI BÖLGESİ.
+    Görsel olarak gizli. Her tahminden sonra harflerin durumunu,
+    oyun bitince sonucu ve doğru kelimeyi sesli okur.
+    Oyunun tüm bilgisi renkle veriliyor — bu bölge o bilgiyi KELİMEYE çevirir.
+  -->
+  <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ announcement() }}</p>
 
   <app-toast [text]="game.message()" />
 

@@ -1,6 +1,14 @@
 <div class="backdrop" (click)="close.emit()">
-  <div class="modal" role="dialog" aria-modal="true" aria-label="İstatistikler" (click)="$event.stopPropagation()">
-    <button class="x" type="button" aria-label="Kapat" (click)="close.emit()">✕</button>
+  <div
+    #dialog
+    class="modal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="İstatistikler"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+  >
+    <button class="x" type="button" aria-label="İstatistik ekranını kapat" (click)="close.emit()">✕</button>
 
     <h2 class="head">İstatistikler</h2>
 

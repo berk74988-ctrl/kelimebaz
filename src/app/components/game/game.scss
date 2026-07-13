@@ -96,6 +96,25 @@ app-board {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
+/* ---------- ÇOK DAR TELEFONLAR (≤380px) ----------
+   Başlık çubuğunda 4 ikon var; dar ekranda sıkışıp düzeni kaydırıyorlardı. */
+@media (max-width: 380px) {
+  .bar {
+    gap: 2px;
+  }
+
+  .icon {
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+  }
+
+  .titles h1 {
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+}
+
 /* ---------- TABLET (≥640px) ---------- */
 @media (min-width: 640px) {
   .game {

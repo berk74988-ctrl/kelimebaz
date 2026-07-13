@@ -83,6 +83,41 @@
   color-scheme: light;
 }
 
+/**
+ * YÜKSEK KONTRAST (renk körü) MODU — <html data-contrast="high">
+ *
+ * Yeşil/sarı ayrımı kırmızı-yeşil renk körlüğü olanlar için görünmez.
+ * Bu mod, herkesin ayırt edebildiği MAVİ / TURUNCU paletine geçer.
+ * Tema (koyu/açık) tercihinden bağımsız çalışır — bu yüzden en sonda,
+ * her iki temayı da ezecek şekilde tanımlıdır.
+ */
+:root[data-contrast='high'] {
+  --correct: #1668c4; // mavi = doğru yerde
+  --present: #e07b39; // turuncu = kelimede var
+  --on-correct: #ffffff;
+  --on-present: #241002;
+}
+
+:root[data-contrast='high'][data-theme='light'] {
+  --correct: #0d5aad;
+  --present: #d1691f;
+  --on-correct: #ffffff;
+  --on-present: #ffffff;
+}
+
+/** Yalnızca ekran okuyucular için — görsel olarak gizli ama okunur. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 // --- Reset ---
 *,
 *::before,
@@ -148,10 +183,21 @@ a {
   text-decoration: none;
 }
 
+/**
+ * ODAK HALKASI — klavyeyle gezerken her zaman görünür.
+ * Kalın ve zıt renkli: hem koyu hem açık temada, hatta renkli kutuların
+ * üzerinde bile seçilir. (:focus-visible sadece klavye odağında çıkar,
+ * fareyle tıklayınca çıkmaz — görsel gürültü yaratmaz.)
+ */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 3px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+// Modallar odak alır ama kendi halkasını göstermez (içerik zaten vurgulu)
+[role='dialog']:focus-visible {
+  outline: none;
 }
 
 /**

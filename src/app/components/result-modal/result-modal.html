@@ -1,6 +1,15 @@
 <div class="backdrop" (click)="close.emit()">
-  <div class="modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
-    <button class="x" type="button" aria-label="Kapat" (click)="close.emit()">✕</button>
+  <!-- tabindex=-1: açılınca odak buraya gelir → klavye kullanıcısı modalın içinde kalır -->
+  <div
+    #dialog
+    class="modal"
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    [attr.aria-label]="status() === 'won' ? 'Kazandın' : 'Kaybettin'"
+    (click)="$event.stopPropagation()"
+  >
+    <button class="x" type="button" aria-label="Sonuç ekranını kapat" (click)="close.emit()">✕</button>
 
     @if (status() === 'won') {
       <p class="emoji" aria-hidden="true">🎉</p>

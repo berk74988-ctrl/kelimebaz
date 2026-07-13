@@ -1,11 +1,14 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
   inject,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { copyText, shareNative } from '../../core/clipboard';
 import { buildShareGrid } from '../../core/share';
@@ -22,7 +25,7 @@ import { StatsPanel } from '../stats-panel/stats-panel';
   styleUrl: './result-modal.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ResultModal {
+export class ResultModal implements AfterViewInit {
   private readonly game = inject(GameService);
 
   readonly status = input.required<GameStatus>();
@@ -31,6 +34,13 @@ export class ResultModal {
 
   readonly playAgain = output<void>();
   readonly close = output<void>();
+
+  private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
+
+  /** Açılınca odağı modala taşı — klavye kullanıcısı sayfada kaybolmasın. */
+  ngAfterViewInit(): void {
+    this.dialog()?.nativeElement.focus();
+  }
 
   /** Paylaş butonunun geri bildirimi. */
   protected readonly shareState = signal<'idle' | 'copied' | 'failed'>('idle');

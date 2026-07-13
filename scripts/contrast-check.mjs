@@ -64,10 +64,23 @@ await page.goto(TARGET, { waitUntil: 'networkidle' });
 
 let failures = 0;
 
-for (const theme of ['dark', 'light']) {
-  await page.evaluate((t) => {
-    document.documentElement.dataset.theme = t;
-  }, theme);
+// Normal + yüksek kontrast (renk körü) modu, her iki temada
+const MODES = [
+  { theme: 'dark', high: false },
+  { theme: 'light', high: false },
+  { theme: 'dark', high: true },
+  { theme: 'light', high: true },
+];
+
+for (const { theme, high } of MODES) {
+  await page.evaluate(
+    ({ t, h }) => {
+      document.documentElement.dataset.theme = t;
+      if (h) document.documentElement.dataset.contrast = 'high';
+      else delete document.documentElement.dataset.contrast;
+    },
+    { t: theme, h: high },
+  );
   await page.waitForTimeout(150);
 
   const vars = await page.evaluate((names) => {
@@ -77,7 +90,8 @@ for (const theme of ['dark', 'light']) {
     return out;
   }, [...new Set(PAIRS.flatMap(([, f, b]) => [f, b]))]);
 
-  console.log(`\n${theme === 'dark' ? '🌙 KARANLIK' : '☀️ AYDINLIK'} TEMA`);
+  const themeName = theme === 'dark' ? '🌙 KARANLIK' : '☀️ AYDINLIK';
+  console.log(`\n${themeName} TEMA${high ? '  +  👁 YÜKSEK KONTRAST (renk körü)' : ''}`);
   console.log('─'.repeat(64));
 
   for (const [name, fgVar, bgVar, min] of PAIRS) {
