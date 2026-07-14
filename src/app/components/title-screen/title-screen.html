@@ -44,17 +44,18 @@
     </button>
 
     <div class="tools">
-      <!-- 🪙 Altın — mağaza için biriktirilir -->
+      <!-- 🪙 Altın rozeti — tıklayınca mağaza açılır -->
       <button
         class="coin"
         type="button"
-        [attr.aria-label]="'Altının: ' + gold.balance()"
-        (click)="openProfile.emit()"
+        [attr.aria-label]="'Altının: ' + gold.balance() + ' — Mağazayı aç'"
+        (click)="openShop.emit()"
       >
         <span aria-hidden="true">🪙</span>
         <b>{{ gold.balance().toLocaleString('tr') }}</b>
       </button>
 
+      <button class="tool" type="button" aria-label="Mağaza" (click)="openShop.emit()">🛒</button>
       <button class="tool" type="button" aria-label="Profil" (click)="openProfile.emit()">👤</button>
       <button class="tool" type="button" aria-label="Ayarlar" (click)="settingsOpen.set(true)">⚙️</button>
     </div>

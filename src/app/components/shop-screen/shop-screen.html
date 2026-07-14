@@ -1,0 +1,90 @@
+<main class="screen">
+  <!-- Üst çubuk: geri · başlık · altın -->
+  <header class="bar">
+    <button class="back" type="button" aria-label="Geri dön" (click)="back.emit()">←</button>
+    <h1 class="title">Mağaza</h1>
+    <div class="coin" [attr.aria-label]="'Altının: ' + gold.balance()">
+      <span aria-hidden="true">🪙</span>
+      <b>{{ gold.balance().toLocaleString('tr') }}</b>
+    </div>
+  </header>
+
+  <!-- Kategori sekmeleri -->
+  <nav class="tabs" aria-label="Ürün kategorileri">
+    @for (cat of categories; track cat) {
+      <button
+        class="tab"
+        type="button"
+        [class.on]="activeCat() === cat"
+        [attr.aria-pressed]="activeCat() === cat"
+        (click)="activeCat.set(cat)"
+      >
+        <span aria-hidden="true">{{ meta[cat].icon }}</span>
+        {{ meta[cat].label }}
+      </button>
+    }
+  </nav>
+
+  <!-- Ürün ızgarası -->
+  <div class="grid">
+    @for (item of items(); track item.id) {
+      @let st = state(item);
+      <button
+        class="item"
+        type="button"
+        [class.equipped]="st === 'equipped'"
+        [class.locked]="st === 'locked'"
+        [disabled]="st === 'locked'"
+        [attr.aria-label]="item.name + (st === 'equipped' ? ' (kullanımda)' : st === 'owned' ? ' (sahipsin, kullan)' : ' — ' + item.price + ' altın')"
+        (click)="onItem(item)"
+      >
+        <!-- Önizleme -->
+        <div class="pv">
+          @switch (item.category) {
+            @case ('theme') {
+              <span class="pv-swatch" [style.background]="'linear-gradient(135deg, ' + item.preview + ', ' + item.preview2 + ')'"></span>
+            }
+            @case ('frame') {
+              <span class="pv-frame" [style.background]="item.preview === 'transparent' ? 'var(--surface-2)' : item.preview">
+                <span class="pv-frame-in">🙂</span>
+              </span>
+            }
+            @default {
+              <span class="pv-emoji">{{ item.preview || '—' }}</span>
+            }
+          }
+        </div>
+
+        <span class="i-name">{{ item.name }}</span>
+
+        <!-- Durum satırı: fiyat / sahipsin / kullanımda -->
+        <span class="i-foot">
+          @switch (st) {
+            @case ('equipped') {
+              <span class="tag on">✓ Kullanımda</span>
+            }
+            @case ('owned') {
+              <span class="tag own">Kullan</span>
+            }
+            @default {
+              @if (item.price === 0) {
+                <span class="tag own">Kullan</span>
+              } @else {
+                <span class="price" [class.no]="st === 'locked'">🪙 {{ item.price }}</span>
+              }
+            }
+          }
+        </span>
+
+        <!-- Satın alma geri bildirimi -->
+        @if (flash()?.id === item.id) {
+          <span class="flash" [class.bad]="!flash()!.ok">
+            {{ flash()!.ok ? '✓ Alındı' : 'Yetersiz altın' }}
+          </span>
+        }
+      </button>
+    }
+  </div>
+
+  <p class="note">Satın aldıkların kalıcıdır · istediğinde kullanıp geri çıkarabilirsin</p>
+</main>

@@ -111,6 +111,16 @@ Ayrıca **birim testte** bir değişmez (invariant) doğrulanıyor:
 - [x] Metinde **hiç harf yok** (spoiler yok)
 - [x] **HTTP üzerinde bile** panoya kopyalanıyor (yedek yöntem)
 
+### Mağaza (`check:shop`)
+- [x] Dört kategori (tema/çerçeve/rozet/avatar) ve ürünler görünüyor
+- [x] Yeterli altınla satın alınıyor, altın düşüyor, otomatik kullanıma alınıyor
+- [x] Yetersiz altınla satın alınmıyor, kasaya dokunulmuyor (ürün kilitli)
+- [x] Aynı ürün **iki kez** satın alınamıyor
+- [x] Satın alınan tema **gerçekten uygulanıyor** (`data-skin`) ve geri çıkarılabiliyor
+- [x] Sahiplik ve kullanım sayfa yenilenince korunuyor
+- [x] Satın alınan avatar profilde görünüyor
+- [x] 320 / 390 / 1440 px — yatay kaydırma yok
+
 ### Altın ve görevler (`check:gold`)
 - [x] Oyun kazanınca altın geliyor (oyun + hız + günlük bonusu)
 - [x] Günlük görev tamamlanınca altın ANINDA ödeniyor

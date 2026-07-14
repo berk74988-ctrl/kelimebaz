@@ -1,7 +1,7 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { InventoryService } from './inventory.service';
 
 const NAME_KEY = 'kelimebaz:profile:name';
-const AVATAR_KEY = 'kelimebaz:profile:avatar';
 const PHOTO_KEY = 'kelimebaz:profile:photo';
 
 /**
@@ -12,27 +12,28 @@ const PHOTO_KEY = 'kelimebaz:profile:photo';
 const PHOTO_SIZE = 160;
 const PHOTO_QUALITY = 0.82;
 
-/** Seçilebilir avatarlar — oyunun harf kutusu diliyle uyumlu, sade. */
-export const AVATARS = ['🦉', '🐝', '🦊', '🐧', '🐢', '🦅', '🐙', '🦌'] as const;
-
-const DEFAULT_AVATAR = AVATARS[0];
 const MAX_NAME = 16;
 
 /**
- * Oyuncu profili — ad ve avatar.
+ * Oyuncu profili — ad ve fotoğraf.
  *
- * Sunucu yok, hesap yok: bu tamamen yerel bir kimlik. Amacı, ana menüde
- * "kim oynuyor" hissini vermek ve istatistikleri bir isme bağlamak.
- * Paylaşım metnine karışmaz (spoiler/kimlik sızdırmaz).
+ * AVATAR ARTIK BURADA DEĞİL: mağaza avatarlarıyla tek sistem olsun diye
+ * envantere taşındı (InventoryService). Bu servis avatarı oradan OKUR, böylece
+ * eski `profile.avatar()` tüketicileri (ana menü, profil) hiç değişmeden çalışır.
+ *
+ * Sunucu yok, hesap yok: tamamen yerel bir kimlik. Paylaşım metnine karışmaz.
  */
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
+  private readonly inventory = inject(InventoryService);
+
   private readonly _name = signal(this.load(NAME_KEY, ''));
-  private readonly _avatar = signal(this.loadAvatar());
   private readonly _photo = signal(this.load(PHOTO_KEY, ''));
 
   readonly name = this._name.asReadonly();
-  readonly avatar = this._avatar.asReadonly();
+
+  /** Kullanımdaki avatar emojisi — kaynağı envanter (mağazayla tek sistem). */
+  readonly avatar = computed(() => this.inventory.equippedItem('avatar').preview);
 
   /** Yüklenmiş profil fotoğrafı (data URL). Yoksa boş dizge → emoji avatar gösterilir. */
   readonly photo = this._photo.asReadonly();
@@ -48,12 +49,6 @@ export class ProfileService {
     const clean = value.trim().slice(0, MAX_NAME);
     this._name.set(clean);
     this.save(NAME_KEY, clean);
-  }
-
-  setAvatar(value: string): void {
-    if (!AVATARS.includes(value as (typeof AVATARS)[number])) return;
-    this._avatar.set(value);
-    this.save(AVATAR_KEY, value);
   }
 
   /**
@@ -85,12 +80,6 @@ export class ProfileService {
     } catch {
       /* depolama kapalı — sorun değil */
     }
-  }
-
-  private loadAvatar(): string {
-    const saved = this.load(AVATAR_KEY, DEFAULT_AVATAR);
-    // Kayıtlı avatar listeden çıkarılmışsa varsayılana düş — bozuk veri ekranı kırmasın
-    return AVATARS.includes(saved as (typeof AVATARS)[number]) ? saved : DEFAULT_AVATAR;
   }
 
   private load(key: string, fallback: string): string {

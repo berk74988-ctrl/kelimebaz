@@ -10,12 +10,19 @@
     <!-- ── Kimlik kartı: fotoğraf · ad · seviye ── -->
     <section class="card hero">
       <div class="ph-wrap">
-        <div class="ph" [class.has]="profile.hasPhoto()">
-          @if (profile.hasPhoto()) {
-            <img [src]="profile.photo()" alt="Profil fotoğrafın" />
-          } @else {
-            <span class="ph-emoji" aria-hidden="true">{{ profile.avatar() }}</span>
-          }
+        <!-- Kullanımdaki ÇERÇEVE, fotoğrafı/avatarı sarar. transparent → çerçevesiz -->
+        <div
+          class="ph-frame"
+          [class.framed]="frame() !== 'transparent'"
+          [style.background]="frame() !== 'transparent' ? frame() : null"
+        >
+          <div class="ph" [class.has]="profile.hasPhoto()">
+            @if (profile.hasPhoto()) {
+              <img [src]="profile.photo()" alt="Profil fotoğrafın" />
+            } @else {
+              <span class="ph-emoji" aria-hidden="true">{{ profile.avatar() }}</span>
+            }
+          </div>
         </div>
 
         <!-- Dosya girdisi görünmez; tıklanan şey etiket (label) -->
@@ -28,14 +35,20 @@
       <div class="id">
         <label class="field">
           <span class="lbl">Kullanıcı adı</span>
-          <input
-            class="inp"
-            type="text"
-            maxlength="16"
-            placeholder="Kelimebaz"
-            [value]="profile.name()"
-            (input)="onName($event)"
-          />
+          <div class="name-row">
+            <input
+              class="inp"
+              type="text"
+              maxlength="16"
+              placeholder="Kelimebaz"
+              [value]="profile.name()"
+              (input)="onName($event)"
+            />
+            <!-- Kullanımdaki ROZET, adın yanında -->
+            @if (badge()) {
+              <span class="name-badge" [attr.aria-label]="'Rozet'">{{ badge() }}</span>
+            }
+          </div>
         </label>
 
         <!-- Seviye + ilerleme -->
@@ -72,19 +85,22 @@
       <section class="card">
         <h2 class="sec">Avatar</h2>
         <div class="av-row">
-          @for (a of avatars; track a) {
+          @for (a of ownedAvatars(); track a.id) {
             <button
               class="av"
               type="button"
-              [class.on]="profile.avatar() === a"
-              [attr.aria-pressed]="profile.avatar() === a"
-              [attr.aria-label]="'Avatar ' + a"
-              (click)="profile.setAvatar(a)"
+              [class.on]="inventory.isEquipped(a.id)"
+              [attr.aria-pressed]="inventory.isEquipped(a.id)"
+              [attr.aria-label]="a.name"
+              (click)="inventory.equip(a.id)"
             >
-              {{ a }}
+              {{ a.preview }}
             </button>
           }
         </div>
+        <button class="shop-link" type="button" (click)="openShop.emit()">
+          🛒 Mağazadan daha fazla avatar
+        </button>
       </section>
     }
 
@@ -109,7 +125,9 @@
         </div>
       </div>
 
-      <p class="g-note">Altınlarını yakında açılacak mağazada tema, profil çerçevesi ve rozet almak için kullanacaksın.</p>
+      <button class="g-shop" type="button" (click)="openShop.emit()">
+        🛒 Mağazayı aç
+      </button>
     </section>
 
     <!-- ── 📋 Günlük görevler ── -->

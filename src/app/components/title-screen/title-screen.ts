@@ -54,8 +54,9 @@ export class TitleScreen {
 
   readonly play = output<GameMode>();
 
-  /** Profil artık modal değil, kendi SAYFASI — yönlendirmeyi app yapar. */
+  /** Profil ve mağaza kendi sayfaları — yönlendirmeyi app yapar. */
   readonly openProfile = output<void>();
+  readonly openShop = output<void>();
 
   protected readonly floaters = FLOATERS;
   protected readonly title = signal('KELİMEBAZ');

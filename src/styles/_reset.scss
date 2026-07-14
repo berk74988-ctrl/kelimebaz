@@ -119,6 +119,36 @@
   --on-present: #ffffff;
 }
 
+/**
+ * MAĞAZA TEMALARI — <html data-skin="...">
+ *
+ * Sadece VURGU rengini (--accent, --accent-2) değiştirir; butonlar, seviye
+ * çubuğu, odak halkası, altın rozeti hepsi bundan beslenir. Oyun durumu
+ * renklerine (correct/present/absent — WCAG ile ölçüldü) ve paylaş butonuna
+ * (--share-*, ayrıca ölçüldü) DOKUNMAZ. Böylece hiçbir tema okunabilirliği
+ * bozamaz. Değerler shop-catalog.ts'teki önizleme renkleriyle eşleşir.
+ */
+:root[data-skin='ocean'] {
+  --accent: #22b8cf;
+  --accent-2: #3b82f6;
+}
+:root[data-skin='sunset'] {
+  --accent: #f97316;
+  --accent-2: #ec4899;
+}
+:root[data-skin='forest'] {
+  --accent: #22c55e;
+  --accent-2: #84cc16;
+}
+:root[data-skin='grape'] {
+  --accent: #a855f7;
+  --accent-2: #6366f1;
+}
+:root[data-skin='rose'] {
+  --accent: #f43f5e;
+  --accent-2: #fb7185;
+}
+
 /** Yalnızca ekran okuyucular için — görsel olarak gizli ama okunur. */
 .sr-only {
   position: absolute;

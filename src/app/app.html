@@ -1,9 +1,11 @@
 @if (!ready()) {
   <app-error-screen />
 } @else if (view() === 'title') {
-  <app-title-screen (play)="play($event)" (openProfile)="show('profile')" />
+  <app-title-screen (play)="play($event)" (openProfile)="show('profile')" (openShop)="show('shop')" />
 } @else if (view() === 'profile') {
-  <app-profile-screen (back)="show('title')" />
+  <app-profile-screen (back)="show('title')" (openShop)="show('shop')" />
+} @else if (view() === 'shop') {
+  <app-shop-screen (back)="show('title')" />
 } @else {
   <app-game [mode]="mode()" (exit)="show('title')" />
 }

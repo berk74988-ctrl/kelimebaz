@@ -1,0 +1,310 @@
+@use '../../../styles/variables' as v;
+
+.screen {
+  min-height: 100dvh;
+  background: var(--bg);
+  padding-bottom: v.$space-5;
+}
+
+/* ---------- Üst çubuk ---------- */
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+
+  display: flex;
+  align-items: center;
+  gap: v.$space-2;
+  padding: 12px 14px;
+
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.back {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  transition:
+    transform 0.16s cubic-bezier(0.34, 1.5, 0.64, 1),
+    background 0.16s ease;
+
+  &:hover {
+    transform: translateX(-2px);
+    background: var(--surface-2);
+  }
+
+  &:active {
+    transform: scale(0.93);
+  }
+}
+
+.title {
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.coin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 12px;
+
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+
+  background: color-mix(in srgb, var(--present) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--present) 45%, var(--border));
+  border-radius: 13px;
+
+  b {
+    font-weight: 800;
+    color: var(--present);
+  }
+}
+
+/* ---------- Kategori sekmeleri ---------- */
+
+.tabs {
+  display: flex;
+  gap: 7px;
+  padding: 12px 14px 4px;
+  max-width: 720px;
+  margin: 0 auto;
+
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.tab {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--text-muted);
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease;
+
+  &:hover {
+    color: var(--text);
+  }
+
+  &.on {
+    color: var(--on-correct);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+}
+
+/* ---------- Ürün ızgarası ----------
+   auto-fill: kart sayısı sabit değil, ekran genişledikçe daha çok sütun.
+   Yeni ürün eklemek düzeni bozmaz. */
+
+.grid {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 12px 14px 0;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px 12px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+
+  transition:
+    transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1),
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.24);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(-1px) scale(0.98);
+  }
+
+  &.equipped {
+    border-color: var(--correct);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--correct) 35%, transparent);
+  }
+
+  &.locked {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+/* ---------- Önizlemeler ---------- */
+
+.pv {
+  display: grid;
+  place-items: center;
+  height: 56px;
+}
+
+.pv-swatch {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.pv-frame {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  border-radius: 50%;
+}
+
+.pv-frame-in {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+
+  background: var(--surface-2);
+  border-radius: 50%;
+}
+
+.pv-emoji {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.i-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.i-foot {
+  display: flex;
+  align-items: center;
+  min-height: 22px;
+}
+
+.price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--present);
+
+  &.no {
+    color: var(--text-muted);
+  }
+}
+
+.tag {
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 999px;
+
+  &.on {
+    color: var(--on-correct);
+    background: var(--correct);
+  }
+
+  &.own {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  }
+}
+
+/* Satın alma geri bildirimi — kartın üstüne biner */
+.flash {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--on-correct);
+
+  background: color-mix(in srgb, var(--correct) 92%, transparent);
+  border-radius: 16px;
+
+  animation: flash-in 0.2s ease;
+
+  &.bad {
+    color: #fff;
+    background: color-mix(in srgb, var(--danger) 92%, transparent);
+  }
+}
+
+@keyframes flash-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+.note {
+  max-width: 720px;
+  margin: 18px auto 0;
+  padding: 0 14px;
+
+  font-size: 11.5px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* ---------- Mobil ---------- */
+
+@media (max-width: 420px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 9px;
+  }
+}

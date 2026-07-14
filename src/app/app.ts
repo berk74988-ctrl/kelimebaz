@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { ErrorScreen } from './components/error-screen/error-screen';
 import { Game } from './components/game/game';
 import { ProfileScreen } from './components/profile-screen/profile-screen';
+import { ShopScreen } from './components/shop-screen/shop-screen';
 import { TitleScreen } from './components/title-screen/title-screen';
 import { GameMode } from './models/game.model';
 import { AudioService } from './services/audio.service';
@@ -9,11 +10,11 @@ import { ContrastService } from './services/contrast.service';
 import { ThemeService } from './services/theme.service';
 import { WordService } from './services/word.service';
 
-type View = 'title' | 'game' | 'profile';
+type View = 'title' | 'game' | 'profile' | 'shop';
 
 @Component({
   selector: 'app-root',
-  imports: [TitleScreen, Game, ProfileScreen, ErrorScreen],
+  imports: [TitleScreen, Game, ProfileScreen, ShopScreen, ErrorScreen],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { PROFILE_STATS } from '../../core/profile-stats';
+import { itemsByCategory } from '../../core/shop-catalog';
 import { GoldService } from '../../services/gold.service';
-import { AVATARS, ProfileService } from '../../services/profile.service';
+import { InventoryService } from '../../services/inventory.service';
+import { ProfileService } from '../../services/profile.service';
 import { QuestService } from '../../services/quest.service';
 import { StatsService } from '../../services/stats.service';
 import { GuessDistribution } from '../guess-distribution/guess-distribution';
@@ -29,14 +31,23 @@ export class ProfileScreen {
   protected readonly statsService = inject(StatsService);
   protected readonly gold = inject(GoldService);
   protected readonly questService = inject(QuestService);
+  protected readonly inventory = inject(InventoryService);
 
   readonly back = output<void>();
+  readonly openShop = output<void>();
 
-  protected readonly avatars = AVATARS;
   protected readonly statCards = PROFILE_STATS;
 
-  /** Avatar seçici açık mı (fotoğraf yoksa gösterilir). */
-  protected readonly picking = signal(false);
+  /** Avatar seçicide gösterilen SAHİP OLUNAN avatarlar (mağazadan gelenler dâhil). */
+  protected readonly ownedAvatars = computed(() =>
+    itemsByCategory('avatar').filter((a) => this.inventory.owns(a.id)),
+  );
+
+  /** Kullanımdaki çerçevenin CSS gradyanı ('transparent' → çerçeve yok). */
+  protected readonly frame = computed(() => this.inventory.equippedItem('frame').preview);
+
+  /** Kullanımdaki rozet emojisi (boşsa rozet yok). */
+  protected readonly badge = computed(() => this.inventory.equippedItem('badge').preview);
 
   /** Fotoğraf yüklenemezse gösterilecek uyarı. */
   protected readonly photoError = signal('');

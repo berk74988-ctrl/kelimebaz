@@ -10,6 +10,7 @@ import {
 import { AudioService } from '../../services/audio.service';
 import { ContrastService } from '../../services/contrast.service';
 import { GoldService } from '../../services/gold.service';
+import { InventoryService } from '../../services/inventory.service';
 import { StatsService } from '../../services/stats.service';
 import { ThemeService } from '../../services/theme.service';
 import { WordService } from '../../services/word.service';
@@ -28,6 +29,7 @@ export class SettingsModal implements AfterViewInit {
   protected readonly statsService = inject(StatsService);
   protected readonly audio = inject(AudioService);
   private readonly gold = inject(GoldService);
+  private readonly inventory = inject(InventoryService);
   private readonly words = inject(WordService);
 
   readonly close = output<void>();
@@ -56,11 +58,13 @@ export class SettingsModal implements AfterViewInit {
 
   protected resetStats(): void {
     // Geri alınamaz bir işlem — onay şart.
-    // Altın da istatistiklerden kazanıldığı için birlikte sıfırlanır; yoksa
-    // "sıfırlanmış" bir profilde altın kalır ve nereden geldiği anlaşılmazdı.
-    if (!confirm('Tüm istatistiklerin ve altının silinecek. Emin misin?')) return;
+    // İstatistik, altın ve satın alınan kozmetikler BİRLİKTE sıfırlanır;
+    // altını istatistikten, kozmetikleri altından kazandığın için ayrı ayrı
+    // sıfırlamak tutarsız bir durum bırakırdı.
+    if (!confirm('Tüm istatistiklerin, altının ve satın aldıkların silinecek. Emin misin?')) return;
 
     this.statsService.reset();
     this.gold.reset();
+    this.inventory.reset();
   }
 }

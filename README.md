@@ -53,7 +53,8 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 - ⌨️ **Tam Türk alfabesi** — 29 harf; `İ`/`I` ayrımı doğru. Türkçe klavyesi olmayanlar da `Ç Ğ Ö Ş Ü` yazabilir
 - 📅 **Günün kelimesi** — tarihe göre deterministik, herkese aynı, geri sayımlı
 - 📊 **İstatistikler** — oynanan, kazanma %, seri, tahmin dağılımı
-- 🪙 **Altın** — oyun kazandıkça ve günlük görevleri bitirdikçe birikir; ileride mağazada kozmetik ürünler için harcanacak
+- 🪙 **Altın** — oyun kazandıkça ve günlük görevleri bitirdikçe birikir
+- 🛒 **Mağaza** — altınla tema, profil çerçevesi, rozet ve avatar satın alınır; kalıcı, istenince kullanılıp geri çıkarılır
 - 📋 **Günlük görevler** — her gün yenilenir, tamamlayınca altın kazandırır
 - 👤 **Profil sayfası** — fotoğraf, ad, **seviye**, puan, altın, bulunan kelime, seriler, tahmin dağılımı (tamamen yerel, hesap yok)
 - 🎵 **Ses** — arka plan müziği + oyun içi efektler, **ayrı ayrı** ayarlanabilir ve kaydedilir
@@ -155,6 +156,8 @@ Bitti — profil sayfası, boş durum ve testler kendiliğinden uyar. Eski kayı
 
 **Günlük görevler bir KAYIT DEFTERİNDEN** (`core/quests.ts`) — istatistik kartları gibi. Yeni görev = deftere bir satır. Ödeme bir kez yapılır: tamamlanan görevin kimliği kaydedilir, sayfa yenilense de ikinci kez ödemez. Görevler her gün (oyuncunun yerel günü, günün kelimesiyle aynı ritim) sıfırlanır ama altın kalır.
 
+**Mağaza da bir KAYIT DEFTERİNDEN** (`core/shop-catalog.ts`) — dört kategori (tema, çerçeve, rozet, avatar), her ürün bir satır. `InventoryService` sahipliği ve "kullanımda"yı yönetir; satın alma `GoldService.spend()`'e dayanır (yetersiz altında hiçbir şey değişmez), bir ürün iki kez alınamaz. Satın alınan kalıcıdır ve istenince kullanılıp geri çıkarılır. **Temalar** yalnızca `--accent`/`--accent-2`'yi `<html data-skin>` ile değiştirir; oyun durumu renklerine (WCAG ölçülü) ve paylaş butonuna dokunmaz, yani hiçbir tema okunabilirliği bozamaz. **Avatarlar tek sistem**: eski ücretsiz sekiz emoji de katalogda (fiyat 0), profil sadece envanterden okur.
+
 **Renk mantığı `core/`'da, Angular'dan tamamen bağımsız.** İki geçişli algoritma:
 
 1. Önce **tam isabetler** (🟩) işaretlenir ve o harfler cevabın havuzundan **düşülür**
@@ -173,6 +176,7 @@ npm test                     # 219 birim test
 npm run check:scenarios      # 22 uçtan uca senaryo × 3 tarayıcı
 npm run check:profile        # profil sayfası, seviye, fotoğraf, kalıcılık
 npm run check:gold           # altın kazancı, günlük görevler, kalıcılık
+npm run check:shop           # satın alma, kullanma, tema uygulaması, kalıcılık
 npm run check:audio          # müzik, efektler, ses ayarları, kalıcılık
 npm run check:dictionary     # 29 harf + sözlük kabul/ret (gerçek tarayıcı)
 npm run check:responsive     # 8 ekran boyutu
