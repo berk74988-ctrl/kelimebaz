@@ -30,6 +30,28 @@ describe('Sözlük — kapsam ve kalite', () => {
     }
   });
 
+  describe('alıntı kelimeler — Türkçenin hece yapısına uymasalar da geçerli', () => {
+    // Sesbilgisel bir süzgeç bunları elerdi (baştan iki ünsüz); elemedik.
+    for (const w of ['ANTRE', 'BRAVO', 'KLİŞE', 'PLAZA', 'SPORU', 'GRUBU']) {
+      it(`${w} kabul edilir`, () => expect(words.isValid(w)).toBe(true));
+    }
+  });
+
+  describe('Vikisözlük çekim tabloları', () => {
+    // Korpusta yeterince geçmedikleri için eskiden reddediliyorlardı.
+    for (const w of ['ÜTÜYE', 'ÖZETE', 'AĞAMI', 'YENSE', 'SOLSA', 'ÇÖZSE']) {
+      it(`${w} kabul edilir`, () => expect(words.isValid(w)).toBe(true));
+    }
+  });
+
+  describe('Vikisözlük şablon hataları reddedilir', () => {
+    // Wiktionary'nin çekim şablonu kaynaştırma ünlüsünü atlıyor:
+    // "üvez" + iyelik → ÜVEZM yazıyor, doğrusu ÜVEZİM. Biçimbilim süzgeci eliyor.
+    for (const w of ['ÜVEZM', 'KEDYİ']) {
+      it(`${w} reddedilir`, () => expect(words.isValid(w)).toBe(false));
+    }
+  });
+
   describe('çekimli biçimler — hiçbir kök sözlüğünde yoktur, biçimbilimle geldi', () => {
     // Oyuncu tahtaya "GEL" değil "GELDİ" yazar. Bunlar reddedilirse oyun,
     // dilin en sık kullanılan kelimelerini yok saymış olur.
@@ -68,8 +90,10 @@ describe('Sözlük — kapsam ve kalite', () => {
     }
   });
 
-  describe('İngilizce özel adlar reddedilir', () => {
-    for (const w of ['PETER', 'FROST', 'JAMES', 'ANGEL']) {
+  describe('özel adlar reddedilir', () => {
+    // Vikisözlük'ün özel ad (pos='name') girdileri hem kendileri hem çekimleriyle
+    // kara listede — korpustaki en büyük çöp kaynağı bunlardı.
+    for (const w of ['PETER', 'FROST', 'JAMES', 'ANGEL', 'SARAH', 'PARİS', 'DAVİD']) {
       it(`${w} reddedilir`, () => expect(words.isValid(w)).toBe(false));
     }
   });
@@ -81,7 +105,7 @@ describe('Sözlük — kapsam ve kalite', () => {
     expect(unusable).toEqual([]);
   });
 
-  it('sözlük en az 10.000 kelime içerir', () => {
-    expect(words.dictionarySize).toBeGreaterThanOrEqual(10_000);
+  it('sözlük en az 14.000 kelime içerir', () => {
+    expect(words.dictionarySize).toBeGreaterThanOrEqual(14_000);
   });
 });

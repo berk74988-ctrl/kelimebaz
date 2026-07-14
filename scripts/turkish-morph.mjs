@@ -386,6 +386,24 @@ export function analyze(word, roots) {
   return null;
 }
 
+/*
+ * NOT — İLERİ YÖNDE ÜRETİM DENENDİ VE REDDEDİLDİ.
+ *
+ * Kuralları ters çevirip her kökten her eki türetmek cazip görünüyordu: korpusta
+ * geçmeyen geçerli biçimleri de yakalardı. Ölçtüm, olmuyor:
+ *
+ *   - Kök listelerinde AB, ÖF, PO, OO, RNA, AFP gibi gerçek kelime olmayan
+ *     parçalar var; üreteç onlardan ABIYI, ÖFSÜZ, POMDA, RNANI üretiyor.
+ *     (ŞİMDİ'nin yazım hatası SİMDİ bile "Sİ+M+Dİ" diye üretiliyordu.)
+ *   - Kökü korpus frekansıyla kanıtlamak da yetmedi: eşik 200'de bile sızıyor.
+ *   - Ek-fiil (-di / -se / -iz) HER isme gelebildiği için JELDİ, ÇÖLÜZ, YÖNDÜ
+ *     gibi dilbilgisel ama kimsenin kullanmadığı biçimler patlıyor.
+ *
+ * İsabet %60-70'te tavan yaptı — "uydurma kelime kabul etme" şartını
+ * karşılamıyor. Bu yüzden sözlük yalnızca İNSAN ELİYLE YAZILMIŞ kaynaklardan
+ * ve KORPUSTA KANITLANMIŞ biçimlerden kuruluyor; kelime uydurulmuyor.
+ */
+
 /**
  * Kök havuzunu sözcük türüne göre ayırarak kurar.
  *

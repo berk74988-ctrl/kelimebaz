@@ -48,7 +48,7 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 
 ## Özellikler
 
-- 📚 **12.500+ kelimelik Türkçe sözlük** — çekimli biçimler dâhil (`GELDİ`, `OLSUN`, `BABAM`)
+- 📚 **14.000+ kelimelik Türkçe sözlük** — çekimli biçimler dâhil (`GELDİ`, `OLSUN`, `ÜTÜYE`)
 - 🎯 **Doğru renk mantığı** — harf tekrarlarında bile (Wordle klonlarının en sık hata yaptığı yer)
 - ⌨️ **Tam Türk alfabesi** — 29 harf; `İ`/`I` ayrımı doğru. Türkçe klavyesi olmayanlar da `Ç Ğ Ö Ş Ü` yazabilir
 - 📅 **Günün kelimesi** — tarihe göre deterministik, herkese aynı, geri sayımlı
@@ -112,28 +112,33 @@ src/app/
 ├── models/                  # TypeScript tipleri
 ├── data/
 │   ├── words.json           # CEVAPLAR — elle seçilmiş 230 kelime
-│   └── valid-words.json     # GEÇERLİ TAHMİNLER — 12.581 kelime
+│   └── valid-words.json     # GEÇERLİ TAHMİNLER — 14.251 kelime
 ```
 
 ### Mimari notlar
 
-**Sözlük iki katmandan üretilir** (`scripts/build-dictionary.mjs`):
+**Sözlük üç katmandan üretilir** (`scripts/build-dictionary.mjs`) — kelime **uydurulmaz**, hepsi ya insan eliyle yazılmış bir sözlükten gelir ya da gerçek metinde kanıtlanmıştır:
 
-1. **Sözlük katmanı** — TDK tabanlı listeler + Zemberek + Hunspell → 10.023 kelime
-2. **Korpus katmanı** — OpenSubtitles frekans listesi, **biçimbilim süzgecinden** geçirilmiş → 2.558 kelime
+1. **Sözlük katmanı** — TDK tabanlı listeler + Zemberek + Hunspell + eş anlamlılar
+2. **Vikisözlük katmanı** — madde başları (koşulsuz) + resmî çekim tabloları (sınanarak)
+3. **Korpus katmanı** — OpenSubtitles frekans listesi, biçimbilim süzgecinden geçirilmiş
 
-İkinci katman şart: kök sözlükleri `GEL` içerir ama oyuncu `GELDİ` yazar. `GELDİ`, `OLSUN`, `BABAM`, `YERDE` — hiçbiri kök sözlüğünde **yok**. Ham korpus ise çöp dolu (`FROST`, `MİKEY`, `ALDİM`).
+Üçüncü katman şart: kök sözlükleri `GEL` içerir ama oyuncu `GELDİ` yazar. Ham korpus ise çöp dolu (`FROST`, `MİKEY`, `ALDİM`), o yüzden süzülür.
 
-`scripts/turkish-morph.mjs` her adayı çözümlemeye çalışır — kelime, bilinen bir kökten geçerli bir ekle, **ünlü uyumuna ve ek sırasına uyarak** türetilebiliyor mu?
+`scripts/turkish-morph.mjs` her adayı çözümlemeye çalışır — kelime, bilinen bir kökten geçerli bir ekle, **ünlü uyumuna, sözcük türüne ve ek sırasına uyarak** türetilebiliyor mu?
 
 | Aday | Karar | Neden |
 | --- | --- | --- |
 | `GELDİ` | ✅ | `GEL`(fiil) + `-di` — uyum doğru |
 | `YOKTU` | ✅ | `YOK`(isim) + `-tu` — ek-fiil isme de gelir |
+| `ÜTÜYE` | ✅ | Vikisözlük çekim tablosu: `ütü` + yönelme |
 | `ALDİM` | ❌ | uyum bozuk (`AL` kalın → `ALDIM` olmalı) |
 | `MORAN` | ❌ | `MOR` isim; `-an` yalnızca fiile gelir |
-| `FROST` | ❌ | çözümlenemiyor |
+| `ÜVEZM` | ❌ | Vikisözlük şablon hatası (doğrusu `ÜVEZİM`) |
+| `PETER` | ❌ | özel ad — Vikisözlük'ün `name` girdileri kara listede |
 | `SİMDİ` | ❌ | `ŞİMDİ`nin yazım hatası (tek harf düzeltmesi çok daha sık) |
+
+**Kelime ÜRETMEK denendi ve reddedildi.** Kuralları ileri yönde çalıştırıp her kökten her eki türetmek cazipti, ama isabeti %60-70'te tavan yaptı: kök listelerindeki `AB`, `ÖF`, `PO` gibi sahte parçalardan `ABIYI`, `ÖFSÜZ`, `POMDA` üretiyor; ek-fiil her isme gelebildiği için `JELDİ`, `ÇÖLÜZ` gibi dilbilgisel ama var olmayan kelimeler patlıyordu. Gerekçe `turkish-morph.mjs` içinde kayıtlı.
 
 **Renk mantığı `core/`'da, Angular'dan tamamen bağımsız.** İki geçişli algoritma:
 

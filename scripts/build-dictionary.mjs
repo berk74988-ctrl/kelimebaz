@@ -2,34 +2,39 @@
  * KELİMEBAZ — sözlük üretici.
  *
  * ===========================================================================
- * İKİ KATMANLI SÖZLÜK
+ * ÜÇ KATMANLI SÖZLÜK — hepsi İNSAN ELİYLE DOĞRULANMIŞ ya da METİNDE KANITLANMIŞ
  *
  * 1) SÖZLÜK KATMANI — açık kaynak Türkçe kelime listeleri
- *    TDK tabanlı listeler + Zemberek + Hunspell. Kök ve türemiş kelimeler.
- *    Güvenilir; koşulsuz kabul edilir.
+ *    TDK tabanlı listeler + Zemberek + Hunspell. Koşulsuz kabul.
  *
- * 2) KORPUS KATMANI — OpenSubtitles frekans listesi, biçimbilim süzgecinden
- *    geçirilmiş.
+ * 2) WIKTIONARY KATMANI — Vikisözlük'ün Türkçe dökümü (kaikki.org)
+ *    Madde başları + maddelerin RESMİ ÇEKİM TABLOLARI. İnsan yazmış.
  *
- *    Neden gerekli: kök sözlükleri "GEL" içerir ama oyuncu "GELDİ" yazar.
- *    GELDİ, OLSUN, BABAM, YERDE, EVDEN — bunların hiçbiri kök sözlüğünde YOK.
- *    Bu çekimli biçimler olmadan oyun, dilin en yaygın kelimelerini reddeder.
+ *    ÖZEL ADLAR TAMAMEN DIŞARIDA (pos='name'): PETER, PARİS, RİVNE gibi
+ *    girdiler ve onların çekimleri sözlüğe girmez — oyuncunun "kelime" diye
+ *    yazacağı şeyler değiller ve korpustaki en büyük çöp kaynağı bunlar.
  *
- *    Neden süzgeç gerekli: ham korpus çöp doludur —
- *      FROST, ANGEL, MİKEY  → İngilizce / özel ad
- *      ALDİM, HAKLİ, DEGİL  → altyazı yazım hatası
+ * 3) KORPUS KATMANI — OpenSubtitles frekans listesi, biçimbilim süzgecinden
+ *    geçirilmiş. Kök sözlükleri "GEL" içerir ama oyuncu "GELDİ" yazar;
+ *    çekimli biçimlerin çoğu buradan gelir.
  *
- *    turkish-morph.mjs her adayı çözümlemeye çalışır: kelime = bilinen kök +
- *    geçerli ek, ünlü uyumu ve ünsüz benzeşmesine uygun mu? Uymuyorsa girmez.
+ *    Ham korpus çöp doludur (FROST, MİKEY / ALDİM, DEGİL), bu yüzden
+ *    turkish-morph.mjs her adayı çözümler: kelime, bilinen bir kökten geçerli
+ *    bir ekle — ünlü uyumu, ünsüz benzeşmesi, sözcük türü ve ek sırasına
+ *    uyarak — türetilebiliyor mu?
  *
- *      GELDİ → GEL(fiil) + -DI   ✅
- *      ALDİM → uyum bozuk        ❌  (AL + -DIm → ALDIM olmalıydı)
- *      MORAN → MOR isim, -an fiil eki ❌
- *      FROST → çözümlenemez      ❌
+ * KELİME UYDURULMAZ. Kuralları ileri yönde çalıştırıp biçim ÜRETMEK denendi ve
+ * reddedildi (gerekçesi turkish-morph.mjs içinde): isabeti %60-70'te tavan
+ * yapıyor ve JELDİ, ÇÖLÜZ, ABIYI gibi sahte kelimeler sızdırıyordu.
  *
- * AYRICA (Wordle'daki gibi):
- *    CEVAPLAR (words.json)  → elle seçilmiş, bilinen, adil kelimeler
- *    GEÇERLİ TAHMİNLER (bu) → sözlükteki HER 5 harfli kelime
+ * TAHMİN SÖZLÜĞÜ ile CEVAP HAVUZU AYRIDIR (Wordle'daki gibi):
+ *    CEVAPLAR (words.json)  → elle seçilmiş 230 bilinen kelime
+ *    GEÇERLİ TAHMİNLER (bu) → sözlüklerdeki HER 5 harfli kelime
+ *
+ * Bu ayrım kasıtlı bir asimetri taşır: nadir bir kelimeyi TAHMİN olarak kabul
+ * etmenin maliyeti düşüktür (oyuncu zaten onu biliyor ki yazıyor), ama geçerli
+ * bir kelimeyi reddetmenin maliyeti yüksektir (oyuncu tıkanır). Bu yüzden
+ * tahmin sözlüğü geniş, cevap havuzu dardır.
  * ===========================================================================
  *
  * Kullanım: node scripts/build-dictionary.mjs
@@ -51,7 +56,11 @@ const SOURCES = [
   ['Hunspell TR sözlüğü', 'https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/tr/index.dic'],
   ['Zemberek ana sözlük', 'https://raw.githubusercontent.com/ahmetaa/zemberek-nlp/master/morphology/src/main/resources/tr/master-dictionary.dict'],
   ['Zemberek ek sözlük', 'https://raw.githubusercontent.com/ahmetaa/zemberek-nlp/master/morphology/src/main/resources/tr/non-tdk.dict'],
+  ['Eş anlamlı sözlük', 'https://raw.githubusercontent.com/maidis/mythes-tr/master/th_tr_TR_v2.dat'],
 ];
+
+/** Vikisözlük (Wiktionary) Türkçe dökümü — madde başları + çekim tabloları. */
+const WIKTIONARY = ['Vikisözlük (Wiktionary)', 'https://kaikki.org/dictionary/Turkish/kaikki.org-dictionary-Turkish.jsonl'];
 
 /** Konuşma dili korpusu — çekimli biçimler buradan gelir. */
 const CORPUS = ['OpenSubtitles frekans', 'https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/tr/tr_full.txt'];
@@ -102,14 +111,112 @@ for (const [name, url] of SOURCES) {
   console.log(`  ${String(n(added)).padStart(8)} kelime  ←  ${name}`);
 }
 
-const roots = buildRoots(dictWords);
-const fromDict = new Set(dictWords.filter(isFive));
+// ---------------------------------------------------------------------------
+// 2. KATMAN — Vikisözlük (madde başları + resmi çekim tabloları)
+//
+// ÖZEL ADLAR (pos='name') TAMAMEN ATILIR. Hem madde başı hem çekimleriyle:
+// PETER, PARİS, RİVNE... Oyuncunun "kelime" diye yazacağı şeyler değiller ve
+// sözlüğün en büyük çöp kaynağı bunlar olurdu.
+// ---------------------------------------------------------------------------
+console.log(`\n📥 ${WIKTIONARY[0]} indiriliyor (~34 MB)...`);
+
+/**
+ * MADDE BAŞI ile ÇEKİM BİÇİMİ farklı güvenilirlikte:
+ *
+ *   MADDE BAŞI  — insan açmış bir sözlük sayfası. Koşulsuz kabul.
+ *                 (KABZE, ANTRE gibi kökler çözümlenmez ama gerçek kelimedir.)
+ *
+ *   ÇEKİM BİÇİMİ — Wiktionary'nin ŞABLONU otomatik üretmiş. Çoğu doğru ama
+ *                 şablon hata da yapıyor:
+ *                     üvez  + iyelik → "ÜVEZM"   ✗ (doğrusu ÜVEZİM)
+ *                     kedy  (uydurma madde) → "KEDYİ"  ✗
+ *                 Bu yüzden çekimler İKİ kapıdan geçer: bozuk etiket taşımayacak
+ *                 ve biçimbilim çözümlemesinden geçecek.
+ */
+const BAD_TAGS = new Set([
+  'error-unrecognized-form', // Wiktionary'nin KENDİSİ hatalı diye işaretlemiş
+  'alternative', // ağız / eski yazım: ÇİRAĞ, KOMEŞ, NAPAK
+  'romanization',
+  'obsolete',
+]);
+
+const wiktHeads = new Set(); // madde başları — koşulsuz
+const wiktFormCands = new Set(); // çekim biçimleri — sınanacak
+const properNames = new Set(); // sadece özel ad olarak geçenler → asla kabul edilmez
+let wiktEntries = 0;
+let wiktNames = 0;
+let badTagged = 0;
+
+for (const line of await lines(WIKTIONARY[1])) {
+  const t = line.trim();
+  if (!t) continue;
+
+  let e;
+  try {
+    e = JSON.parse(t);
+  } catch {
+    continue; // bozuk satır — atla
+  }
+
+  const head = trUpper(String(e.word ?? ''));
+  const forms = (e.forms ?? []).map((f) => ({
+    w: trUpper(String(f.form ?? '')),
+    tags: f.tags ?? [],
+  }));
+
+  // Özel adlar (PETER, PARİS, RİVNE) — hem maddesi hem çekimleri kara listeye
+  if (e.pos === 'name') {
+    wiktNames++;
+    if (isFive(head) && isTurkish(head)) properNames.add(head);
+    for (const { w } of forms) if (isFive(w) && isTurkish(w)) properNames.add(w);
+    continue;
+  }
+
+  wiktEntries++;
+  if (isFive(head) && isTurkish(head)) wiktHeads.add(head);
+
+  for (const { w, tags } of forms) {
+    if (!isFive(w) || !isTurkish(w)) continue;
+    if (tags.some((tg) => BAD_TAGS.has(tg))) {
+      badTagged++;
+      continue;
+    }
+    wiktFormCands.add(w);
+  }
+}
+
+// Bir kelime hem özel ad hem cins ad olabilir (bir çiçek adı gibi).
+// Cins ad girdisi varsa kalır → "yalnızca özel ad olanlar" kara listede.
+for (const w of [...wiktHeads, ...wiktFormCands]) properNames.delete(w);
+
+console.log(`  ${String(n(wiktEntries)).padStart(8)} madde · ${n(wiktNames)} özel ad atıldı · ${n(badTagged)} bozuk etiketli biçim atıldı`);
+
+// Kök havuzu: sözlükler + Vikisözlük MADDE BAŞLARI (çekimler değil — onları
+// bu havuzla sınayacağız, yoksa kendi kendini doğrulamış olurdu)
+const roots = buildRoots([...dictWords, ...wiktHeads]);
+
+// Çekim biçimleri biçimbilimden geçmek ZORUNDA
+const wiktForms = new Set();
+let wiktFormFail = 0;
+for (const w of wiktFormCands) {
+  if (wiktHeads.has(w)) continue; // zaten madde başı
+  if (analyze(w, roots)) wiktForms.add(w);
+  else wiktFormFail++;
+}
+
+console.log(`  ${String(n(wiktHeads.size)).padStart(8)} madde başı (5 harfli, koşulsuz)`);
+console.log(`  ${String(n(wiktForms.size)).padStart(8)} çekim biçimi biçimbilimden geçti · ${n(wiktFormFail)} şablon hatası elendi`);
+
+// İki sözlük katmanı birleşir. Özel adlar ayıklanır.
+const fromDict = new Set(
+  [...dictWords.filter(isFive), ...wiktHeads, ...wiktForms].filter((w) => !properNames.has(w)),
+);
 
 console.log(`\n🌳 Kök havuzu: ${n(roots.nouns.size)} isim/sıfat · ${n(roots.verbs.size)} fiil (mastarlardan)`);
-console.log(`📖 Sözlüklerden gelen 5 harfli: ${n(fromDict.size)}`);
+console.log(`📖 Sözlük katmanı toplam 5 harfli: ${n(fromDict.size)}`);
 
 // ---------------------------------------------------------------------------
-// 2. KATMAN — korpus, biçimbilim süzgecinden geçirilerek
+// 3. KATMAN — korpus, biçimbilim süzgecinden geçirilerek
 // ---------------------------------------------------------------------------
 console.log(`\n📥 ${CORPUS[0]} indiriliyor...`);
 
@@ -131,7 +238,9 @@ for (const line of await lines(CORPUS[1])) {
 console.log(`  ${n(freq.size)} adet 5 harfli biçim bulundu`);
 
 const candidates = [...freq]
-  .filter(([w, c]) => c >= MIN_FREQ && !fromDict.has(w))
+  // Vikisözlük'ün özel ad listesi burada da işe yarıyor: PARİS, DAVİD gibi
+  // adlar biçimbilimden kazara geçebilir (PARİS = PAR + İS?). Baştan eleniyorlar.
+  .filter(([w, c]) => c >= MIN_FREQ && !fromDict.has(w) && !properNames.has(w))
   .map(([w]) => w);
 
 /**

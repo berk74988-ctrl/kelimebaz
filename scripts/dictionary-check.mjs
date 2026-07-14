@@ -21,8 +21,12 @@ const ALPHABET = [...'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ'];
 const SHOULD_ACCEPT = [
   // kök kelimeler
   'BEYİN', 'ERKEK', 'GÜNAH', 'YANAK', 'DELİK', 'ALKOL',
-  // çekimli biçimler — hiçbir kök sözlüğünde YOK, biçimbilim süzgecinden geldi
+  // çekimli biçimler — hiçbir kök sözlüğünde YOK, korpustan + biçimbilimle geldi
   'GELDİ', 'OLSUN', 'BABAM', 'YERDE', 'EVDEN', 'ALDIM', 'YOKTU', 'ADINI', 'MUSUN',
+  // Vikisözlük çekim tabloları — korpusta yeterince geçmedikleri için eskiden reddediliyordu
+  'ÜTÜYE', 'ÖZETE', 'AĞAMI', 'YENSE', 'ÇÖZSE',
+  // alıntı kelimeler (Türkçenin hece yapısına uymaz ama geçerli)
+  'ANTRE', 'KLİŞE', 'PLAZA',
 ];
 
 /** Uydurma diziler ve yazım hataları — REDDEDİLMELİ. */
@@ -30,7 +34,8 @@ const SHOULD_REJECT = [
   'ZZZZZ', 'ABCDE', 'ÇÇÇÇÇ', 'AAAAA', // uydurma
   'ALDİM', 'SİMDİ', 'DEGİL', // yazım hatası (ALDIM / ŞİMDİ / DEĞİL)
   'MORAN', 'JETER', // kurallara aykırı türetme (isim köküne fiil eki)
-  'PETER', 'FROST', // İngilizce özel ad
+  'ÜVEZM', 'KEDYİ', // Vikisözlük şablon hatası (doğrusu ÜVEZİM)
+  'PETER', 'FROST', 'SARAH', 'PARİS', // özel ad
 ];
 
 const browser = await chromium.launch();
