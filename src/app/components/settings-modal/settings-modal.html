@@ -1,0 +1,76 @@
+<div class="backdrop" (click)="close.emit()">
+  <div
+    #dialog
+    class="modal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Ayarlar"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+  >
+    <button class="x" type="button" aria-label="Ayarları kapat" (click)="close.emit()">✕</button>
+
+    <h2 class="head">Ayarlar</h2>
+
+    <!-- Tema -->
+    <div class="row">
+      <div class="txt">
+        <b>Karanlık tema</b>
+        <span>Açılışta sistem tercihine uyar</span>
+      </div>
+      <button
+        class="sw"
+        type="button"
+        role="switch"
+        [class.on]="theme.theme() === 'dark'"
+        [attr.aria-checked]="theme.theme() === 'dark'"
+        [attr.aria-label]="theme.theme() === 'dark' ? 'Aydınlık moda geç' : 'Karanlık moda geç'"
+        (click)="theme.toggle()"
+      >
+        <i></i>
+      </button>
+    </div>
+
+    <!-- Renk körü modu -->
+    <div class="row">
+      <div class="txt">
+        <b>Renk körü modu</b>
+        <span>Yüksek kontrast: mavi / turuncu</span>
+      </div>
+      <button
+        class="sw"
+        type="button"
+        role="switch"
+        [class.on]="contrast.high()"
+        [attr.aria-checked]="contrast.high()"
+        [attr.aria-label]="
+          contrast.high() ? 'Yüksek kontrast modunu kapat' : 'Yüksek kontrast (renk körü) modunu aç'
+        "
+        (click)="contrast.toggle()"
+      >
+        <i></i>
+      </button>
+    </div>
+
+    <div class="rule"></div>
+
+    <!-- Veri -->
+    <div class="row">
+      <div class="txt">
+        <b>İstatistikler</b>
+        <span>
+          @if (statsService.isEmpty()) {
+            Henüz kayıt yok
+          } @else {
+            {{ statsService.stats().played }} oyun kayıtlı
+          }
+        </span>
+      </div>
+      <button class="danger" type="button" [disabled]="statsService.isEmpty()" (click)="resetStats()">
+        Sıfırla
+      </button>
+    </div>
+
+    <p class="foot">📚 {{ dictSize.toLocaleString('tr') }} kelimelik Türkçe sözlük</p>
+  </div>
+</div>

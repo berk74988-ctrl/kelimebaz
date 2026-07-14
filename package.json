@@ -13,6 +13,7 @@
     "check:a11y": "node scripts/a11y-check.mjs",
     "check:scenarios": "node scripts/scenarios-check.mjs",
     "screenshots": "node scripts/screenshots.mjs",
+    "screenshots:menu": "node scripts/menu-shots.mjs",
     "check:dictionary": "node scripts/dictionary-check.mjs",
     "build:dictionary": "node scripts/build-dictionary.mjs"
   },

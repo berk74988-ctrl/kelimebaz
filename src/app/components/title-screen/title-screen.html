@@ -21,124 +21,128 @@
     </div>
   </div>
 
-  <!-- ── Üst köşe: tema + erişilebilirlik ── -->
-  <div class="corner">
-    <button
-      class="icon"
-      type="button"
-      [class.active]="contrast.high()"
-      [attr.aria-pressed]="contrast.high()"
-      [attr.aria-label]="
-        contrast.high() ? 'Yüksek kontrast modunu kapat' : 'Yüksek kontrast (renk körü) modunu aç'
-      "
-      (click)="contrast.toggle()"
-    >
-      👁
+  <!-- ── Üst çubuk: oyuncu · profil · ayarlar ── -->
+  <header class="bar">
+    <button class="who" type="button" aria-label="Profil" (click)="profileOpen.set(true)">
+      <span class="who-av" aria-hidden="true">{{ profile.avatar() }}</span>
+      <span class="who-tx">
+        <b>{{ profile.displayName() }}</b>
+        <span>
+          @if (stats.currentStreak > 0) {
+            🔥 {{ stats.currentStreak }} günlük seri
+          } @else if (stats.played > 0) {
+            {{ stats.played }} oyun oynandı
+          } @else {
+            Hoş geldin
+          }
+        </span>
+      </span>
     </button>
 
-    <button
-      class="icon"
-      type="button"
-      [attr.aria-label]="theme.theme() === 'dark' ? 'Aydınlık moda geç' : 'Karanlık moda geç'"
-      (click)="theme.toggle()"
-    >
-      {{ theme.theme() === 'dark' ? '☀️' : '🌙' }}
-    </button>
-  </div>
+    <div class="tools">
+      <button class="tool" type="button" aria-label="Profil" (click)="profileOpen.set(true)">👤</button>
+      <button class="tool" type="button" aria-label="Ayarlar" (click)="settingsOpen.set(true)">⚙️</button>
+    </div>
+  </header>
 
   <!-- ── İçerik ── -->
   <div class="content">
     <!-- Kahraman bölüm -->
-    <header class="hero">
+    <section class="hero">
       <p class="eyebrow">Türkçe Kelime Oyunu</p>
 
       <h1 class="logo" [attr.aria-label]="title()">
         @for (ch of title().split(''); track $index) {
-          <span class="tile" aria-hidden="true" [style.animation-delay.ms]="120 + $index * 60">
+          <span class="tile" aria-hidden="true" [style.animation-delay.ms]="120 + $index * 55">
             {{ ch }}
           </span>
         }
       </h1>
 
-      <p class="tagline">
-        5 harfli gizli kelimeyi <b>6 tahminde</b> bul.
-      </p>
+      <p class="tagline">5 harfli gizli kelimeyi <b>6 tahminde</b> bul.</p>
 
       <ul class="legend">
         <li class="chip correct"><span class="sw"></span> doğru yerde</li>
         <li class="chip present"><span class="sw"></span> kelimede var</li>
         <li class="chip absent"><span class="sw"></span> yok</li>
       </ul>
-    </header>
+    </section>
 
     <!-- Mod seçimi -->
     <nav class="modes" aria-label="Oyun modu">
       @if (dailyDone()) {
-        <!-- Bugün oynandı: sonuç + geri sayım -->
-        <div class="done">
-          <div class="done-head">
-            <span class="done-badge" [class.win]="dailyWon()">
-              {{ dailyWon() ? '✓' : '✕' }}
-            </span>
-            <div class="done-txt">
+        <!-- Bugün oynandı: sonuç + geri sayım + tahtayı görüntüle, tek kart içinde -->
+        <div class="done" [class.won]="dailyWon()">
+          <div class="d-head">
+            <span class="d-badge">{{ dailyWon() ? '✓' : '✕' }}</span>
+            <span class="d-tx">
               <b>{{ dailyWon() ? 'Bugünkü kelimeyi buldun' : 'Bugünkü kelimeyi bulamadın' }}</b>
-              @if (dailyWon()) {
-                <span>{{ dailyTries() }}/6 tahmin</span>
-              }
-            </div>
+              <span>
+                @if (dailyWon()) {
+                  {{ dailyTries() }}/6 tahminde · bulmaca #{{ dayNo() }}
+                } @else {
+                  Bulmaca #{{ dayNo() }}
+                }
+              </span>
+            </span>
           </div>
-          <app-countdown />
-        </div>
 
-        <button class="mode ghost" type="button" (click)="play.emit('daily')">
-          <span class="m-ico">📋</span>
-          <span class="m-txt">
-            <b>Sonucu Gör</b>
-            <span>bugünün tahtası</span>
-          </span>
-          <span class="m-arrow" aria-hidden="true">→</span>
-        </button>
+          <app-countdown />
+
+          <button class="mode ghost inset" type="button" (click)="play.emit('daily')">
+            <span class="m-ico">📋</span>
+            <span class="m-tx">
+              <b>Sonucu Gör</b>
+              <span>Bugünün tahtası</span>
+            </span>
+            <span class="m-arw" aria-hidden="true">→</span>
+          </button>
+        </div>
       } @else {
         <button class="mode primary" type="button" (click)="play.emit('daily')">
           <span class="m-ico">📅</span>
-          <span class="m-txt">
+          <span class="m-tx">
             <b>Günün Kelimesi</b>
-            <span>#{{ dayNo() }} · herkese aynı</span>
+            <span>Herkese aynı · günde bir kez</span>
           </span>
-          <span class="m-arrow" aria-hidden="true">→</span>
+          <span class="m-tag">#{{ dayNo() }}</span>
+          <span class="m-arw" aria-hidden="true">→</span>
         </button>
       }
 
       <button class="mode ghost" type="button" (click)="play.emit('practice')">
         <span class="m-ico">🎲</span>
-        <span class="m-txt">
+        <span class="m-tx">
           <b>Serbest Oyna</b>
-          <span>rastgele kelime · sınırsız</span>
+          <span>Rastgele kelime · sınırsız</span>
         </span>
-        <span class="m-arrow" aria-hidden="true">→</span>
+        <span class="m-arw" aria-hidden="true">→</span>
       </button>
     </nav>
 
-    <!-- Alt bilgi -->
-    <footer class="foot">
-      @if (stats.played > 0) {
-        <div class="stats">
-          <div class="stat">
-            <b>{{ stats.played }}</b>
-            <span>oyun</span>
-          </div>
-          <div class="stat">
-            <b>%{{ statsService.winRate() }}</b>
-            <span>kazanma</span>
-          </div>
-          <div class="stat">
-            <b>🔥 {{ stats.currentStreak }}</b>
-            <span>seri</span>
-          </div>
-        </div>
-      } @else {
-        <p class="dict">📚 {{ dictSize().toLocaleString('tr') }} kelimelik Türkçe sözlük</p>
-      }
-    </footer>
+    <!-- İstatistikler — hep görünür (boşken 0), tıklayınca profil açılır -->
+    <section class="stats" aria-label="İstatistiklerin">
+      <button class="stat" type="button" aria-label="İstatistikleri göster" (click)="profileOpen.set(true)">
+        <b>{{ stats.played }}</b>
+        <span>Oyun</span>
+      </button>
+      <button class="stat" type="button" aria-label="İstatistikleri göster" (click)="profileOpen.set(true)">
+        <b>%{{ statsService.winRate() }}</b>
+        <span>Kazanma</span>
+      </button>
+      <button class="stat" type="button" aria-label="İstatistikleri göster" (click)="profileOpen.set(true)">
+        <b>🔥 {{ stats.currentStreak }}</b>
+        <span>Seri</span>
+      </button>
+    </section>
+
+    <p class="foot">📚 {{ dictSize().toLocaleString('tr') }} kelimelik Türkçe sözlük</p>
   </div>
+
+  @if (profileOpen()) {
+    <app-profile-modal (close)="profileOpen.set(false)" />
+  }
+  @if (settingsOpen()) {
+    <app-settings-modal (close)="settingsOpen.set(false)" />
+  }
 </main>

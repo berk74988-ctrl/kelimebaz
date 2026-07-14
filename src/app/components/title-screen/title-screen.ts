@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
 import { GameMode } from '../../models/game.model';
-import { ContrastService } from '../../services/contrast.service';
 import { GameService } from '../../services/game.service';
+import { ProfileService } from '../../services/profile.service';
 import { StatsService } from '../../services/stats.service';
-import { ThemeService } from '../../services/theme.service';
 import { WordService } from '../../services/word.service';
 import { Countdown } from '../countdown/countdown';
+import { ProfileModal } from '../profile-modal/profile-modal';
+import { SettingsModal } from '../settings-modal/settings-modal';
 
 /** Arka planda süzülen harf. */
 interface Floater {
@@ -36,10 +37,10 @@ const FLOATERS: Floater[] = [
   { ch: 'Ş', left: 63, size: 26, delay: 23, duration: 34, drift: 20 },
 ];
 
-/** Giriş ekranı — oyun adı, mod seçimi, günlük bulmaca durumu. */
+/** Ana menü — oyun adı, mod seçimi, günlük durum, profil ve ayarlar. */
 @Component({
   selector: 'app-title-screen',
-  imports: [Countdown],
+  imports: [Countdown, ProfileModal, SettingsModal],
   templateUrl: './title-screen.html',
   styleUrl: './title-screen.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,8 +48,7 @@ const FLOATERS: Floater[] = [
 export class TitleScreen {
   private readonly words = inject(WordService);
   private readonly game = inject(GameService);
-  protected readonly theme = inject(ThemeService);
-  protected readonly contrast = inject(ContrastService);
+  protected readonly profile = inject(ProfileService);
   protected readonly statsService = inject(StatsService);
 
   readonly play = output<GameMode>();
@@ -62,6 +62,10 @@ export class TitleScreen {
   protected readonly dailyDone = signal(this.game.dailyDone());
   protected readonly dailyWon = signal(this.game.dailySnapshot()?.status === 'won');
   protected readonly dailyTries = signal(this.game.dailySnapshot()?.guesses.length ?? 0);
+
+  /** Açık pencere — ikisi aynı anda açılamaz. */
+  protected readonly profileOpen = signal(false);
+  protected readonly settingsOpen = signal(false);
 
   protected get stats() {
     return this.statsService.stats();

@@ -32,17 +32,17 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 
 ## Ekran görüntüleri
 
-| Başlık ekranı | Kazanma |
+| Ana menü | Kazanma |
 | --- | --- |
-| ![](docs/screenshots/1-baslik.png) | ![](docs/screenshots/3-kazanma.png) |
+| ![](docs/screenshots/menu-2-masaustu-dolu.png) | ![](docs/screenshots/3-kazanma.png) |
 
-| İstatistikler | Aydınlık tema |
+| Profil | Ayarlar |
 | --- | --- |
-| ![](docs/screenshots/4-istatistik.png) | ![](docs/screenshots/5-aydinlik-tema.png) |
+| ![](docs/screenshots/menu-3-profil.png) | ![](docs/screenshots/menu-4-ayarlar.png) |
 
 | Renk körü modu | Mobil |
 | --- | --- |
-| ![](docs/screenshots/6-renk-koru-modu.png) | <img src="docs/screenshots/8-mobil-oyun.png" width="260"> |
+| ![](docs/screenshots/6-renk-koru-modu.png) | <img src="docs/screenshots/menu-5-mobil.png" width="260"> |
 
 ---
 
@@ -53,6 +53,8 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 - ⌨️ **Tam Türk alfabesi** — 29 harf; `İ`/`I` ayrımı doğru. Türkçe klavyesi olmayanlar da `Ç Ğ Ö Ş Ü` yazabilir
 - 📅 **Günün kelimesi** — tarihe göre deterministik, herkese aynı, geri sayımlı
 - 📊 **İstatistikler** — oynanan, kazanma %, seri, tahmin dağılımı
+- 👤 **Profil** — oyuncu adı ve avatar (tamamen yerel, hesap yok)
+- ⚙️ **Ayarlar** — tema, renk körü modu, veri sıfırlama
 - 📋 **Spoiler'sız paylaşım** — 🟩🟨⬜ emoji ızgarası
 - 🌙 **Karanlık + aydınlık tema** — sistem tercihine uyar
 - 👁 **Renk körü modu** — mavi/turuncu palet
@@ -195,4 +197,5 @@ Böylece düz `ng build` her zaman doğru yolu üretir.
 - [x] Sözlüğü genişlet (205 → 5.520 kelime)
 - [x] Giriş menüsünü yenile (hareketli arka plan, mod kartları)
 - [x] Biçimbilim süzgeci + çekimli biçimler (5.520 → 12.581 kelime)
+- [x] Ana menü: cam panel, profil + ayarlar, istatistik kartları
 - [ ] HTTPS (özel alan adı)

@@ -1,7 +1,10 @@
 @use '../../../styles/variables' as v;
 
 /* =============================================================
-   GİRİŞ EKRANI
+   ANA MENÜ
+
+   Düzen: üst çubuk (oyuncu · profil · ayarlar) sabit köşede,
+   içerik dikeyde ortalı tek bir sütun — kahraman, modlar, istatistik.
 
    Tüm animasyonlar transform/opacity üzerinden — düzen yeniden
    hesaplanmaz, GPU'da çalışır, mobilde de akıcıdır.
@@ -12,8 +15,8 @@
   min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: v.$space-4 v.$space-3;
-  overflow: hidden; // arka plan efektleri taşmasın
+  padding: 76px v.$space-3 v.$space-4; // üst çubuğun altına düşmesin
+  overflow: hidden;
   background: var(--bg);
 }
 
@@ -26,7 +29,6 @@
   overflow: hidden;
 }
 
-// Yumuşak renk bulutları — yavaşça sürüklenir
 .blob {
   position: absolute;
   border-radius: 50%;
@@ -59,7 +61,7 @@
   top: 45%;
   left: 55%;
   background: radial-gradient(circle, var(--present), transparent 70%);
-  opacity: 0.28;
+  opacity: 0.26;
   animation: drift-c 34s ease-in-out infinite;
 }
 
@@ -78,7 +80,6 @@
   50%      { transform: translate(-70px, 50px) scale(0.9); }
 }
 
-// Yukarı süzülen harfler
 .floaters {
   position: absolute;
   inset: 0;
@@ -105,7 +106,7 @@
     opacity: 0;
   }
   10%, 85% {
-    opacity: 0.07;
+    opacity: 0.06;
   }
   100% {
     transform: translate(var(--drift, 0px), -115vh) rotate(22deg);
@@ -113,52 +114,127 @@
   }
 }
 
-/* ---------- Üst köşe butonları ---------- */
+/* ---------- Üst çubuk ---------- */
 
-.corner {
+.bar {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  display: flex;
-  gap: 6px;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 2;
-  animation: fade-in 0.6s ease 0.5s both;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: v.$space-2;
+  padding: 14px 16px;
+
+  animation: fade-in 0.6s ease 0.45s both;
 }
 
-.icon {
+// Oyuncu rozeti — avatar + ad + seri. Tıklayınca profil açılır.
+.who {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 12px 6px 6px;
+  max-width: 62vw;
+
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+
+  transition:
+    transform 0.16s cubic-bezier(0.34, 1.5, 0.64, 1),
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.97);
+  }
+}
+
+.who-av {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+
+  background: var(--surface-2);
+  border-radius: 50%;
+}
+
+.who-tx {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  text-align: left;
+
+  b {
+    font-size: 12.5px;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  span {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+}
+
+.tools {
+  display: flex;
+  gap: 7px;
+}
+
+.tool {
   width: 40px;
   height: 40px;
   display: grid;
   place-items: center;
   font-size: 16px;
 
-  border-radius: var(--radius);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
   border: 1px solid var(--border);
-  backdrop-filter: blur(6px);
+  border-radius: 13px;
+  backdrop-filter: blur(8px);
 
   transition:
     transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1),
     background 0.16s ease,
-    border-color 0.16s ease;
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
 
   &:hover {
     transform: translateY(-2px);
     background: var(--surface-2);
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
   }
 
   &:active {
-    transform: translateY(0) scale(0.94);
-  }
-
-  &.active {
-    background: var(--accent);
-    border-color: var(--accent);
+    transform: translateY(0) scale(0.92);
   }
 }
 
 /* ---------- İçerik ---------- */
 
+/* İçerik tek bir "cam panel" içinde toplanır.
+   Panelsiz hâlde kartlar geniş ekranda boşlukta yüzüyor ve ekran boş
+   hissettiriyordu; panel içeriği çerçeveleyip menüye gövde veriyor. */
 .content {
   position: relative;
   z-index: 1;
@@ -166,18 +242,29 @@
   max-width: 440px;
   display: flex;
   flex-direction: column;
-  gap: v.$space-4;
+  gap: 18px;
+
+  padding: 22px 20px 18px;
+
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  border-radius: 26px;
+  backdrop-filter: blur(18px);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05); // üstte ince ışık çizgisi → cam hissi
 }
 
 // Açılışta kademeli yükselme
 .hero  { animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s both; }
-.modes { animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.22s both; }
-.foot  { animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.38s both; }
+.modes { animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.20s both; }
+.stats { animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.34s both; }
+.foot  { animation: fade-in 0.7s ease 0.5s both; }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(22px);
+    transform: translateY(20px);
   }
 }
 
@@ -192,48 +279,50 @@
 }
 
 .eyebrow {
+  margin-bottom: 11px;
   font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 4px;
   text-transform: uppercase;
   color: var(--accent);
-  margin-bottom: v.$space-3;
 }
 
+/* 9 harf TEK satırda kalmalı. Sabit genişlik verirsek dar panelde son harf
+   ("Z") alta düşüyordu; onun yerine kutular satırı paylaşır ve daralır. */
 .logo {
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 5px;
   perspective: 700px; // harfler gerçekten dönsün
 }
 
 .tile {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 42px;
+  aspect-ratio: 1;
+
   display: grid;
   place-items: center;
-  width: clamp(32px, 8.6vw, 44px);
-  height: clamp(32px, 8.6vw, 44px);
 
-  font-size: clamp(16px, 4.4vw, 22px);
+  font-size: clamp(14px, 3.6vw, 21px);
   font-weight: 800;
 
-  border-radius: 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  border-radius: 11px;
   color: var(--text);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 
   animation: flip-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
   // Renk dilini tanıtır: ilk 3 harf doğru, kalanı "kelimede var"
   &:nth-child(-n + 3) {
     background: var(--correct);
-    border-color: var(--correct);
     color: var(--on-correct);
   }
 
   &:nth-child(n + 4) {
     background: var(--present);
-    border-color: var(--present);
     color: var(--on-present);
   }
 }
@@ -246,8 +335,8 @@
 }
 
 .tagline {
-  margin-top: v.$space-3;
-  font-size: 14px;
+  margin-top: 13px;
+  font-size: 13.5px;
   color: var(--text-muted);
 
   b {
@@ -255,13 +344,12 @@
   }
 }
 
-// Renk açıklaması
 .legend {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: v.$space-3;
+  margin-top: 12px;
 }
 
 .chip {
@@ -270,17 +358,17 @@
   gap: 6px;
   padding: 5px 10px;
 
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   color: var(--text-muted);
 
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 999px;
 
   .sw {
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
     border-radius: 3px;
   }
 
@@ -289,7 +377,7 @@
   &.absent  .sw { background: var(--absent); }
 }
 
-/* ---------- Mod butonları ---------- */
+/* ---------- Mod kartları ---------- */
 
 .modes {
   display: grid;
@@ -301,12 +389,14 @@
   display: flex;
   align-items: center;
   gap: 13px;
+  width: 100%;
   padding: 15px 16px;
   text-align: left;
 
   border-radius: 16px;
   border: 1px solid var(--border);
   background: var(--surface);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
   overflow: hidden;
 
   transition:
@@ -319,21 +409,20 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.12) 50%, transparent 65%);
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.13) 50%, transparent 65%);
     transform: translateX(-120%);
     transition: transform 0.6s ease;
+    pointer-events: none;
   }
 
   &:hover {
     transform: translateY(-3px);
-    border-color: var(--accent);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+    border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3);
 
-    &::before {
-      transform: translateX(120%);
-    }
+    &::before { transform: translateX(120%); }
 
-    .m-arrow {
+    .m-arw {
       transform: translateX(4px);
       opacity: 1;
     }
@@ -341,15 +430,35 @@
 
   &:active {
     transform: translateY(-1px) scale(0.985);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.24);
   }
 
+  // Birincil kart — günün kelimesi. Görsel ağırlığı en yüksek olan öğe.
   &.primary {
-    background: linear-gradient(135deg, var(--correct), color-mix(in srgb, var(--correct) 72%, #000));
+    padding: 17px 16px;
+    background: linear-gradient(135deg, var(--correct), color-mix(in srgb, var(--correct) 68%, #000));
     border-color: transparent;
     color: var(--on-correct);
+    box-shadow: 0 10px 26px color-mix(in srgb, var(--correct) 28%, transparent);
 
-    .m-txt span { opacity: 0.8; }
+    &:hover {
+      border-color: transparent;
+      box-shadow: 0 16px 38px color-mix(in srgb, var(--correct) 36%, transparent);
+    }
+
+    .m-tx span { opacity: 0.82; }
+    .m-ico { background: rgba(255, 255, 255, 0.16); }
+  }
+
+  &.ghost .m-ico {
+    background: var(--surface-2);
+  }
+
+  // Bugün oynandı kartının içine gömülü "Sonucu Gör"
+  &.inset {
+    margin-top: 11px;
+    background: var(--surface-2);
+    box-shadow: none;
   }
 }
 
@@ -360,21 +469,15 @@
   display: grid;
   place-items: center;
   font-size: 20px;
-
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
 }
 
-.mode.ghost .m-ico {
-  background: var(--surface-2);
-}
-
-.m-txt {
+.m-tx {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
 
   b {
     font-size: 15.5px;
@@ -384,59 +487,73 @@
   span {
     font-size: 11.5px;
     color: inherit;
-    opacity: 0.65;
+    opacity: 0.68;
   }
 }
 
-.m-arrow {
+// Bulmaca numarası rozeti
+.m-tag {
+  flex: none;
+  padding: 3px 8px;
+
+  font-size: 10.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+.m-arw {
   flex: none;
   font-size: 17px;
-  opacity: 0.4;
+  opacity: 0.45;
   transition:
     transform 0.18s ease,
     opacity 0.18s ease;
 }
 
-/* ---------- Bugün oynandı kutusu ---------- */
+/* ---------- Bugün oynandı kartı ---------- */
 
 .done {
-  padding: 14px;
+  padding: 15px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }
 
-.done-head {
+.d-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 11px;
+  margin-bottom: 13px;
 }
 
-.done-badge {
+.d-badge {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
 
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
 
   border-radius: 50%;
   color: #fff;
   background: var(--danger);
 
-  &.win {
+  .done.won & {
     background: var(--correct);
     color: var(--on-correct);
   }
 }
 
-.done-txt {
+.d-tx {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 
   b {
@@ -449,54 +566,74 @@
   }
 }
 
-/* ---------- Alt bilgi ---------- */
-
-.foot {
-  text-align: center;
-}
+/* ---------- İstatistik kartları ---------- */
 
 .stats {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
 }
 
 .stat {
-  flex: 1;
-  max-width: 110px;
-  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 13px 8px;
 
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
 
-  transition: transform 0.16s ease;
+  transition:
+    transform 0.16s cubic-bezier(0.34, 1.5, 0.64, 1),
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
 
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.26);
+  }
+
+  &:active {
+    transform: translateY(-1px) scale(0.97);
   }
 
   b {
-    display: block;
-    font-size: 17px;
+    font-size: 19px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 
   span {
     font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
     color: var(--text-muted);
   }
 }
 
-.dict {
-  font-size: 12px;
+.foot {
+  font-size: 11.5px;
+  text-align: center;
   color: var(--text-muted);
 }
 
 /* ---------- Mobil ---------- */
 
 @media (max-width: 520px) {
+  .screen {
+    padding: 68px 12px 14px;
+  }
+
   .content {
-    gap: v.$space-3;
+    gap: 15px;
+    padding: 18px 14px 15px;
+    border-radius: 22px;
   }
 
   .blob {
@@ -508,14 +645,39 @@
   .b2 { width: 280px; height: 280px; }
   .b3 { display: none; } // mobilde daha az katman → daha akıcı
 
+  .who-tx span { display: none; } // dar ekranda ad yeter, alt satır taşar
+
   .mode {
     padding: 13px 14px;
+    gap: 11px;
+  }
+
+  .mode.primary {
+    padding: 15px 14px;
   }
 
   .m-ico {
     width: 38px;
     height: 38px;
     font-size: 18px;
+  }
+
+  .stat {
+    padding: 11px 6px;
+
+    b { font-size: 17px; }
+  }
+}
+
+// Çok kısa ekranlarda (yatay telefon) dekoratif kısımları kısarak yeri içeriğe ver
+@media (max-height: 620px) {
+  .legend,
+  .foot {
+    display: none;
+  }
+
+  .content {
+    gap: 13px;
   }
 }
 
