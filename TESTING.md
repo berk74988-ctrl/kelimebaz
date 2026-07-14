@@ -111,6 +111,14 @@ Ayrıca **birim testte** bir değişmez (invariant) doğrulanıyor:
 - [x] Metinde **hiç harf yok** (spoiler yok)
 - [x] **HTTP üzerinde bile** panoya kopyalanıyor (yedek yöntem)
 
+### Ses (`check:audio`)
+- [x] `music.mp3` sunuluyor, döngüde çalıyor
+- [x] Otomatik başlatma engellenirse **ilk etkileşimde** kendiliğinden başlıyor
+- [x] Müzik kaydırıcısı `<audio>.volume` değerini gerçekten değiştiriyor
+- [x] Müzik ve efekt kanalları **birbirinden bağımsız** (biri kapanınca diğeri etkilenmiyor)
+- [x] Ayarlar sayfa yenilenince aynı şekilde geri geliyor
+- [x] Bozuk/boş kayıt varsayılana düşüyor, oyun sessizleşmiyor
+
 ### Harf ve sözlük sistemi (`check:dictionary`)
 - [x] Ekran klavyesinde **29 harfin hepsi** var ve tahtaya yazılıyor
 - [x] Türkçe fiziksel klavyede 29 harfin hepsi tuşlanıyor
@@ -148,6 +156,9 @@ Ayrıca **birim testte** bir değişmez (invariant) doğrulanıyor:
 | 17 | **Türkçe olmayan klavyede 6 harf yazılamıyordu** — US QWERTY'de `Ç Ğ Ö Ş Ü İ` tuşu yok; `event.code` konum eşlemesi eklendi | Alfabe denetimi |
 | 18 | **"Sonucu Paylaş" butonu bembeyaz çıkıyordu** — `--accent-2` CSS değişkeni hiç tanımlanmamıştı; geçersiz `linear-gradient` sessizce düşünce buton tarayıcının varsayılan rengine kalıyordu | Ekran görüntüsü incelemesi |
 | 19 | **Buton yazıları WCAG'ı geçmiyordu** — beyaz yazı ham vurgu renginde **3.07:1**, koyu yazı koyulaştırılmış yeşilde **3.21:1** (AA normal metin için 4.5 ister; 14px kalın "büyük metin" sayılmaz). Gradyan uçları düz hex değişkenlere çevrilip koyulaştırıldı, yeşil buton düz renge alındı → 4.78 / 4.86 / 6.35. `contrast-check` artık bu üç çifti de ölçüyor | Kontrast ölçümü |
+| 20 | **Ses ayarları hiç kaydedilmiyordu** — kayıt Angular `effect()` içindeydi; effect yalnızca değişiklik algılaması çalışınca tetiklenir, dolayısıyla ayarlar sessizce kaybolabiliyordu. Kayıt doğrudan ayarlayıcılara alındı | Kalıcılık testi |
+| 21 | **Açılışta uygulama çöküyordu** — `audio.play()` test ortamında (ve eski tarayıcılarda) Promise döndürmüyor; doğrudan `.then()` çağırmak `TypeError` veriyordu | Birim testleri |
+| 22 | **Boş kayıt sesi sıfırlıyordu** — `Number('') === 0`, yani bozuk bir kayıt "ses %0" olarak okunuyordu. Artık boş dizge de varsayılana düşüyor | Birim testleri |
 
 ---
 

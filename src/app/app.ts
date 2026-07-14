@@ -3,6 +3,7 @@ import { ErrorScreen } from './components/error-screen/error-screen';
 import { Game } from './components/game/game';
 import { TitleScreen } from './components/title-screen/title-screen';
 import { GameMode } from './models/game.model';
+import { AudioService } from './services/audio.service';
 import { ContrastService } from './services/contrast.service';
 import { ThemeService } from './services/theme.service';
 import { WordService } from './services/word.service';
@@ -21,6 +22,13 @@ export class App {
   private readonly theme = inject(ThemeService);
   private readonly contrast = inject(ContrastService);
   private readonly words = inject(WordService);
+  private readonly audio = inject(AudioService);
+
+  constructor() {
+    // Müziği açılışta başlatmayı dener. Tarayıcı sesli otomatik oynatmayı
+    // engellerse (standart politika) ilk dokunuş/tıklamada kendiliğinden başlar.
+    this.audio.init();
+  }
 
   /** Kelime havuzu boş/bozuksa oyun başlatılamaz → hata ekranı. */
   protected readonly ready = computed(() => this.words.isReady);

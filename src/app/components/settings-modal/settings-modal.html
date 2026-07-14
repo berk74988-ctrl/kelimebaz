@@ -12,6 +12,90 @@
 
     <h2 class="head">Ayarlar</h2>
 
+    <h3 class="sec">Ses</h3>
+
+    <!-- Müzik: aç/kapa + seviye -->
+    <div class="row audio">
+      <div class="a-head">
+        <div class="txt">
+          <b>🎵 Müzik</b>
+          <span>
+            @if (audio.blocked() && audio.musicOn()) {
+              Tarayıcı otomatik başlatmayı engelledi — ekrana dokun
+            } @else {
+              Arka plan müziği
+            }
+          </span>
+        </div>
+        <button
+          class="sw"
+          type="button"
+          role="switch"
+          [class.on]="audio.musicOn()"
+          [attr.aria-checked]="audio.musicOn()"
+          [attr.aria-label]="audio.musicOn() ? 'Müziği kapat' : 'Müziği aç'"
+          (click)="audio.toggleMusic()"
+        >
+          <i></i>
+        </button>
+      </div>
+
+      <div class="a-vol">
+        <input
+          class="rng"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          aria-label="Müzik ses seviyesi"
+          [disabled]="!audio.musicOn()"
+          [value]="pct(audio.musicVol())"
+          (input)="onMusicVol($event)"
+        />
+        <span class="pc">%{{ pct(audio.musicVol()) }}</span>
+      </div>
+    </div>
+
+    <!-- Efekt sesleri: aç/kapa + seviye -->
+    <div class="row audio">
+      <div class="a-head">
+        <div class="txt">
+          <b>🔔 Efekt sesleri</b>
+          <span>Tuş, kutu açılışı, kazanma</span>
+        </div>
+        <button
+          class="sw"
+          type="button"
+          role="switch"
+          [class.on]="audio.sfxOn()"
+          [attr.aria-checked]="audio.sfxOn()"
+          [attr.aria-label]="audio.sfxOn() ? 'Efekt seslerini kapat' : 'Efekt seslerini aç'"
+          (click)="audio.toggleSfx()"
+        >
+          <i></i>
+        </button>
+      </div>
+
+      <div class="a-vol">
+        <input
+          class="rng"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          aria-label="Efekt sesleri seviyesi"
+          [disabled]="!audio.sfxOn()"
+          [value]="pct(audio.sfxVol())"
+          (input)="onSfxVol($event)"
+        />
+        <span class="pc">%{{ pct(audio.sfxVol()) }}</span>
+      </div>
+    </div>
+
+    <div class="rule"></div>
+
+    <h3 class="sec">Görünüm</h3>
+
     <!-- Tema -->
     <div class="row">
       <div class="txt">
@@ -53,6 +137,8 @@
     </div>
 
     <div class="rule"></div>
+
+    <h3 class="sec">Veri</h3>
 
     <!-- Veri -->
     <div class="row">

@@ -9,7 +9,8 @@ import {
 } from '@angular/core';
 import { guessAnnouncement, resultAnnouncement } from '../../core/a11y';
 import { trUpper } from '../../core/turkish';
-import { GameMode } from '../../models/game.model';
+import { GameMode, WORD_LENGTH } from '../../models/game.model';
+import { AudioService } from '../../services/audio.service';
 import { ContrastService } from '../../services/contrast.service';
 import { GameService } from '../../services/game.service';
 import { ThemeService } from '../../services/theme.service';
@@ -31,6 +32,7 @@ export class Game {
   protected readonly game = inject(GameService);
   protected readonly theme = inject(ThemeService);
   protected readonly contrast = inject(ContrastService);
+  private readonly audio = inject(AudioService);
 
   readonly mode = input.required<GameMode>();
   readonly exit = output<void>();
@@ -91,12 +93,17 @@ export class Game {
 
   protected onLetter(letter: string): void {
     if (this.locked()) return;
+    const before = this.game.currentGuess();
     this.game.type(letter);
+    // Satır zaten doluysa harf eklenmez → ses de çıkmasın (yanlış geri bildirim olur)
+    if (this.game.currentGuess() !== before) this.audio.sfx('key');
   }
 
   protected onBackspace(): void {
     if (this.locked()) return;
+    const before = this.game.currentGuess();
     this.game.backspace();
+    if (this.game.currentGuess() !== before) this.audio.sfx('delete');
   }
 
   /** Fiziksel klavye desteği (masaüstü). */
@@ -160,16 +167,22 @@ export class Game {
 
       const guess = this.game.guesses()[after - 1];
       this.announcement.set(guessAnnouncement(guess, after));
+
+      // Kutular sırayla açılırken her kutuda bir tık — görsel ritimle aynı gecikme
+      this.audio.revealSequence(WORD_LENGTH, 90);
     } else if (this.game.message()) {
       // Reddedildi → uyarıyı duyur (toast zaten aria-live)
       this.announcement.set(this.game.message());
+      this.audio.sfx('invalid');
     }
 
     if (this.game.isOver()) {
+      const won = this.game.status() === 'won';
+      // Açılma animasyonu bitince çal — kutu tıklarının üstüne binmesin
+      setTimeout(() => this.audio.sfx(won ? 'win' : 'lose'), 900);
+
       setTimeout(() => {
-        this.announcement.set(
-          resultAnnouncement(this.game.status() === 'won', after, this.game.answer()),
-        );
+        this.announcement.set(resultAnnouncement(won, after, this.game.answer()));
         this.resultOpen.set(true);
       }, 900); // açılma animasyonu bitsin
     }
