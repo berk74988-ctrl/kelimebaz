@@ -14,23 +14,49 @@
 .modal {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   max-height: 92dvh;
   overflow-y: auto;
-  padding: v.$space-5 v.$space-4 v.$space-4;
+  padding: 26px 20px 20px;
   text-align: center;
 
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: 22px;
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
   animation: rise 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+
+  // Sonucu tepeden gelen bir renk sızıntısıyla belli et — kazandın mı kaybettin mi,
+  // metni okumadan anlaşılsın.
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    pointer-events: none;
+    background: radial-gradient(
+      120% 100% at 50% 0%,
+      color-mix(in srgb, var(--danger) 22%, transparent),
+      transparent 70%
+    );
+  }
+
+  &.won::before {
+    background: radial-gradient(
+      120% 100% at 50% 0%,
+      color-mix(in srgb, var(--correct) 24%, transparent),
+      transparent 70%
+    );
+  }
 }
 
 .x {
   position: absolute;
   top: 10px;
   right: 12px;
+  z-index: 1;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -43,192 +69,210 @@
   }
 }
 
+/* ---------- Başlık ---------- */
+
+.hero {
+  position: relative;
+}
+
 .emoji {
-  font-size: 40px;
+  display: block;
+  font-size: 38px;
   line-height: 1;
+  animation: pop 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) both;
 }
 
 .head {
-  margin-top: v.$space-2;
-  font-size: 24px;
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--danger);
 
-  &.win {
+  .modal.won & {
     color: var(--correct);
-  }
-
-  &.lose {
-    color: var(--danger);
   }
 }
 
 .sub {
+  margin-top: 3px;
+  font-size: 13px;
   color: var(--text-muted);
-  font-size: 14px;
-  margin-top: v.$space-1;
-}
 
-.answer {
-  margin-top: v.$space-2;
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: 4px;
-  color: var(--correct);
-
-  &.win {
-    font-size: 20px;
-    opacity: 0.85;
+  b {
+    color: var(--text);
   }
 }
 
+/* ---------- Cevap (harf kutuları) ---------- */
+
+.answer {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 15px;
+}
+
+.a-tile {
+  flex: 0 1 44px;
+  min-width: 0;
+  aspect-ratio: 1;
+
+  display: grid;
+  place-items: center;
+
+  font-size: clamp(16px, 4.5vw, 20px);
+  font-weight: 800;
+
+  color: var(--on-correct);
+  background: var(--correct);
+  border-radius: 10px;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--correct) 22%, transparent);
+
+  animation: flip-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* ---------- Günlük: geri sayım ---------- */
+
 .next {
-  margin-top: v.$space-3;
-  padding: v.$space-3 v.$space-2;
+  margin-top: 15px;
+  padding: 13px 12px;
   background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 
 .note {
-  margin-top: v.$space-2;
-  font-size: 11.5px;
+  margin-top: 7px;
+  font-size: 11px;
   line-height: 1.5;
   color: var(--text-muted);
 }
 
-.stats {
-  margin-top: v.$space-4;
-  padding-top: v.$space-3;
-  border-top: 1px solid var(--border);
+.rule {
+  height: 1px;
+  margin: 18px 0 15px;
+  background: var(--border);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: v.$space-2;
-}
+/* ---------- Paylaşım önizlemesi ---------- */
 
-.stat {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-
-  b {
-    font-size: 22px;
-  }
-
-  span {
-    font-size: 10.5px;
-    color: var(--text-muted);
-    line-height: 1.25;
-  }
-}
-
-.dist-title {
-  margin: v.$space-4 0 v.$space-2;
-  font-size: 11px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.dist {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.dist-row {
-  display: flex;
-  align-items: center;
-  gap: v.$space-2;
-
-  .n {
-    width: 12px;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text-muted);
-  }
-}
-
-.bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-width: 24px;
-  padding: 2px 7px;
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--on-absent);
-  background: var(--absent);
-  border-radius: 4px;
-  transition: width 0.4s ease;
-
-  &.hit {
-    background: var(--correct);
-    color: var(--on-correct);
-  }
-}
-
-// Paylaşılacak ızgaranın önizlemesi
 .preview {
-  margin-top: v.$space-4;
-  padding: v.$space-2;
+  margin-top: 16px;
+  padding: 11px;
+
   font-family: inherit;
-  font-size: 15px;
-  line-height: 1.25;
+  font-size: 14px;
+  line-height: 1.2;
   letter-spacing: 2px;
   text-align: center;
   white-space: pre;
 
   background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
 }
+
+/* ---------- Eylem butonları ----------
+   İkisi de büyük ve dolgun: paylaşmak ve tekrar oynamak bu ekranın
+   tek amacı; kenarda duran soluk butonlar bunu iletmiyordu. */
 
 .actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: v.$space-2;
-  margin-top: v.$space-2;
+  gap: 9px;
+  margin-top: 14px;
 }
 
 .btn {
-  padding: 12px;
-  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 52px;
+  padding: 12px 10px;
+
+  font-size: 14px;
   font-weight: 800;
-  border-radius: var(--radius);
+
+  border: 1px solid transparent;
+  border-radius: 14px;
+
   transition:
-    filter 0.15s ease,
-    transform 0.06s ease;
+    transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1),
+    box-shadow 0.16s ease,
+    filter 0.16s ease;
 
   &:hover {
-    filter: brightness(1.12);
+    transform: translateY(-2px);
+    filter: brightness(1.08);
   }
 
   &:active {
-    transform: scale(0.98);
+    transform: translateY(0) scale(0.97);
   }
 
-  &.primary {
-    background: var(--correct);
+  // Paylaş — vurgu rengi. Uçlar WCAG için koyulaştırılmış (bkz. _reset.scss).
+  &.share {
+    color: var(--on-share);
+    background: linear-gradient(135deg, var(--share-1), var(--share-2));
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--share-1) 40%, transparent);
+
+    &:hover {
+      box-shadow: 0 12px 30px color-mix(in srgb, var(--share-1) 50%, transparent);
+    }
+  }
+
+  /* Yeni oyun — oyunun ana rengi.
+     DÜZ renk, gradyan değil: koyulaştırılmış uçta koyu yazının kontrastı
+     3.21:1'e düşüyordu. Düz --correct üzerinde 6.36:1. Dikkat çekiciliği
+     renkli parıltı gölgesi sağlıyor. */
+  &.again {
     color: var(--on-correct);
+    background: var(--correct);
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--correct) 34%, transparent);
+
+    &:hover {
+      box-shadow: 0 12px 30px color-mix(in srgb, var(--correct) 46%, transparent);
+    }
   }
 
-  &.ghost {
-    background: var(--surface-2);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-
-  // Kopyalama geri bildirimi
+  // Kopyalama geri bildirimi — paylaş butonunun üstüne biner
   &.ok {
     background: var(--correct);
-    border-color: var(--correct);
     color: var(--on-correct);
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--correct) 30%, transparent);
   }
 
   &.err {
     background: var(--danger);
-    border-color: var(--danger);
     color: #fff;
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--danger) 30%, transparent);
+  }
+}
+
+.b-ico {
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* ---------- Mobil ---------- */
+
+@media (max-width: 400px) {
+  .modal {
+    padding: 22px 15px 16px;
+  }
+
+  .btn {
+    min-height: 50px;
+    font-size: 13px;
+    gap: 5px;
+  }
+}
+
+/* Çok dar ekranda iki buton yan yana sıkışıyor → alt alta ve tam genişlik */
+@media (max-width: 340px) {
+  .actions {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -242,5 +286,19 @@
   from {
     opacity: 0;
     transform: translateY(18px) scale(0.96);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes flip-in {
+  from {
+    opacity: 0;
+    transform: rotateX(-90deg) translateY(10px);
   }
 }

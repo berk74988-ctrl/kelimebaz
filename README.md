@@ -32,9 +32,9 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 
 ## Ekran görüntüleri
 
-| Ana menü | Kazanma |
+| Ana menü | Oyun sonu |
 | --- | --- |
-| ![](docs/screenshots/menu-2-masaustu-dolu.png) | ![](docs/screenshots/3-kazanma.png) |
+| ![](docs/screenshots/menu-2-masaustu-dolu.png) | ![](docs/screenshots/sonuc-1-kazanma.png) |
 
 | Profil | Ayarlar |
 | --- | --- |
@@ -198,4 +198,5 @@ Böylece düz `ng build` her zaman doğru yolu üretir.
 - [x] Giriş menüsünü yenile (hareketli arka plan, mod kartları)
 - [x] Biçimbilim süzgeci + çekimli biçimler (5.520 → 12.581 kelime)
 - [x] Ana menü: cam panel, profil + ayarlar, istatistik kartları
+- [x] Oyun sonu ekranı: kart hâlinde istatistikler, okunur dağılım, büyük butonlar
 - [ ] HTTPS (özel alan adı)

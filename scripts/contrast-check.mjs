@@ -56,6 +56,13 @@ const PAIRS = [
   ['Kutu: YOK (gri)', '--on-absent', '--absent', 3.0],
   ['Klavye tuşu metni', '--text', '--key-bg', 4.5],
   ['Toast metni', '--on-toast', '--toast-bg', 4.5],
+
+  // Oyun sonu butonları. Buton yazısı NORMAL boyutta sayılır (14px kalın,
+  // WCAG'ın "büyük metin" eşiği 18.66px kalın) → 4.5 gerekir, 3.0 değil.
+  // Paylaş butonu gradyanlı: metin İKİ UÇTA da okunmalı, ikisi de ölçülüyor.
+  ['Buton: Paylaş (sol uç)', '--on-share', '--share-1', 4.5],
+  ['Buton: Paylaş (sağ uç)', '--on-share', '--share-2', 4.5],
+  ['Buton: Yeni Oyun', '--on-correct', '--correct', 4.5],
 ];
 
 const browser = await chromium.launch();

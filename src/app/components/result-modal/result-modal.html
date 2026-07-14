@@ -3,6 +3,7 @@
   <div
     #dialog
     class="modal"
+    [class.won]="status() === 'won'"
     role="dialog"
     aria-modal="true"
     tabindex="-1"
@@ -11,26 +12,34 @@
   >
     <button class="x" type="button" aria-label="Sonuç ekranını kapat" (click)="close.emit()">✕</button>
 
-    @if (status() === 'won') {
-      <p class="emoji" aria-hidden="true">🎉</p>
-      <h2 class="head win">Tebrikler!</h2>
+    <!-- Başlık: sonuç + kaç tahminde -->
+    <header class="hero">
+      <span class="emoji" aria-hidden="true">{{ status() === 'won' ? '🎉' : '😔' }}</span>
+      <h2 class="head">{{ status() === 'won' ? 'Tebrikler!' : 'Bu sefer olmadı' }}</h2>
       <p class="sub">
-        Kelimeyi <b>{{ attempts() }}/{{ maxAttempts }}</b> tahminde buldun.
+        @if (status() === 'won') {
+          Kelimeyi <b>{{ attempts() }}/{{ maxAttempts }}</b> tahminde buldun
+        } @else {
+          6 hakkın da bitti — doğru kelime şuydu
+        }
       </p>
-      <p class="answer win">{{ answer() }}</p>
-    } @else {
-      <p class="emoji" aria-hidden="true">😔</p>
-      <h2 class="head lose">Bu sefer olmadı</h2>
-      <p class="sub">6 hakkın da bitti. Doğru kelime:</p>
-      <p class="answer">{{ answer() }}</p>
-    }
+    </header>
+
+    <!-- Cevap: oyunun kendi kutu diliyle -->
+    <div class="answer" [attr.aria-label]="'Doğru kelime: ' + answer()">
+      @for (ch of answerLetters(); track $index) {
+        <span class="a-tile" aria-hidden="true" [style.animation-delay.ms]="$index * 60">{{ ch }}</span>
+      }
+    </div>
 
     @if (isDaily()) {
       <div class="next">
         <app-countdown />
-        <p class="note">Bugünün bulmacası bitti. Hemen devam etmek istersen "Yeni oyun" serbest moddan başlar.</p>
+        <p class="note">Bugünün bulmacası bitti. Hemen devam etmek istersen "Yeni Oyun" serbest moddan başlar.</p>
       </div>
     }
+
+    <div class="rule"></div>
 
     <section class="stats" aria-label="İstatistikler">
       <!-- Kazanılan oyunun satırı grafikte vurgulanır -->
@@ -42,7 +51,7 @@
 
     <div class="actions">
       <button
-        class="btn ghost"
+        class="btn share"
         type="button"
         [class.ok]="shareState() === 'copied'"
         [class.err]="shareState() === 'failed'"
@@ -50,18 +59,20 @@
       >
         @switch (shareState()) {
           @case ('copied') {
-            ✓ Kopyalandı
+            <span class="b-ico" aria-hidden="true">✓</span> Kopyalandı
           }
           @case ('failed') {
-            ✕ Kopyalanamadı
+            <span class="b-ico" aria-hidden="true">✕</span> Kopyalanamadı
           }
           @default {
-            📋 Sonucu paylaş
+            <span class="b-ico" aria-hidden="true">📋</span> Sonucu Paylaş
           }
         }
       </button>
 
-      <button class="btn primary" type="button" (click)="playAgain.emit()">Yeni oyun</button>
+      <button class="btn again" type="button" (click)="playAgain.emit()">
+        <span class="b-ico" aria-hidden="true">🔄</span> Yeni Oyun
+      </button>
     </div>
   </div>
 </div>

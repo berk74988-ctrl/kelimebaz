@@ -30,7 +30,21 @@
   --key-bg: #{v.$surface-2};
 
   --accent: #{v.$accent};
+  --accent-2: #{v.$accent-2};
   --danger: #{v.$danger};
+
+  /**
+   * PAYLAŞ BUTONU — gradyanın iki ucu.
+   *
+   * Ham vurgu renginde (#6c8cff) beyaz yazının kontrastı 3.07:1 — WCAG AA
+   * normal metin için 4.5 ister, kalıyordu. Uçlar koyulaştırıldı: 4.79 ve 4.96.
+   *
+   * Değişken olarak ve DÜZ HEX yazılıyorlar ki contrast-check.mjs onları
+   * gerçekten okuyup ölçebilsin; color-mix() ifadesi ölçülemezdi.
+   */
+  --share-1: #546dc7;
+  --share-2: #7a60c7;
+  --on-share: #ffffff;
 
   --backdrop: rgba(6, 9, 16, 0.72);
   --toast-bg: #{v.$text};

@@ -57,11 +57,11 @@ await page.waitForTimeout(500);
 // Ekrandaki ızgara önizlemesi
 const onScreen = (await page.locator('.preview').textContent()).trim();
 
-await page.getByRole('button', { name: /Sonucu paylaş/ }).click();
+await page.getByRole('button', { name: /Sonucu paylaş/i }).click();
 await page.waitForTimeout(400);
 
 // Buton geri bildirimi
-const feedback = (await page.locator('.actions .ghost').textContent()).trim();
+const feedback = (await page.locator('.actions .share').textContent()).trim();
 
 /**
  * PANONUN İÇİNİ OKU.

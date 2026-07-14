@@ -25,35 +25,54 @@
   }
 }
 
-// --- Sayılar ---
+// --- Sayılar: dört kart ---
+// Eskiden çıplak sayılardı ve boşlukta duruyorlardı; kart hâlinde
+// gruplanınca hem okunuyor hem de ekranın geri kalanıyla aynı dile konuşuyor.
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: v.$space-2;
+  gap: 7px;
 }
 
 .stat {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
-  text-align: center;
+  padding: 11px 4px;
+
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 
   b {
-    font-size: 22px;
+    font-size: 19px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
   }
 
   span {
-    font-size: 10.5px;
-    line-height: 1.25;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
     color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  // En iyi seri — hafifçe öne çıkar
+  &.best b {
+    color: var(--present);
   }
 }
 
 // --- Dağılım grafiği ---
 .dist-title {
-  margin: v.$space-4 0 v.$space-2;
-  font-size: 11px;
-  letter-spacing: 1.5px;
+  margin: v.$space-4 0 10px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
   text-transform: uppercase;
   color: var(--text-muted);
   text-align: center;
@@ -62,47 +81,77 @@
 .dist {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
+/* Satır: [no] [————— ray + çubuk —————] [adet]
+   Sayıyı çubuğun İÇİNDEN çıkarıp sağa sabitledim: kısa çubuklarda sayı
+   dışarı taşıyor, sıfır satırları da hiç okunmuyordu. Şimdi altı satırın
+   sayısı da aynı sütunda hizalı. */
 .dist-row {
   display: flex;
   align-items: center;
-  gap: v.$space-2;
+  gap: 9px;
 
   .n {
-    width: 12px;
     flex: none;
-    font-size: 12px;
-    font-weight: 700;
+    width: 16px;
+    height: 16px;
+    display: grid;
+    place-items: center;
+
+    font-size: 10.5px;
+    font-weight: 800;
     color: var(--text-muted);
+
+    background: var(--surface-2);
+    border-radius: 5px;
   }
-}
 
-.bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-width: 26px;
-  padding: 2px 7px;
+  .c {
+    flex: none;
+    min-width: 18px;
+    text-align: right;
 
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--on-absent);
-  background: var(--absent);
-  border-radius: 4px;
-
-  transition: width 0.45s ease;
-
-  // O tahmin sayısında hiç kazanılmamış
-  &.zero {
-    width: 26px;
-    opacity: 0.45;
+    font-size: 12px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
   }
 
   // Son kazanılan oyunun satırı
   &.hit {
-    background: var(--correct);
-    color: var(--on-correct);
+    .n {
+      color: var(--on-correct);
+      background: var(--correct);
+    }
+
+    .bar {
+      background: var(--correct);
+    }
+
+    .c {
+      color: var(--correct);
+    }
   }
+}
+
+.track {
+  flex: 1;
+  min-width: 0;
+  height: 10px;
+
+  background: var(--surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  min-width: 0;
+
+  background: var(--absent);
+  border-radius: 999px;
+
+  transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 }

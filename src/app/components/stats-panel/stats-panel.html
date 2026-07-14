@@ -12,16 +12,16 @@
       <span>Oynanan</span>
     </div>
     <div class="stat">
-      <b>{{ statsService.winRate() }}%</b>
+      <b>%{{ statsService.winRate() }}</b>
       <span>Kazanma</span>
     </div>
     <div class="stat">
       <b>{{ stats.currentStreak }}</b>
       <span>Seri</span>
     </div>
-    <div class="stat">
+    <div class="stat best">
       <b>{{ stats.maxStreak }}</b>
-      <span>En iyi seri</span>
+      <span>En iyi</span>
     </div>
   </div>
 
@@ -29,17 +29,16 @@
 
   <div class="dist">
     @for (i of rows; track i) {
-      <div class="dist-row">
+      <!-- Her satır: tahmin sayısı · dolu oranı · adet.
+           Boş satırlarda da RAY görünür → 6 satır hep aynı hizada durur. -->
+      <div class="dist-row" [class.hit]="isHighlighted(i)">
         <span class="n">{{ i + 1 }}</span>
 
-        @if (stats.distribution[i] > 0) {
-          <div class="bar" [class.hit]="isHighlighted(i)" [style.width.%]="barWidth(i)">
-            {{ stats.distribution[i] }}
-          </div>
-        } @else {
-          <!-- hiç kazanılmamış satır: ince boş çubuk -->
-          <div class="bar zero">0</div>
-        }
+        <div class="track">
+          <div class="bar" [style.width.%]="barWidth(i)"></div>
+        </div>
+
+        <span class="c">{{ stats.distribution[i] }}</span>
       </div>
     }
   </div>

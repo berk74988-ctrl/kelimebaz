@@ -146,6 +146,8 @@ Ayrıca **birim testte** bir değişmez (invariant) doğrulanıyor:
 | 15 | **Ek sırası denetlenmiyordu** — `MOR`+`-a`(hâl)+`-n`(iyelik) gibi imkânsız türetmeler geçiyordu. Türkçede sıra kök→çoğul→iyelik→hâl; ihlal eden çözümlemeler elendi | Kabul edilenlerin gözden geçirilmesi |
 | 16 | **Ek-fiil yalnızca fiile geliyordu** — `YOKTU` `ZORDU` `GÜNDÜ` `BENSE` haksız yere reddediliyordu; ek-fiil isme de gelir | Reddedilenlerin sıklığa göre incelenmesi |
 | 17 | **Türkçe olmayan klavyede 6 harf yazılamıyordu** — US QWERTY'de `Ç Ğ Ö Ş Ü İ` tuşu yok; `event.code` konum eşlemesi eklendi | Alfabe denetimi |
+| 18 | **"Sonucu Paylaş" butonu bembeyaz çıkıyordu** — `--accent-2` CSS değişkeni hiç tanımlanmamıştı; geçersiz `linear-gradient` sessizce düşünce buton tarayıcının varsayılan rengine kalıyordu | Ekran görüntüsü incelemesi |
+| 19 | **Buton yazıları WCAG'ı geçmiyordu** — beyaz yazı ham vurgu renginde **3.07:1**, koyu yazı koyulaştırılmış yeşilde **3.21:1** (AA normal metin için 4.5 ister; 14px kalın "büyük metin" sayılmaz). Gradyan uçları düz hex değişkenlere çevrilip koyulaştırıldı, yeşil buton düz renge alındı → 4.78 / 4.86 / 6.35. `contrast-check` artık bu üç çifti de ölçüyor | Kontrast ölçümü |
 
 ---
 

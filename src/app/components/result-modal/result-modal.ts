@@ -52,6 +52,9 @@ export class ResultModal implements AfterViewInit {
   /** Paylaşılacak emoji ızgarasının önizlemesi (harf içermez). */
   protected readonly shareGrid = computed(() => buildShareGrid(this.game.guesses()));
 
+  /** Cevap, harf harf — oyunun kutu diliyle gösterilir. */
+  protected readonly answerLetters = computed(() => [...this.answer()]);
+
   /**
    * Sonucu paylaş: önce cihazın yerel paylaşımını dener (mobil),
    * olmazsa panoya kopyalar. Kopyalama HTTP'de de çalışır (yedek yöntem).

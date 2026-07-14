@@ -19,7 +19,9 @@ describe('ResultModal — sonuç ekranı', () => {
       const el = render('won').nativeElement as HTMLElement;
 
       expect(el.querySelector('.head')?.textContent).toContain('Tebrikler');
-      expect(el.querySelector('.head')?.classList.contains('win')).toBe(true);
+      // Kazanma/kaybetme artık modalın kendisinde işaretli — başlık rengi,
+      // üstteki renk sızıntısı ve cevap kutuları hep bu tek sınıftan besleniyor.
+      expect(el.querySelector('.modal')?.classList.contains('won')).toBe(true);
     });
 
     it('kaç tahminde bulunduğu yazar', () => {
@@ -33,7 +35,7 @@ describe('ResultModal — sonuç ekranı', () => {
       const el = render('lost').nativeElement as HTMLElement;
 
       expect(el.querySelector('.head')?.textContent).toContain('olmadı');
-      expect(el.querySelector('.head')?.classList.contains('lose')).toBe(true);
+      expect(el.querySelector('.modal')?.classList.contains('won')).toBe(false);
     });
 
     it('DOĞRU KELİME gösterilir', () => {
@@ -43,14 +45,14 @@ describe('ResultModal — sonuç ekranı', () => {
   });
 
   describe('butonlar', () => {
-    it('"Yeni oyun" butonu playAgain olayını yayar', () => {
+    it('"Yeni Oyun" butonu playAgain olayını yayar', () => {
       const fixture = render('lost');
       let fired = 0;
       fixture.componentInstance.playAgain.subscribe(() => fired++);
 
       const btn = Array.from(
         (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('.btn'),
-      ).find((b) => b.textContent?.includes('Yeni oyun'));
+      ).find((b) => b.textContent?.includes('Yeni Oyun'));
 
       btn?.click();
       expect(fired).toBe(1);

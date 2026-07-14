@@ -43,41 +43,41 @@ describe('StatsPanel — istatistik ekranı', () => {
       const values = Array.from(el.querySelectorAll('.stat b')).map((b) => b.textContent?.trim());
 
       expect(el.querySelector('.empty')).toBeNull();
-      expect(values).toEqual(['4', '75%', '1', '2']); // oynanan, kazanma, seri, en iyi seri
+      expect(values).toEqual(['4', '%75', '1', '2']); // oynanan, kazanma, seri, en iyi seri
     });
 
     it('dağılım grafiği 6 satır çizer ve sayıları doğru yazar', () => {
       const el = render();
-      const bars = el.querySelectorAll('.bar');
+      // Adet artık çubuğun içinde değil, sağda ayrı sütunda (.c) —
+      // kısa çubuklarda sayı dışarı taşıyordu, sıfır satırları okunmuyordu.
+      const counts = Array.from(el.querySelectorAll('.dist-row .c')).map((c) => c.textContent?.trim());
 
       expect(el.querySelectorAll('.dist-row').length).toBe(6);
-      expect(bars[2].textContent?.trim()).toBe('2'); // 3. tahminde 2 kez kazanıldı
-      expect(bars[4].textContent?.trim()).toBe('1'); // 5. tahminde 1 kez
-      expect(bars[0].textContent?.trim()).toBe('0'); // 1. tahminde hiç
+      expect(counts).toEqual(['0', '0', '2', '0', '1', '0']);
     });
 
-    it('kazanılmamış satırlar "zero" olarak işaretlenir', () => {
+    it('kazanılmamış satırlarda çubuk genişliği sıfırdır', () => {
       const el = render();
-      const bars = el.querySelectorAll('.bar');
+      const bars = el.querySelectorAll<HTMLElement>('.bar');
 
-      expect(bars[0].classList.contains('zero')).toBe(true); // 1. tahmin: hiç
-      expect(bars[2].classList.contains('zero')).toBe(false); // 3. tahmin: var
+      expect(bars[0].style.width).toBe('0%'); // 1. tahmin: hiç kazanılmamış
+      expect(bars[2].style.width).not.toBe('0%'); // 3. tahmin: var
     });
 
     it('DOĞRU SATIRI vurgular', () => {
       const el = render(3); // 3 tahminde kazanıldı
-      const bars = el.querySelectorAll('.bar');
+      const rows = el.querySelectorAll('.dist-row');
 
-      expect(bars[2].classList.contains('hit')).toBe(true); // 3. satır vurgulu
-      expect(bars[0].classList.contains('hit')).toBe(false);
-      expect(bars[4].classList.contains('hit')).toBe(false);
+      expect(rows[2].classList.contains('hit')).toBe(true); // 3. satır vurgulu
+      expect(rows[0].classList.contains('hit')).toBe(false);
+      expect(rows[4].classList.contains('hit')).toBe(false);
     });
 
     it('vurgu yoksa hiçbir satır vurgulanmaz', () => {
       const el = render(null);
 
-      for (const bar of Array.from(el.querySelectorAll('.bar'))) {
-        expect(bar.classList.contains('hit')).toBe(false);
+      for (const row of Array.from(el.querySelectorAll('.dist-row'))) {
+        expect(row.classList.contains('hit')).toBe(false);
       }
     });
 
