@@ -203,7 +203,43 @@
 
 .tools {
   display: flex;
+  align-items: center;
   gap: 7px;
+}
+
+// 🪙 Altın rozeti — mağaza parası, ikonlarla aynı yükseklikte
+.coin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 12px;
+
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+
+  background: color-mix(in srgb, var(--present) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--present) 45%, var(--border));
+  border-radius: 13px;
+  backdrop-filter: blur(8px);
+
+  transition:
+    transform 0.16s cubic-bezier(0.34, 1.5, 0.64, 1),
+    box-shadow 0.16s ease;
+
+  b {
+    font-weight: 800;
+    color: var(--present);
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--present) 25%, transparent);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.94);
+  }
 }
 
 .tool {

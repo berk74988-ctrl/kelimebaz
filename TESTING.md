@@ -111,6 +111,16 @@ Ayrıca **birim testte** bir değişmez (invariant) doğrulanıyor:
 - [x] Metinde **hiç harf yok** (spoiler yok)
 - [x] **HTTP üzerinde bile** panoya kopyalanıyor (yedek yöntem)
 
+### Altın ve görevler (`check:gold`)
+- [x] Oyun kazanınca altın geliyor (oyun + hız + günlük bonusu)
+- [x] Günlük görev tamamlanınca altın ANINDA ödeniyor
+- [x] Aynı görev **ikinci kez ödemiyor** (sayfa yenilense de)
+- [x] Çok adımlı görev (3 oyun oyna) hedefe ulaşınca ödüyor
+- [x] Gün değişince görevler sıfırlanıyor **ama altın kalıyor**
+- [x] Altın ana menüde ve profil sayfasında görünüyor
+- [x] Sayfa yenilenince altın ve görev ilerlemesi duruyor
+- [x] Bozuk kayıt oyunu çökertmiyor; harcama yetersiz bakiyede kasaya dokunmuyor
+
 ### Profil (`check:profile`)
 - [x] Profil sayfası açılıyor; istenen tüm istatistikler ekranda
 - [x] Seviye ve ilerleme çubuğu puandan hesaplanıyor (3.450 puan → Seviye 8)

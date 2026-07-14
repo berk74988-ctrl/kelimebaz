@@ -14,6 +14,7 @@ import { copyText, shareNative } from '../../core/clipboard';
 import { buildShareGrid } from '../../core/share';
 import { GameStatus, MAX_ATTEMPTS } from '../../models/game.model';
 import { GameService } from '../../services/game.service';
+import { GoldService } from '../../services/gold.service';
 import { Countdown } from '../countdown/countdown';
 import { StatsPanel } from '../stats-panel/stats-panel';
 
@@ -27,6 +28,7 @@ import { StatsPanel } from '../stats-panel/stats-panel';
 })
 export class ResultModal implements AfterViewInit {
   private readonly game = inject(GameService);
+  protected readonly gold = inject(GoldService);
 
   readonly status = input.required<GameStatus>();
   readonly answer = input.required<string>();
@@ -54,6 +56,10 @@ export class ResultModal implements AfterViewInit {
 
   /** Cevap, harf harf — oyunun kutu diliyle gösterilir. */
   protected readonly answerLetters = computed(() => [...this.answer()]);
+
+  /** Bu oyunda kazanılan altın — oyunun kendisinden + tamamlanan görevlerden. */
+  protected readonly goldEarned = this.game.goldEarned;
+  protected readonly questGold = this.game.questGold;
 
   /**
    * Sonucu paylaş: önce cihazın yerel paylaşımını dener (mobil),

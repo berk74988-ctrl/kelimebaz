@@ -131,6 +131,52 @@
   animation: flip-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
+/* ---------- 🪙 Kazanılan altın ---------- */
+
+.gold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 11px 14px;
+
+  background: color-mix(in srgb, var(--present) 14%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--present) 40%, var(--border));
+  border-radius: var(--radius);
+
+  animation: coin-pop 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) 0.35s both;
+}
+
+.gc-ico {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.gc-tx {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+
+  b {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--present);
+  }
+
+  span {
+    font-size: 10.5px;
+    color: var(--text-muted);
+  }
+}
+
+@keyframes coin-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
 /* ---------- Günlük: geri sayım ---------- */
 
 .next {

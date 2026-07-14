@@ -10,8 +10,11 @@ import {
   WORD_LENGTH,
 } from '../models/game.model';
 import { evaluateGuess, keyStatesFrom } from '../core/evaluate';
+import { goldForGame } from '../core/gold';
 import { buildShareText } from '../core/share';
 import { trUpper } from '../core/turkish';
+import { GoldService } from './gold.service';
+import { QuestService } from './quest.service';
 import { StatsService } from './stats.service';
 import { WordService } from './word.service';
 
@@ -25,6 +28,8 @@ const SAVE_KEY = 'kelimebaz:game';
 export class GameService {
   private readonly wordService = inject(WordService);
   private readonly stats = inject(StatsService);
+  private readonly gold = inject(GoldService);
+  private readonly quests = inject(QuestService);
 
   // --- Durum (signals) ---
   private readonly _answer = signal('');
@@ -35,12 +40,19 @@ export class GameService {
   private readonly _invalidShake = signal(0); // her geçersiz denemede artar → animasyon tetikler
   private readonly _message = signal('');
 
+  /** Bu oyunda kazanılan TOPLAM altın (oyun + görevler) — sonuç ekranı gösterir. */
+  private readonly _goldEarned = signal(0);
+  /** Bunun ne kadarı günlük görevlerden geldi. */
+  private readonly _questGold = signal(0);
+
   readonly answer = this._answer.asReadonly();
   readonly status = this._status.asReadonly();
   readonly mode = this._mode.asReadonly();
   readonly invalidShake = this._invalidShake.asReadonly();
   readonly message = this._message.asReadonly();
   readonly currentGuess = this._current.asReadonly();
+  readonly goldEarned = this._goldEarned.asReadonly();
+  readonly questGold = this._questGold.asReadonly();
 
   /** Değerlendirilmiş tahmin satırları. */
   readonly guesses = computed<Guess[]>(() =>
@@ -85,6 +97,12 @@ export class GameService {
   /** Yeni oyun başlat (o modun kayıtlı oyunu varsa onu sürdürür). */
   start(mode: GameMode): void {
     this._mode.set(mode);
+    // Bu oyunun altın sayacı sıfırdan başlar — yoksa kaydedilmiş bir oyunu
+    // açınca ÖNCEKİ oyunun kazancı sonuç ekranında tekrar görünürdü.
+    this._goldEarned.set(0);
+    this._questGold.set(0);
+    this.quests.refresh(); // gün dönmüşse görevler tazelensin
+
     const saved = this.load(mode);
 
     if (saved && this.isSameSession(saved, mode)) {
@@ -167,13 +185,35 @@ export class GameService {
 
     if (guess === this._answer()) {
       this._status.set('won');
-      this.stats.record(true, guesses.length);
+      this.endGame(true, guesses.length);
     } else if (guesses.length >= MAX_ATTEMPTS) {
       this._status.set('lost');
-      this.stats.record(false, guesses.length);
+      this.endGame(false, guesses.length);
     }
 
     this.save();
+  }
+
+  /**
+   * Oyun bitti — istatistik, altın ve günlük görevler TAM BİR KEZ işlenir.
+   *
+   * Altın iki kaynaktan gelir ve ikisi de burada toplanır:
+   *   1. Oyunun kendisi (kazanma + hız + günlük bonusu)
+   *   2. O hamlede tamamlanan günlük görevler
+   * Sonuç ekranı bu toplamı gösterir.
+   */
+  private endGame(won: boolean, attempts: number): void {
+    const isDaily = this._mode() === 'daily';
+
+    this.stats.record(won, attempts);
+
+    const fromGame = goldForGame(won, attempts, isDaily);
+    this.gold.earn(fromGame);
+
+    const fromQuests = this.quests.recordGame(won, attempts, isDaily);
+
+    this._goldEarned.set(fromGame + fromQuests);
+    this._questGold.set(fromQuests);
   }
 
   /** Sonucu emoji ızgarası olarak paylaş metnine çevirir (harf içermez). */

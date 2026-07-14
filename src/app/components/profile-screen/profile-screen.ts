@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
 import { PROFILE_STATS } from '../../core/profile-stats';
+import { GoldService } from '../../services/gold.service';
 import { AVATARS, ProfileService } from '../../services/profile.service';
+import { QuestService } from '../../services/quest.service';
 import { StatsService } from '../../services/stats.service';
 import { GuessDistribution } from '../guess-distribution/guess-distribution';
 
@@ -25,6 +27,8 @@ import { GuessDistribution } from '../guess-distribution/guess-distribution';
 export class ProfileScreen {
   protected readonly profile = inject(ProfileService);
   protected readonly statsService = inject(StatsService);
+  protected readonly gold = inject(GoldService);
+  protected readonly questService = inject(QuestService);
 
   readonly back = output<void>();
 

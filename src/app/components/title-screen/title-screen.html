@@ -44,6 +44,17 @@
     </button>
 
     <div class="tools">
+      <!-- 🪙 Altın — mağaza için biriktirilir -->
+      <button
+        class="coin"
+        type="button"
+        [attr.aria-label]="'Altının: ' + gold.balance()"
+        (click)="openProfile.emit()"
+      >
+        <span aria-hidden="true">🪙</span>
+        <b>{{ gold.balance().toLocaleString('tr') }}</b>
+      </button>
+
       <button class="tool" type="button" aria-label="Profil" (click)="openProfile.emit()">👤</button>
       <button class="tool" type="button" aria-label="Ayarlar" (click)="settingsOpen.set(true)">⚙️</button>
     </div>

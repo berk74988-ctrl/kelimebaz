@@ -88,6 +88,75 @@
       </section>
     }
 
+    <!-- ── 🪙 Altın ── -->
+    <section class="card gold">
+      <div class="g-main">
+        <span class="g-ico" aria-hidden="true">🪙</span>
+        <div class="g-tx">
+          <b>{{ gold.balance().toLocaleString('tr') }}</b>
+          <span>Altının</span>
+        </div>
+      </div>
+
+      <div class="g-side">
+        <div class="g-row">
+          <span>Toplam kazanılan</span>
+          <b>{{ gold.earned().toLocaleString('tr') }}</b>
+        </div>
+        <div class="g-row">
+          <span>Harcanan</span>
+          <b>{{ gold.spent().toLocaleString('tr') }}</b>
+        </div>
+      </div>
+
+      <p class="g-note">Altınlarını yakında açılacak mağazada tema, profil çerçevesi ve rozet almak için kullanacaksın.</p>
+    </section>
+
+    <!-- ── 📋 Günlük görevler ── -->
+    <section class="card">
+      <div class="q-head">
+        <h2 class="sec" style="margin: 0">Günlük görevler</h2>
+        <span class="q-count">{{ questService.completedCount() }} / {{ questService.quests.length }}</span>
+      </div>
+
+      <div class="quests">
+        @for (q of questService.view(); track q.quest.id) {
+          <div class="quest" [class.done]="q.done">
+            <span class="q-ico" aria-hidden="true">{{ q.done ? '✓' : q.quest.icon }}</span>
+
+            <div class="q-body">
+              <div class="q-top">
+                <span class="q-label">{{ q.quest.label }}</span>
+                <span class="q-reward">🪙 {{ q.quest.reward }}</span>
+              </div>
+
+              @if (q.quest.goal > 1) {
+                <div
+                  class="q-track"
+                  role="progressbar"
+                  [attr.aria-valuenow]="q.progress"
+                  [attr.aria-valuemin]="0"
+                  [attr.aria-valuemax]="q.quest.goal"
+                  [attr.aria-label]="q.quest.label"
+                >
+                  <div class="q-fill" [style.width.%]="(q.progress / q.quest.goal) * 100"></div>
+                </div>
+                <span class="q-num">{{ q.progress }} / {{ q.quest.goal }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <p class="q-note">
+        @if (questService.allDone()) {
+          Bugünün görevlerinin hepsini bitirdin. Yarın yenileri gelecek.
+        } @else {
+          Görevler her gün yenilenir · bugün toplam 🪙 {{ questService.totalReward }} kazanabilirsin
+        }
+      </p>
+    </section>
+
     <!-- ── İstatistikler — kayıt defterinden çizilir ── -->
     <section class="card">
       <h2 class="sec">İstatistikler</h2>

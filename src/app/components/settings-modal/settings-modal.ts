@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { AudioService } from '../../services/audio.service';
 import { ContrastService } from '../../services/contrast.service';
+import { GoldService } from '../../services/gold.service';
 import { StatsService } from '../../services/stats.service';
 import { ThemeService } from '../../services/theme.service';
 import { WordService } from '../../services/word.service';
@@ -26,6 +27,7 @@ export class SettingsModal implements AfterViewInit {
   protected readonly contrast = inject(ContrastService);
   protected readonly statsService = inject(StatsService);
   protected readonly audio = inject(AudioService);
+  private readonly gold = inject(GoldService);
   private readonly words = inject(WordService);
 
   readonly close = output<void>();
@@ -54,6 +56,11 @@ export class SettingsModal implements AfterViewInit {
 
   protected resetStats(): void {
     // Geri alınamaz bir işlem — onay şart.
-    if (confirm('Tüm istatistiklerin silinecek. Emin misin?')) this.statsService.reset();
+    // Altın da istatistiklerden kazanıldığı için birlikte sıfırlanır; yoksa
+    // "sıfırlanmış" bir profilde altın kalır ve nereden geldiği anlaşılmazdı.
+    if (!confirm('Tüm istatistiklerin ve altının silinecek. Emin misin?')) return;
+
+    this.statsService.reset();
+    this.gold.reset();
   }
 }

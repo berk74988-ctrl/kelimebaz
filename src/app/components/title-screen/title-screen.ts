@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
 import { GameMode } from '../../models/game.model';
 import { GameService } from '../../services/game.service';
+import { GoldService } from '../../services/gold.service';
 import { ProfileService } from '../../services/profile.service';
 import { StatsService } from '../../services/stats.service';
 import { WordService } from '../../services/word.service';
@@ -49,6 +50,7 @@ export class TitleScreen {
   private readonly game = inject(GameService);
   protected readonly profile = inject(ProfileService);
   protected readonly statsService = inject(StatsService);
+  protected readonly gold = inject(GoldService);
 
   readonly play = output<GameMode>();
 

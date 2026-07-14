@@ -360,6 +360,216 @@
   border-radius: var(--radius);
 }
 
+/* ---------- 🪙 Altın kartı ---------- */
+
+.gold {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+
+  // Altın rengiyle hafif boyanır — para olduğu bir bakışta anlaşılsın
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--present) 14%, var(--surface)),
+    var(--surface) 70%
+  );
+  border-color: color-mix(in srgb, var(--present) 35%, var(--border));
+}
+
+.g-main {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.g-ico {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.g-tx {
+  display: flex;
+  flex-direction: column;
+
+  b {
+    font-size: 26px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    color: var(--present);
+  }
+
+  span {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+  }
+}
+
+.g-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.g-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+
+  span {
+    font-size: 11.5px;
+    color: var(--text-muted);
+  }
+
+  b {
+    font-size: 13px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.g-note {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* ---------- 📋 Günlük görevler ---------- */
+
+.q-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.q-count {
+  font-size: 11.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.quests {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quest {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 12px;
+
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+
+  &.done {
+    border-color: color-mix(in srgb, var(--correct) 55%, var(--border));
+    background: color-mix(in srgb, var(--correct) 12%, var(--surface-2));
+
+    .q-ico {
+      color: var(--on-correct);
+      background: var(--correct);
+    }
+
+    .q-label {
+      text-decoration: line-through;
+      opacity: 0.65;
+    }
+
+    .q-reward {
+      color: var(--correct);
+    }
+  }
+}
+
+.q-ico {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+
+  font-size: 15px;
+  font-weight: 800;
+
+  background: var(--bg);
+  border-radius: 50%;
+}
+
+.q-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.q-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.q-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.q-reward {
+  flex: none;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--present);
+}
+
+// Çok adımlı görevlerde ilerleme çubuğu (tek adımlılarda gereksiz)
+.q-track {
+  height: 5px;
+  margin-top: 6px;
+
+  background: var(--bg);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.q-fill {
+  height: 100%;
+  background: var(--present);
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.q-num {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.q-note {
+  margin-top: 11px;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--text-muted);
+}
+
 /* ---------- İstatistik kartları ----------
    Sayı SABİT değil: kayıt defterine yeni bir istatistik eklenince ızgara
    kendiliğinden büyür. auto-fill bu yüzden — sabit sütun sayısı, yedinci
@@ -455,5 +665,16 @@
 
   .s-val {
     font-size: 20px;
+  }
+
+  // Altın kartı: iki sütun dar ekranda sıkışıyor → alt alta
+  .gold {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .g-side {
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
   }
 }

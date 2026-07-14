@@ -53,7 +53,9 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 - ⌨️ **Tam Türk alfabesi** — 29 harf; `İ`/`I` ayrımı doğru. Türkçe klavyesi olmayanlar da `Ç Ğ Ö Ş Ü` yazabilir
 - 📅 **Günün kelimesi** — tarihe göre deterministik, herkese aynı, geri sayımlı
 - 📊 **İstatistikler** — oynanan, kazanma %, seri, tahmin dağılımı
-- 👤 **Profil sayfası** — fotoğraf, ad, **seviye**, puan, bulunan kelime, seriler, tahmin dağılımı (tamamen yerel, hesap yok)
+- 🪙 **Altın** — oyun kazandıkça ve günlük görevleri bitirdikçe birikir; ileride mağazada kozmetik ürünler için harcanacak
+- 📋 **Günlük görevler** — her gün yenilenir, tamamlayınca altın kazandırır
+- 👤 **Profil sayfası** — fotoğraf, ad, **seviye**, puan, altın, bulunan kelime, seriler, tahmin dağılımı (tamamen yerel, hesap yok)
 - 🎵 **Ses** — arka plan müziği + oyun içi efektler, **ayrı ayrı** ayarlanabilir ve kaydedilir
 - ⚙️ **Ayarlar** — ses, tema, renk körü modu, veri sıfırlama
 - 📋 **Spoiler'sız paylaşım** — 🟩🟨⬜ emoji ızgarası
@@ -149,6 +151,10 @@ Bitti — profil sayfası, boş durum ve testler kendiliğinden uyar. Eski kayı
 
 **Puan ve seviye saf fonksiyonlar** (`core/score.ts`, `core/level.ts`). Puan: temel 100 + hız (kalan her hak +20) + seri (×5, en fazla +50). Her seviye bir öncekinden pahalı — `n → n+1` için `100 × n` puan.
 
+**Altın ile puan AYRI para birimleri.** Puan seviye ilerlemesidir, harcanmaz. Altın (`core/gold.ts`) mağaza parasıdır, harcanır. İkisini karıştırmak — altını harcayınca seviyenin düşmesi — saçma olurdu. `GoldService.spend()` yetersiz bakiyede `false` döner ve kasaya dokunmaz; mağaza sadece bunu çağıracak.
+
+**Günlük görevler bir KAYIT DEFTERİNDEN** (`core/quests.ts`) — istatistik kartları gibi. Yeni görev = deftere bir satır. Ödeme bir kez yapılır: tamamlanan görevin kimliği kaydedilir, sayfa yenilense de ikinci kez ödemez. Görevler her gün (oyuncunun yerel günü, günün kelimesiyle aynı ritim) sıfırlanır ama altın kalır.
+
 **Renk mantığı `core/`'da, Angular'dan tamamen bağımsız.** İki geçişli algoritma:
 
 1. Önce **tam isabetler** (🟩) işaretlenir ve o harfler cevabın havuzundan **düşülür**
@@ -166,6 +172,7 @@ Bu sıra sayesinde bir harf **asla iki kez sayılmaz**. Örnek — cevap `KALEM`
 npm test                     # 219 birim test
 npm run check:scenarios      # 22 uçtan uca senaryo × 3 tarayıcı
 npm run check:profile        # profil sayfası, seviye, fotoğraf, kalıcılık
+npm run check:gold           # altın kazancı, günlük görevler, kalıcılık
 npm run check:audio          # müzik, efektler, ses ayarları, kalıcılık
 npm run check:dictionary     # 29 harf + sözlük kabul/ret (gerçek tarayıcı)
 npm run check:responsive     # 8 ekran boyutu

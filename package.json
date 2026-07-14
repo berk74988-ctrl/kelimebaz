@@ -16,6 +16,7 @@
     "screenshots:menu": "node scripts/menu-shots.mjs",
     "screenshots:result": "node scripts/result-shots.mjs",
     "check:profile": "node scripts/profile-check.mjs",
+    "check:gold": "node scripts/gold-check.mjs",
     "check:audio": "node scripts/audio-check.mjs",
     "screenshots:profile": "node scripts/profile-shots.mjs",
     "check:dictionary": "node scripts/dictionary-check.mjs",

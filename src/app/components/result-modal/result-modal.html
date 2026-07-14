@@ -32,6 +32,21 @@
       }
     </div>
 
+    <!-- 🪙 Bu oyunda kazanılan altın (oyun + tamamlanan günlük görevler) -->
+    @if (goldEarned() > 0) {
+      <div class="gold">
+        <span class="gc-ico" aria-hidden="true">🪙</span>
+        <span class="gc-tx">
+          <b>+{{ goldEarned() }} altın</b>
+          @if (questGold() > 0) {
+            <span>{{ goldEarned() - questGold() }} oyundan · {{ questGold() }} günlük görevlerden</span>
+          } @else {
+            <span>Toplam: {{ gold.balance().toLocaleString('tr') }}</span>
+          }
+        </span>
+      </div>
+    }
+
     @if (isDaily()) {
       <div class="next">
         <app-countdown />
