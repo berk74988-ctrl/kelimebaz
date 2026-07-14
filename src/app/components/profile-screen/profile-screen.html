@@ -1,0 +1,120 @@
+<main class="screen">
+  <!-- Üst çubuk -->
+  <header class="bar">
+    <button class="back" type="button" aria-label="Geri dön" (click)="back.emit()">←</button>
+    <h1 class="title">Profil</h1>
+    <span class="spacer" aria-hidden="true"></span>
+  </header>
+
+  <div class="content">
+    <!-- ── Kimlik kartı: fotoğraf · ad · seviye ── -->
+    <section class="card hero">
+      <div class="ph-wrap">
+        <div class="ph" [class.has]="profile.hasPhoto()">
+          @if (profile.hasPhoto()) {
+            <img [src]="profile.photo()" alt="Profil fotoğrafın" />
+          } @else {
+            <span class="ph-emoji" aria-hidden="true">{{ profile.avatar() }}</span>
+          }
+        </div>
+
+        <!-- Dosya girdisi görünmez; tıklanan şey etiket (label) -->
+        <label class="ph-btn" [attr.aria-label]="profile.hasPhoto() ? 'Fotoğrafı değiştir' : 'Fotoğraf yükle'">
+          📷
+          <input type="file" accept="image/*" (change)="onPhoto($event)" />
+        </label>
+      </div>
+
+      <div class="id">
+        <label class="field">
+          <span class="lbl">Kullanıcı adı</span>
+          <input
+            class="inp"
+            type="text"
+            maxlength="16"
+            placeholder="Kelimebaz"
+            [value]="profile.name()"
+            (input)="onName($event)"
+          />
+        </label>
+
+        <!-- Seviye + ilerleme -->
+        <div class="lv">
+          <div class="lv-top">
+            <span class="lv-badge">Seviye {{ level.level }}</span>
+            <span class="lv-num">{{ level.into }} / {{ level.need }} puan</span>
+          </div>
+          <div
+            class="lv-track"
+            role="progressbar"
+            [attr.aria-valuenow]="level.into"
+            [attr.aria-valuemin]="0"
+            [attr.aria-valuemax]="level.need"
+            [attr.aria-label]="'Seviye ' + level.level + ' ilerlemesi'"
+          >
+            <div class="lv-fill" [style.width.%]="level.progress * 100"></div>
+          </div>
+          <p class="lv-hint">Sonraki seviyeye <b>{{ level.remaining }}</b> puan kaldı</p>
+        </div>
+      </div>
+    </section>
+
+    @if (photoError()) {
+      <p class="err" role="alert">{{ photoError() }}</p>
+    }
+
+    <!-- Fotoğraf yoksa avatar seç; varsa kaldırma seçeneği -->
+    @if (profile.hasPhoto()) {
+      <button class="ghost" type="button" (click)="profile.clearPhoto()">
+        Fotoğrafı kaldır, avatara dön
+      </button>
+    } @else {
+      <section class="card">
+        <h2 class="sec">Avatar</h2>
+        <div class="av-row">
+          @for (a of avatars; track a) {
+            <button
+              class="av"
+              type="button"
+              [class.on]="profile.avatar() === a"
+              [attr.aria-pressed]="profile.avatar() === a"
+              [attr.aria-label]="'Avatar ' + a"
+              (click)="profile.setAvatar(a)"
+            >
+              {{ a }}
+            </button>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- ── İstatistikler — kayıt defterinden çizilir ── -->
+    <section class="card">
+      <h2 class="sec">İstatistikler</h2>
+
+      <div class="stats">
+        @for (s of statCards; track s.key) {
+          <div class="stat" [attr.data-stat]="s.key">
+            <span class="s-ico" aria-hidden="true">{{ s.icon }}</span>
+            <b class="s-val">{{ s.value(stats) }}</b>
+            <span class="s-lbl">{{ s.label }}</span>
+            @if (s.hint) {
+              <span class="s-hint">{{ s.hint }}</span>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- ── Tahmin dağılımı ── -->
+    <section class="card">
+      <h2 class="sec">Tahmin dağılımı</h2>
+
+      @if (statsService.isEmpty()) {
+        <p class="empty">İlk oyununu bitir, dağılımın burada oluşsun.</p>
+      } @else {
+        <app-guess-distribution [highlight]="highlight" />
+      }
+    </section>
+  </div>
+</main>

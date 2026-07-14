@@ -141,11 +141,23 @@
   padding: 0;
 }
 
+/**
+ * SAYFA KAYDIRMA.
+ *
+ * Burada `height: 100%` + `overflow-x: hidden` İKİSİ BİRDEN vardı ve bu,
+ * body'yi ekran boyunda KENDİ kaydırma kabına çeviriyordu: ekrandan uzun bir
+ * sayfanın alt kısmına hiç ulaşılamıyordu (profil sayfası bunu ortaya çıkardı —
+ * ekrandan uzun ilk ekran oydu; tahmin dağılımı grafiği erişilemez kalmıştı).
+ *
+ * Doğrusu: yatay taşmayı YALNIZCA html'de kes, dikey akışı belgeye bırak.
+ * Ekranlar kendi yüksekliklerini `min-height: 100dvh` ile zaten kuruyor.
+ */
+html {
+  overflow-x: hidden; // hiçbir ekranda yatay kaydırma olmasın
+}
+
 html,
 body {
-  height: 100%;
-  // Hiçbir ekranda yatay kaydırma olmasın
-  overflow-x: hidden;
   max-width: 100%;
 }
 

@@ -111,6 +111,13 @@ Ayrıca **birim testte** bir değişmez (invariant) doğrulanıyor:
 - [x] Metinde **hiç harf yok** (spoiler yok)
 - [x] **HTTP üzerinde bile** panoya kopyalanıyor (yedek yöntem)
 
+### Profil (`check:profile`)
+- [x] Profil sayfası açılıyor; istenen tüm istatistikler ekranda
+- [x] Seviye ve ilerleme çubuğu puandan hesaplanıyor (3.450 puan → Seviye 8)
+- [x] Fotoğraf yükleniyor, **kareye kırpılıp** 160×160'a küçülüyor, JPEG olarak saklanıyor (~1 KB)
+- [x] Kullanıcı adı, fotoğraf ve seviye sayfa yenilenince geri geliyor
+- [x] 320 / 390 / 768 / 1440 px — yatay kaydırma yok
+
 ### Ses (`check:audio`)
 - [x] `music.mp3` sunuluyor, döngüde çalıyor
 - [x] Otomatik başlatma engellenirse **ilk etkileşimde** kendiliğinden başlıyor
@@ -159,6 +166,8 @@ Ayrıca **birim testte** bir değişmez (invariant) doğrulanıyor:
 | 20 | **Ses ayarları hiç kaydedilmiyordu** — kayıt Angular `effect()` içindeydi; effect yalnızca değişiklik algılaması çalışınca tetiklenir, dolayısıyla ayarlar sessizce kaybolabiliyordu. Kayıt doğrudan ayarlayıcılara alındı | Kalıcılık testi |
 | 21 | **Açılışta uygulama çöküyordu** — `audio.play()` test ortamında (ve eski tarayıcılarda) Promise döndürmüyor; doğrudan `.then()` çağırmak `TypeError` veriyordu | Birim testleri |
 | 22 | **Boş kayıt sesi sıfırlıyordu** — `Number('') === 0`, yani bozuk bir kayıt "ses %0" olarak okunuyordu. Artık boş dizge de varsayılana düşüyor | Birim testleri |
+| 23 | **Ekrandan uzun sayfalar KAYDIRILAMIYORDU** — global stilde `html, body { height: 100%; overflow-x: hidden }` ikisi birden vardı ve bu, body'yi ekran boyunda kendi kaydırma kabına çeviriyordu. `documentElement.scrollHeight` 1254 yerine 844 (ekran yüksekliği) görünüyordu; `window.scrollTo` işlemiyordu. Profil sayfası bunu ortaya çıkardı — ekrandan uzun ilk ekran oydu, tahmin dağılımı grafiğine hiç ulaşılamıyordu. Yatay taşma artık yalnızca `html`'de kesiliyor | Profil sayfası ölçümü |
+| 24 | **Yatay telefonda klavyenin alt sırası kesiliyordu** — 740×360'ta oyun ekranı 153 px taşıyordu, ama #23'teki kırpma bunu GİZLİYORDU: doğrulama betiği "sığıyor" sanıyordu, oysa tuşlara erişilemiyordu. Kırpma düzeltilince görünür oldu. Kutu/tuş taban ölçüleri düşürüldü ve boş uyarı satırı (30 px) akıştan çıkarılıp yüzer hâle getirildi | Responsive denetimi (#23'ü düzeltince ortaya çıktı) |
 
 ---
 

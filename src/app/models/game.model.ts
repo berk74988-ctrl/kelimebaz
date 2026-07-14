@@ -46,6 +46,13 @@ export interface SavedGame {
  *   lastWinAttempts: 4                   // son kazanılan oyun kaç tahminde (grafikte vurgulanır)
  * }
  */
+/**
+ * Oyuncu istatistikleri.
+ *
+ * YENİ ALAN EKLERKEN: buraya bir alan, EMPTY_STATS'a varsayılanı, ve
+ * core/profile-stats.ts'e bir kayıt yeter. Eski kayıtlar StatsService.load()
+ * tarafından varsayılanla tamamlanır — göç kodu yazmaya gerek yok.
+ */
 export interface Stats {
   played: number;
   won: number;
@@ -55,6 +62,10 @@ export interface Stats {
   distribution: number[];
   /** Son kazanılan oyunun tahmin sayısı; hiç kazanılmadıysa null. */
   lastWinAttempts: number | null;
+  /** Toplam puan — seviye bundan hesaplanır (core/level.ts). */
+  points: number;
+  /** Şimdiye kadar tahtaya yazılan geçerli kelime sayısı (kazanılan + kaybedilen). */
+  guesses: number;
 }
 
 export const EMPTY_STATS: Stats = {
@@ -64,6 +75,8 @@ export const EMPTY_STATS: Stats = {
   maxStreak: 0,
   distribution: [0, 0, 0, 0, 0, 0],
   lastWinAttempts: null,
+  points: 0,
+  guesses: 0,
 };
 
 export const WORD_LENGTH = 5;

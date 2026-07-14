@@ -1,0 +1,15 @@
+<div class="dist">
+  @for (i of rows; track i) {
+    <!-- Her satır: tahmin sayısı · dolu oranı · adet.
+         Boş satırlarda da RAY görünür → 6 satır hep aynı hizada durur. -->
+    <div class="dist-row" [class.hit]="isHighlighted(i)">
+      <span class="n">{{ i + 1 }}</span>
+
+      <div class="track">
+        <div class="bar" [style.width.%]="barWidth(i)"></div>
+      </div>
+
+      <span class="c">{{ stats.distribution[i] }}</span>
+    </div>
+  }
+</div>

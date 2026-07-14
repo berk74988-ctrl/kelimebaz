@@ -23,15 +23,19 @@
 
   <!-- ── Üst çubuk: oyuncu · profil · ayarlar ── -->
   <header class="bar">
-    <button class="who" type="button" aria-label="Profil" (click)="profileOpen.set(true)">
-      <span class="who-av" aria-hidden="true">{{ profile.avatar() }}</span>
+    <button class="who" type="button" aria-label="Profil" (click)="openProfile.emit()">
+      <!-- Fotoğraf yüklenmişse o, yoksa emoji avatar -->
+      @if (profile.hasPhoto()) {
+        <img class="who-av ph" [src]="profile.photo()" alt="" />
+      } @else {
+        <span class="who-av" aria-hidden="true">{{ profile.avatar() }}</span>
+      }
+
       <span class="who-tx">
         <b>{{ profile.displayName() }}</b>
         <span>
-          @if (stats.currentStreak > 0) {
-            🔥 {{ stats.currentStreak }} günlük seri
-          } @else if (stats.played > 0) {
-            {{ stats.played }} oyun oynandı
+          @if (stats.played > 0) {
+            Seviye {{ statsService.level().level }} · {{ stats.points.toLocaleString('tr') }} puan
           } @else {
             Hoş geldin
           }
@@ -40,7 +44,7 @@
     </button>
 
     <div class="tools">
-      <button class="tool" type="button" aria-label="Profil" (click)="profileOpen.set(true)">👤</button>
+      <button class="tool" type="button" aria-label="Profil" (click)="openProfile.emit()">👤</button>
       <button class="tool" type="button" aria-label="Ayarlar" (click)="settingsOpen.set(true)">⚙️</button>
     </div>
   </header>
@@ -120,17 +124,17 @@
       </button>
     </nav>
 
-    <!-- İstatistikler — hep görünür (boşken 0), tıklayınca profil açılır -->
+    <!-- İstatistikler — hep görünür (boşken 0), tıklayınca profil SAYFASI açılır -->
     <section class="stats" aria-label="İstatistiklerin">
-      <button class="stat" type="button" aria-label="İstatistikleri göster" (click)="profileOpen.set(true)">
+      <button class="stat" type="button" aria-label="İstatistikleri göster" (click)="openProfile.emit()">
         <b>{{ stats.played }}</b>
         <span>Oyun</span>
       </button>
-      <button class="stat" type="button" aria-label="İstatistikleri göster" (click)="profileOpen.set(true)">
+      <button class="stat" type="button" aria-label="İstatistikleri göster" (click)="openProfile.emit()">
         <b>%{{ statsService.winRate() }}</b>
         <span>Kazanma</span>
       </button>
-      <button class="stat" type="button" aria-label="İstatistikleri göster" (click)="profileOpen.set(true)">
+      <button class="stat" type="button" aria-label="İstatistikleri göster" (click)="openProfile.emit()">
         <b>🔥 {{ stats.currentStreak }}</b>
         <span>Seri</span>
       </button>
@@ -139,9 +143,6 @@
     <p class="foot">📚 {{ dictSize().toLocaleString('tr') }} kelimelik Türkçe sözlük</p>
   </div>
 
-  @if (profileOpen()) {
-    <app-profile-modal (close)="profileOpen.set(false)" />
-  }
   @if (settingsOpen()) {
     <app-settings-modal (close)="settingsOpen.set(false)" />
   }

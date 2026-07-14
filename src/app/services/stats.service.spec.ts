@@ -160,6 +160,79 @@ describe('StatsService', () => {
       expect(s.lastWinAttempts).toBeNull();
       expect(reloaded.winRate()).toBe(60);
     });
+
+    it('PUAN/KELİME alanları sonradan eklendi — eski kayıtlar göç istemez', () => {
+      // Puan sistemi gelmeden önce kaydedilmiş bir oyuncu
+      localStorage.setItem(
+        'kelimebaz:stats',
+        JSON.stringify({ played: 9, won: 7, currentStreak: 2, maxStreak: 4 }),
+      );
+
+      const reloaded = freshService();
+      const s = reloaded.stats();
+
+      expect(s.points).toBe(0); // alan yoktu → sıfırdan başlar
+      expect(s.guesses).toBe(0);
+      expect(reloaded.level().level).toBe(1);
+      expect(s.played).toBe(9); // eski veri KORUNUR
+      expect(s.maxStreak).toBe(4);
+    });
+
+    it('bozuk sayı alanları sıfıra çekilir (oyun sessizce saçmalamaz)', () => {
+      localStorage.setItem(
+        'kelimebaz:stats',
+        JSON.stringify({ played: 3, points: null, guesses: 'çok', maxStreak: -7 }),
+      );
+
+      const s = freshService().stats();
+
+      expect(s.points).toBe(0);
+      expect(s.guesses).toBe(0);
+      expect(s.maxStreak).toBe(0);
+    });
+  });
+
+  describe('puan ve seviye', () => {
+    it('kazanınca puan birikir, kaybedince de az da olsa artar', () => {
+      stats.record(true, 1); // 100 temel + 100 hız + 5 seri(1) = 205
+      expect(stats.stats().points).toBe(205);
+
+      stats.record(false, 6); // +10
+      expect(stats.stats().points).toBe(215);
+    });
+
+    it('seri büyüdükçe aynı tahmin daha çok puan getirir', () => {
+      stats.record(true, 3);
+      const ilk = stats.stats().points;
+
+      stats.record(true, 3); // seri 2 → bonus arttı
+      const ikinci = stats.stats().points - ilk;
+
+      expect(ikinci).toBeGreaterThan(ilk);
+    });
+
+    it('yazılan kelime sayısı her oyunun tahminlerini toplar', () => {
+      stats.record(true, 3); // 3 kelime yazıldı
+      stats.record(false, 6); // 6 kelime daha
+
+      expect(stats.stats().guesses).toBe(9);
+    });
+
+    it('puan biriktikçe seviye atlanır', () => {
+      expect(stats.level().level).toBe(1);
+
+      // 100 puan → seviye 2
+      stats.record(true, 6); // 100 + 5 = 105
+      expect(stats.level().level).toBe(2);
+      expect(stats.level().progress).toBeGreaterThan(0);
+    });
+
+    it('puan sayfa yenilenince korunur', () => {
+      stats.record(true, 2);
+      const beklenen = stats.stats().points;
+
+      expect(freshService().stats().points).toBe(beklenen);
+    });
   });
 
   describe('sıfırlama', () => {

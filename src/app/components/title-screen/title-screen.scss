@@ -171,6 +171,12 @@
 
   background: var(--surface-2);
   border-radius: 50%;
+
+  // Yüklenmiş profil fotoğrafı — daireyi TAM doldurur, ezilmez
+  &.ph {
+    object-fit: cover;
+    border: 1px solid var(--correct);
+  }
 }
 
 .who-tx {

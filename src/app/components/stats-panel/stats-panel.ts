@@ -1,14 +1,17 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
-import { MAX_ATTEMPTS } from '../../models/game.model';
 import { StatsService } from '../../services/stats.service';
+import { GuessDistribution } from '../guess-distribution/guess-distribution';
 
 /**
- * İstatistik paneli: sayılar + tahmin dağılımı grafiği.
- * Hem sonuç ekranında hem de bağımsız istatistik modalında kullanılır.
+ * İstatistik paneli: dört sayı + tahmin dağılımı grafiği.
+ * Sonuç ekranında ve istatistik penceresinde kullanılır.
+ *
+ * (Profil sayfası bu paneli DEĞİL, doğrudan istatistik kayıt defterini kullanır —
+ * orada çok daha fazla sayı gösteriliyor.)
  */
 @Component({
   selector: 'app-stats-panel',
-  imports: [],
+  imports: [GuessDistribution],
   templateUrl: './stats-panel.html',
   styleUrl: './stats-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,20 +25,7 @@ export class StatsPanel {
    */
   readonly highlight = input<number | null>(null);
 
-  protected readonly rows = Array.from({ length: MAX_ATTEMPTS }, (_, i) => i);
-
   protected get stats() {
     return this.statsService.stats();
-  }
-
-  /** Çubuğun genişlik yüzdesi — en yüksek sütuna oranla. */
-  protected barWidth(i: number): number {
-    const value = this.stats.distribution[i];
-    if (value === 0) return 0;
-    return Math.max(8, Math.round((value / this.statsService.maxInDistribution()) * 100));
-  }
-
-  protected isHighlighted(i: number): boolean {
-    return this.highlight() === i + 1;
   }
 }

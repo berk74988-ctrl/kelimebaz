@@ -67,7 +67,7 @@
   }
 }
 
-// --- Dağılım grafiği ---
+// --- Dağılım grafiği başlığı (grafiğin kendisi app-guess-distribution'da) ---
 .dist-title {
   margin: v.$space-4 0 10px;
   font-size: 10.5px;
@@ -76,82 +76,4 @@
   text-transform: uppercase;
   color: var(--text-muted);
   text-align: center;
-}
-
-.dist {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* Satır: [no] [————— ray + çubuk —————] [adet]
-   Sayıyı çubuğun İÇİNDEN çıkarıp sağa sabitledim: kısa çubuklarda sayı
-   dışarı taşıyor, sıfır satırları da hiç okunmuyordu. Şimdi altı satırın
-   sayısı da aynı sütunda hizalı. */
-.dist-row {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-
-  .n {
-    flex: none;
-    width: 16px;
-    height: 16px;
-    display: grid;
-    place-items: center;
-
-    font-size: 10.5px;
-    font-weight: 800;
-    color: var(--text-muted);
-
-    background: var(--surface-2);
-    border-radius: 5px;
-  }
-
-  .c {
-    flex: none;
-    min-width: 18px;
-    text-align: right;
-
-    font-size: 12px;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    color: var(--text-muted);
-  }
-
-  // Son kazanılan oyunun satırı
-  &.hit {
-    .n {
-      color: var(--on-correct);
-      background: var(--correct);
-    }
-
-    .bar {
-      background: var(--correct);
-    }
-
-    .c {
-      color: var(--correct);
-    }
-  }
-}
-
-.track {
-  flex: 1;
-  min-width: 0;
-  height: 10px;
-
-  background: var(--surface-2);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.bar {
-  height: 100%;
-  min-width: 0;
-
-  background: var(--absent);
-  border-radius: 999px;
-
-  transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 }

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ErrorScreen } from './components/error-screen/error-screen';
 import { Game } from './components/game/game';
+import { ProfileScreen } from './components/profile-screen/profile-screen';
 import { TitleScreen } from './components/title-screen/title-screen';
 import { GameMode } from './models/game.model';
 import { AudioService } from './services/audio.service';
@@ -8,11 +9,11 @@ import { ContrastService } from './services/contrast.service';
 import { ThemeService } from './services/theme.service';
 import { WordService } from './services/word.service';
 
-type View = 'title' | 'game';
+type View = 'title' | 'game' | 'profile';
 
 @Component({
   selector: 'app-root',
-  imports: [TitleScreen, Game, ErrorScreen],
+  imports: [TitleScreen, Game, ProfileScreen, ErrorScreen],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,7 +42,7 @@ export class App {
     this.view.set('game');
   }
 
-  protected exit(): void {
-    this.view.set('title');
+  protected show(view: View): void {
+    this.view.set(view);
   }
 }

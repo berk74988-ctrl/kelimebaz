@@ -36,9 +36,9 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 | --- | --- |
 | ![](docs/screenshots/menu-2-masaustu-dolu.png) | ![](docs/screenshots/sonuc-1-kazanma.png) |
 
-| Profil | Ayarlar |
+| Profil sayfası | Ayarlar |
 | --- | --- |
-| ![](docs/screenshots/menu-3-profil.png) | ![](docs/screenshots/menu-4-ayarlar.png) |
+| ![](docs/screenshots/profil-1-masaustu.png) | ![](docs/screenshots/menu-4-ayarlar.png) |
 
 | Renk körü modu | Mobil |
 | --- | --- |
@@ -53,7 +53,7 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 - ⌨️ **Tam Türk alfabesi** — 29 harf; `İ`/`I` ayrımı doğru. Türkçe klavyesi olmayanlar da `Ç Ğ Ö Ş Ü` yazabilir
 - 📅 **Günün kelimesi** — tarihe göre deterministik, herkese aynı, geri sayımlı
 - 📊 **İstatistikler** — oynanan, kazanma %, seri, tahmin dağılımı
-- 👤 **Profil** — oyuncu adı ve avatar (tamamen yerel, hesap yok)
+- 👤 **Profil sayfası** — fotoğraf, ad, **seviye**, puan, bulunan kelime, seriler, tahmin dağılımı (tamamen yerel, hesap yok)
 - 🎵 **Ses** — arka plan müziği + oyun içi efektler, **ayrı ayrı** ayarlanabilir ve kaydedilir
 - ⚙️ **Ayarlar** — ses, tema, renk körü modu, veri sıfırlama
 - 📋 **Spoiler'sız paylaşım** — 🟩🟨⬜ emoji ızgarası
@@ -140,6 +140,15 @@ src/app/
 
 **Kelime ÜRETMEK denendi ve reddedildi.** Kuralları ileri yönde çalıştırıp her kökten her eki türetmek cazipti, ama isabeti %60-70'te tavan yaptı: kök listelerindeki `AB`, `ÖF`, `PO` gibi sahte parçalardan `ABIYI`, `ÖFSÜZ`, `POMDA` üretiyor; ek-fiil her isme gelebildiği için `JELDİ`, `ÇÖLÜZ` gibi dilbilgisel ama var olmayan kelimeler patlıyordu. Gerekçe `turkish-morph.mjs` içinde kayıtlı.
 
+**Profil istatistikleri bir KAYIT DEFTERİNDEN çizilir** (`core/profile-stats.ts`). Şablonda kart tek tek yazılmaz; yeni bir istatistik eklemek için:
+
+1. Gerekiyorsa `Stats`'a alanı ekle (`models/game.model.ts` + `EMPTY_STATS`)
+2. Kayıt defterine bir satır ekle
+
+Bitti — profil sayfası, boş durum ve testler kendiliğinden uyar. Eski kayıtlar göç kodu istemez: `StatsService.load()` eksik alanları varsayılanla tamamlar. Türetilmiş istatistikler (kazanma oranı gibi) `Stats`'ta **alan tutmaz**, kayıt defterinde hesaplanır — aynı sayıyı iki yerde saklamak, ikisinin zamanla ayrışması demektir.
+
+**Puan ve seviye saf fonksiyonlar** (`core/score.ts`, `core/level.ts`). Puan: temel 100 + hız (kalan her hak +20) + seri (×5, en fazla +50). Her seviye bir öncekinden pahalı — `n → n+1` için `100 × n` puan.
+
 **Renk mantığı `core/`'da, Angular'dan tamamen bağımsız.** İki geçişli algoritma:
 
 1. Önce **tam isabetler** (🟩) işaretlenir ve o harfler cevabın havuzundan **düşülür**
@@ -156,6 +165,7 @@ Bu sıra sayesinde bir harf **asla iki kez sayılmaz**. Örnek — cevap `KALEM`
 ```bash
 npm test                     # 219 birim test
 npm run check:scenarios      # 22 uçtan uca senaryo × 3 tarayıcı
+npm run check:profile        # profil sayfası, seviye, fotoğraf, kalıcılık
 npm run check:audio          # müzik, efektler, ses ayarları, kalıcılık
 npm run check:dictionary     # 29 harf + sözlük kabul/ret (gerçek tarayıcı)
 npm run check:responsive     # 8 ekran boyutu

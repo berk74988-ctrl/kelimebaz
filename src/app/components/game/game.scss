@@ -169,3 +169,58 @@ app-board {
     padding-bottom: 4px;
   }
 }
+
+/* ---------- ÇOK kısa ekranlar (yatay telefon: 360 px yükseklik) ----------
+ *
+ * Buradaki alt sınırlar kritik: --tile-size'ın tabanı 40px, --key-h'nin tabanı
+ * 46px'ti. 360 px yüksekliğe 6 satır tahta (240px) + 3 sıra klavye (138px) +
+ * başlık asla sığmıyordu — oyun ekranı 153 px taşıyordu.
+ *
+ * Bu taşma GÖRÜNMÜYORDU çünkü global stil body'yi kırpıyordu: klavyenin alt
+ * sırası ekranın dışında kalıyor ve HİÇ ERİŞİLEMİYORDU. Kırpma düzeltilince
+ * ortaya çıktı. Tabanları düşürerek gerçekten sığdırıyoruz.
+ */
+@media (max-height: 430px) {
+  .game {
+    --tile-size: clamp(24px, 6.2dvh, 34px);
+    --tile-gap: 2px;
+    --key-h: clamp(28px, 8dvh, 38px);
+    --key-gap: 3px;
+
+    position: relative; // yüzen uyarı için çapa
+    gap: 3px;
+    padding: 4px 8px 6px;
+  }
+
+  /* Uyarı satırı BOŞKEN bile 30 px yer kaplıyordu — normalde bu iyi bir şey
+     (mesaj çıkınca tahta zıplamıyor), ama 360 px yükseklikte o 30 px oyunun
+     sığmasıyla sığmamasının farkı. Burada uyarıyı akıştan çıkarıp tahtanın
+     üstüne yüzdürüyoruz: yer kaplamıyor, mesaj yine görünüyor, tahta yine
+     zıplamıyor. */
+  app-toast {
+    position: absolute;
+    top: 40px;
+    left: 8px;
+    right: 8px;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .bar {
+    padding-bottom: 3px;
+  }
+
+  .titles h1 {
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+
+  // Alt başlık ("Serbest Oyun") bu yükseklikte lüks — yeri tahtaya ver
+  .titles p {
+    display: none;
+  }
+
+  .icon {
+    height: 32px;
+  }
+}

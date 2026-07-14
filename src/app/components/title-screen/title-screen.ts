@@ -5,7 +5,6 @@ import { ProfileService } from '../../services/profile.service';
 import { StatsService } from '../../services/stats.service';
 import { WordService } from '../../services/word.service';
 import { Countdown } from '../countdown/countdown';
-import { ProfileModal } from '../profile-modal/profile-modal';
 import { SettingsModal } from '../settings-modal/settings-modal';
 
 /** Arka planda süzülen harf. */
@@ -40,7 +39,7 @@ const FLOATERS: Floater[] = [
 /** Ana menü — oyun adı, mod seçimi, günlük durum, profil ve ayarlar. */
 @Component({
   selector: 'app-title-screen',
-  imports: [Countdown, ProfileModal, SettingsModal],
+  imports: [Countdown, SettingsModal],
   templateUrl: './title-screen.html',
   styleUrl: './title-screen.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,6 +52,9 @@ export class TitleScreen {
 
   readonly play = output<GameMode>();
 
+  /** Profil artık modal değil, kendi SAYFASI — yönlendirmeyi app yapar. */
+  readonly openProfile = output<void>();
+
   protected readonly floaters = FLOATERS;
   protected readonly title = signal('KELİMEBAZ');
   protected readonly dictSize = signal(this.words.dictionarySize);
@@ -63,8 +65,6 @@ export class TitleScreen {
   protected readonly dailyWon = signal(this.game.dailySnapshot()?.status === 'won');
   protected readonly dailyTries = signal(this.game.dailySnapshot()?.guesses.length ?? 0);
 
-  /** Açık pencere — ikisi aynı anda açılamaz. */
-  protected readonly profileOpen = signal(false);
   protected readonly settingsOpen = signal(false);
 
   protected get stats() {
