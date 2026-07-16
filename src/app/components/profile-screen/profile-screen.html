@@ -72,6 +72,19 @@
       </div>
     </section>
 
+    <!-- Seviye ödülü — oyuncu seviyenin ne kazandırdığını görsün -->
+    <div class="lv-reward">
+      <span class="lvr-ico" aria-hidden="true">🏅</span>
+      <span class="lvr-tx">
+        <b>Seviye ödülü · her galibiyette 🪙 +{{ winBonus }}</b>
+        @if (nextWinBonus > winBonus) {
+          <span>Seviye {{ level.level + 1 }}'de 🪙 +{{ nextWinBonus }} olur</span>
+        } @else {
+          <span>En yüksek seviye ödülüne ulaştın 🎉</span>
+        }
+      </span>
+    </div>
+
     @if (photoError()) {
       <p class="err" role="alert">{{ photoError() }}</p>
     }

@@ -38,11 +38,20 @@
         <span class="gc-ico" aria-hidden="true">🪙</span>
         <span class="gc-tx">
           <b>+{{ goldEarned() }} altın</b>
-          @if (questGold() > 0) {
-            <span>{{ goldEarned() - questGold() }} oyundan · {{ questGold() }} günlük görevlerden</span>
-          } @else {
-            <span>Toplam: {{ gold.balance().toLocaleString('tr') }}</span>
-          }
+          <span>
+            @if (levelGold() > 0) {
+              🏅 seviye ödülü +{{ levelGold() }}
+            }
+            @if (levelGold() > 0 && questGold() > 0) {
+              ·
+            }
+            @if (questGold() > 0) {
+              🎯 görevler +{{ questGold() }}
+            }
+            @if (levelGold() === 0 && questGold() === 0) {
+              Toplam: {{ gold.balance().toLocaleString('tr') }}
+            }
+          </span>
         </span>
       </div>
     }

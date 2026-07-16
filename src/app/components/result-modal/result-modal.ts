@@ -57,9 +57,10 @@ export class ResultModal implements AfterViewInit {
   /** Cevap, harf harf — oyunun kutu diliyle gösterilir. */
   protected readonly answerLetters = computed(() => [...this.answer()]);
 
-  /** Bu oyunda kazanılan altın — oyunun kendisinden + tamamlanan görevlerden. */
+  /** Bu oyunda kazanılan altın — oyun + seviye ödülü + tamamlanan görevler. */
   protected readonly goldEarned = this.game.goldEarned;
   protected readonly questGold = this.game.questGold;
+  protected readonly levelGold = this.game.levelGold;
 
   /**
    * Sonucu paylaş: önce cihazın yerel paylaşımını dener (mobil),

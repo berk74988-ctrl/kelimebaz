@@ -334,6 +334,40 @@
   }
 }
 
+/* ---------- Seviye ödülü ---------- */
+
+.lv-reward {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 14px;
+
+  background: linear-gradient(135deg, color-mix(in srgb, var(--present) 16%, var(--surface)), var(--surface) 70%);
+  border: 1px solid color-mix(in srgb, var(--present) 35%, var(--border));
+  border-radius: 14px;
+}
+
+.lvr-ico {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.lvr-tx {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  b {
+    font-size: 13px;
+  }
+
+  span {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+}
+
 /* ---------- Avatar ---------- */
 
 .av-row {

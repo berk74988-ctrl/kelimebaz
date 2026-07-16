@@ -10,7 +10,7 @@ import {
   WORD_LENGTH,
 } from '../models/game.model';
 import { evaluateGuess, keyStatesFrom } from '../core/evaluate';
-import { goldForGame } from '../core/gold';
+import { goldForGame, levelBonus } from '../core/gold';
 import { buildShareText } from '../core/share';
 import { trUpper } from '../core/turkish';
 import { GoldService } from './gold.service';
@@ -40,10 +40,12 @@ export class GameService {
   private readonly _invalidShake = signal(0); // her geçersiz denemede artar → animasyon tetikler
   private readonly _message = signal('');
 
-  /** Bu oyunda kazanılan TOPLAM altın (oyun + görevler) — sonuç ekranı gösterir. */
+  /** Bu oyunda kazanılan TOPLAM altın (oyun + seviye + görevler) — sonuç ekranı gösterir. */
   private readonly _goldEarned = signal(0);
   /** Bunun ne kadarı günlük görevlerden geldi. */
   private readonly _questGold = signal(0);
+  /** Bunun ne kadarı SEVİYE ödülünden geldi (kademeli bonus). */
+  private readonly _levelGold = signal(0);
 
   readonly answer = this._answer.asReadonly();
   readonly status = this._status.asReadonly();
@@ -53,6 +55,7 @@ export class GameService {
   readonly currentGuess = this._current.asReadonly();
   readonly goldEarned = this._goldEarned.asReadonly();
   readonly questGold = this._questGold.asReadonly();
+  readonly levelGold = this._levelGold.asReadonly();
 
   /** Değerlendirilmiş tahmin satırları. */
   readonly guesses = computed<Guess[]>(() =>
@@ -101,6 +104,7 @@ export class GameService {
     // açınca ÖNCEKİ oyunun kazancı sonuç ekranında tekrar görünürdü.
     this._goldEarned.set(0);
     this._questGold.set(0);
+    this._levelGold.set(0);
     this.quests.refresh(); // gün dönmüşse görevler tazelensin
 
     const saved = this.load(mode);
@@ -197,23 +201,29 @@ export class GameService {
   /**
    * Oyun bitti — istatistik, altın ve günlük görevler TAM BİR KEZ işlenir.
    *
-   * Altın iki kaynaktan gelir ve ikisi de burada toplanır:
+   * Altın üç kaynaktan gelir ve hepsi burada toplanır:
    *   1. Oyunun kendisi (kazanma + hız + günlük bonusu)
-   *   2. O hamlede tamamlanan günlük görevler
+   *   2. SEVİYE ödülü — oyuncu seviyesi yükseldikçe artar (kademeli)
+   *   3. O hamlede tamamlanan günlük görevler
    * Sonuç ekranı bu toplamı gösterir.
    */
   private endGame(won: boolean, attempts: number): void {
     const isDaily = this._mode() === 'daily';
 
+    // Seviye ödülü, bu oyunun puanı EKLENMEDEN önceki seviyeyle hesaplanır:
+    // oyuncu bu oyuna hangi seviyeyle girdiyse onun ödülünü hak eder.
+    const level = this.stats.level().level;
+
     this.stats.record(won, attempts);
 
-    const fromGame = goldForGame(won, attempts, isDaily);
+    const fromGame = goldForGame(won, attempts, isDaily, level);
     this.gold.earn(fromGame);
 
     const fromQuests = this.quests.recordGame(won, attempts, isDaily);
 
     this._goldEarned.set(fromGame + fromQuests);
     this._questGold.set(fromQuests);
+    this._levelGold.set(won ? levelBonus(level) : 0);
   }
 
   /** Sonucu emoji ızgarası olarak paylaş metnine çevirir (harf içermez). */

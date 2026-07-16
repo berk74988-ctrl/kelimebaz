@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
+import { levelBonus } from '../../core/gold';
 import { PROFILE_STATS } from '../../core/profile-stats';
 import { itemsByCategory } from '../../core/shop-catalog';
 import { GoldService } from '../../services/gold.service';
@@ -58,6 +59,16 @@ export class ProfileScreen {
 
   protected get level() {
     return this.statsService.level();
+  }
+
+  /** Bu seviyenin galibiyet başına verdiği ek altın (seviye ödülü). */
+  protected get winBonus() {
+    return levelBonus(this.level.level);
+  }
+
+  /** Bir sonraki seviyenin galibiyet başına ek altını — "yükselince ne kazanırım". */
+  protected get nextWinBonus() {
+    return levelBonus(this.level.level + 1);
   }
 
   protected onName(event: Event): void {
