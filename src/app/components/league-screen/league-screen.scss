@@ -1,0 +1,537 @@
+@use '../../../styles/variables' as v;
+
+/* Tek ekran: başlık sabit, içerik SIĞAR (scroll yok). */
+.screen {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ---------- Üst çubuk ---------- */
+
+.bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: v.$space-2;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border-bottom: 1px solid var(--border);
+}
+
+.back {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition:
+    transform 0.16s cubic-bezier(0.34, 1.5, 0.64, 1),
+    background 0.16s ease;
+
+  &:hover {
+    transform: translateX(-2px);
+    background: var(--surface-2);
+  }
+  &:active {
+    transform: scale(0.93);
+  }
+}
+
+.title {
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.coin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--present) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--present) 45%, var(--border));
+  border-radius: 13px;
+
+  b {
+    font-weight: 800;
+    color: var(--present);
+  }
+}
+
+/* ---------- İçerik: tek ekrana sığar, KAYDIRMAZ ---------- */
+
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- Rütbe (yatay) ---------- */
+
+.hero {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--tier) 40%, var(--border));
+  background: radial-gradient(130% 180% at 0% 0%, color-mix(in srgb, var(--tier) 24%, var(--surface)) 0%, var(--surface) 68%);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.emblem {
+  flex: none;
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+  font-size: 36px;
+  line-height: 1;
+  border-radius: 20px;
+  background: radial-gradient(circle at 50% 35%, var(--tier), color-mix(in srgb, var(--tier) 28%, var(--surface-2)));
+  box-shadow:
+    0 6px 18px color-mix(in srgb, var(--tier) 45%, transparent),
+    inset 0 0 0 2px color-mix(in srgb, var(--tier) 55%, transparent);
+}
+
+.hbody {
+  flex: 1;
+  min-width: 0;
+}
+
+.hrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rank {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.3px;
+  color: color-mix(in srgb, var(--tier) 50%, var(--text));
+}
+
+.lp {
+  flex: none;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+
+  b {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--text);
+  }
+}
+
+.track {
+  margin: 9px 0 6px;
+  height: 11px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #000 30%, var(--surface-2));
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--tier) 70%, #fff), var(--tier));
+  transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.next {
+  font-size: 12px;
+  color: var(--text-muted);
+
+  b {
+    color: var(--text);
+    font-weight: 800;
+  }
+}
+
+/* ---------- Meta: sezon + istatistik + ödül ---------- */
+
+.meta {
+  flex: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 13px;
+}
+
+.m-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+}
+
+.s-title {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.s-left {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.s-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+
+.s-cell {
+  text-align: center;
+  padding: 7px 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+
+  b {
+    display: block;
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  span {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+}
+
+.reward-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+  padding: 8px 11px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--present) 12%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--present) 36%, var(--border));
+}
+
+.rs-ico {
+  font-size: 16px;
+  flex: none;
+}
+
+.rs-tx {
+  font-size: 11.5px;
+  color: var(--text);
+  line-height: 1.35;
+
+  b {
+    color: var(--present);
+  }
+}
+
+/* ---------- Lig merdiveni: kalan alanı doldurur (scroll yok) ---------- */
+
+.ladder {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.l-row {
+  flex: 1 1 0;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  &.on {
+    border-color: color-mix(in srgb, var(--tier) 65%, var(--border));
+    background: color-mix(in srgb, var(--tier) 15%, var(--surface));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--tier) 40%, transparent);
+  }
+}
+
+.l-ico {
+  flex: none;
+  font-size: 22px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.l-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: color-mix(in srgb, var(--tier) 45%, var(--text));
+}
+
+.l-here {
+  font-size: 10px;
+  font-weight: 800;
+  color: #06251a;
+  background: var(--tier);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.l-lp {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 🖥️ Masaüstü: 2 sütun (sol: rütbe+meta · sağ: merdiven) ---------- */
+
+@media (min-width: 720px) {
+  .content {
+    max-width: 900px;
+    display: grid;
+    grid-template-columns: 1.02fr 0.98fr;
+    grid-template-areas:
+      'hero ladder'
+      'meta ladder';
+    grid-template-rows: auto 1fr;
+    align-content: center;
+    gap: 14px 16px;
+    padding: 20px 18px;
+  }
+
+  .hero {
+    grid-area: hero;
+  }
+  .meta {
+    grid-area: meta;
+  }
+  .ladder {
+    grid-area: ladder;
+    flex: none;
+    justify-content: center;
+  }
+  .l-row {
+    flex: 0 0 auto;
+    min-height: 48px;
+  }
+}
+
+/* ---------- Kısa ekran / mobil sıkışıklığı (≤620px yükseklik) ---------- */
+
+@media (max-height: 620px) and (max-width: 719px) {
+  .content {
+    gap: 7px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+  .hero {
+    padding: 9px 13px;
+    gap: 11px;
+  }
+  .emblem {
+    width: 46px;
+    height: 46px;
+    font-size: 26px;
+    border-radius: 15px;
+  }
+  .rank {
+    font-size: 17px;
+  }
+  .lp b {
+    font-size: 16px;
+  }
+  .track {
+    height: 9px;
+    margin: 6px 0 4px;
+  }
+  .next {
+    font-size: 11px;
+  }
+  .meta {
+    padding: 9px 11px;
+  }
+  .m-head {
+    margin-bottom: 6px;
+  }
+  .s-cell {
+    padding: 5px 3px;
+    b {
+      font-size: 13px;
+    }
+    span {
+      font-size: 9px;
+    }
+  }
+  .reward-strip {
+    margin-top: 7px;
+    padding: 6px 9px;
+  }
+  .rs-tx {
+    font-size: 11px;
+  }
+  .ladder {
+    gap: 5px;
+  }
+  .l-row {
+    min-height: 30px;
+    padding: 0 11px;
+    gap: 9px;
+  }
+  .l-ico {
+    font-size: 18px;
+  }
+  .l-name {
+    font-size: 12.5px;
+  }
+}
+
+/* ---------- Sezon sonu ödül modalı ---------- */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: var(--backdrop, rgba(0, 0, 0, 0.6));
+  backdrop-filter: blur(3px);
+  animation: fade 0.2s ease;
+}
+
+.reward-modal {
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+  padding: 24px 20px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  animation: pop 0.32s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.rm-emoji {
+  font-size: 56px;
+  line-height: 1;
+  display: block;
+  animation: pop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) 0.1s both;
+}
+
+.rm-title {
+  margin-top: 8px;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.rm-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+
+  b {
+    color: var(--text);
+  }
+}
+
+.rm-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 16px 0 12px;
+
+  div {
+    padding: 9px 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    b {
+      display: block;
+      font-size: 17px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+    span {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+  }
+}
+
+.rm-loot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--present);
+  background: color-mix(in srgb, var(--present) 13%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--present) 40%, var(--border));
+  border-radius: 13px;
+}
+
+.rm-loot-ico {
+  font-size: 20px;
+}
+
+.rm-btn {
+  width: 100%;
+  padding: 13px;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--on-correct, #06251a);
+  background: var(--accent);
+  border-radius: 13px;
+  transition:
+    transform 0.14s cubic-bezier(0.34, 1.5, 0.64, 1),
+    filter 0.15s;
+
+  &:hover {
+    filter: brightness(1.08);
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}

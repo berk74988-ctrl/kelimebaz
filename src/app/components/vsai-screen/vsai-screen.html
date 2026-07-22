@@ -1,0 +1,90 @@
+@if (phase() === 'pick') {
+  <main class="vs-pick">
+    <header class="vs-head">
+      <button class="vs-x" type="button" [attr.aria-label]="i18n.t('common.back')" (click)="exit()">←</button>
+      <h1>🤖 {{ i18n.t('vsai.title') }}</h1>
+    </header>
+    <p class="vs-sub">{{ i18n.t('vsai.pickSub') }}</p>
+
+    <div class="vs-cards">
+      @for (d of diffs; track d) {
+        <button class="vs-card" [attr.data-d]="d" type="button" (click)="start(d)">
+          <span class="vs-card-ic">{{ d === 'easy' ? '🐣' : d === 'medium' ? '⚔️' : '🔥' }}</span>
+          <span class="vs-card-tx">
+            <b>{{ i18n.t('vsai.' + d) }}</b>
+            <span>{{ i18n.t('vsai.' + d + 'Desc') }}</span>
+          </span>
+          <span class="vs-card-go">{{ i18n.t('vsai.play') }} →</span>
+        </button>
+      }
+    </div>
+  </main>
+} @else if (phase() === 'playing') {
+  <!-- Rakip HUD — YZ'nin canlı ilerleyişi (harf yok, sadece renk → cevap sızmaz) -->
+  <div class="vs-hud" [class.won]="aiSolved()" [class.lost]="aiFailed()">
+    <span class="vs-hud-face">🤖</span>
+    <div class="vs-hud-mid">
+      <div class="vs-hud-name">
+        {{ i18n.t('vsai.ai') }} <b class="vs-tag" [attr.data-d]="difficulty()">{{ i18n.t('vsai.' + difficulty()) }}</b>
+      </div>
+      <div class="vs-hud-rows">
+        @for (row of aiRows(); track $index) {
+          <span class="vs-row">
+            @for (st of row.pattern; track $index) { <i class="vs-dot" [class]="st"></i> }
+          </span>
+        }
+        @for (g of aiGhosts(); track g) { <span class="vs-row ghost"></span> }
+      </div>
+    </div>
+    <div class="vs-hud-st">
+      @if (aiSolved()) {
+        <span class="vs-ok">✓ {{ i18n.t('vsai.solved') }}</span>
+      } @else if (aiFailed()) {
+        <span class="vs-fail">✕ {{ i18n.t('vsai.failed') }}</span>
+      } @else if (aiThinking()) {
+        <span class="vs-think">{{ i18n.t('vsai.thinking') }}<i></i><i></i><i></i></span>
+      }
+      <span class="vs-hud-n">{{ aiRows().length }}/{{ MAX }}</span>
+    </div>
+  </div>
+
+  <app-game mode="vsai" [roomAnswer]="word()" (finished)="onHumanFinished($event)" (exit)="exit()" />
+} @else {
+  <main class="vs-result" [attr.data-o]="outcome()">
+    <div class="vs-res-card">
+      <div class="vs-res-emoji">{{ outcome() === 'win' ? '🏆' : outcome() === 'lose' ? '🤖' : '🤝' }}</div>
+      <h2 class="vs-res-title">{{ i18n.t('vsai.' + outcome()) }}</h2>
+      <p class="vs-res-sub">{{ i18n.t('vsai.' + outcome() + 'Sub') }}</p>
+
+      <div class="vs-answer">{{ i18n.t('vsai.answer') }} <b>{{ word() }}</b></div>
+
+      <div class="vs-vs">
+        <div class="vs-side me" [class.winner]="outcome() === 'win'">
+          <div class="vs-side-top">🧑 {{ i18n.t('vsai.you') }}</div>
+          @if (myResult(); as m) {
+            <div class="vs-side-res">{{ m.solved ? '✓ ' + m.attempts + '/' + MAX : '✕' }}</div>
+            <div class="vs-side-time">⏱ {{ clock(m.timeMs) }}</div>
+          }
+        </div>
+        <div class="vs-vs-x">VS</div>
+        <div class="vs-side ai" [class.winner]="outcome() === 'lose'">
+          <div class="vs-side-top">🤖 {{ i18n.t('vsai.' + difficulty()) }}</div>
+          @if (aiResult(); as a) {
+            <div class="vs-side-res">{{ a.solved ? '✓ ' + a.attempts + '/' + MAX : '✕' }}</div>
+            <div class="vs-side-time">⏱ {{ clock(a.timeMs) }}</div>
+          }
+        </div>
+      </div>
+
+      @if (bonus() > 0) {
+        <div class="vs-bonus">🪙 +{{ bonus() }} {{ i18n.t('vsai.bonus') }}</div>
+      }
+
+      <div class="vs-actions">
+        <button class="vs-btn primary" type="button" (click)="again()">🔁 {{ i18n.t('vsai.again') }}</button>
+        <button class="vs-btn ghost" type="button" (click)="toPick()">🎚️ {{ i18n.t('vsai.changeDiff') }}</button>
+        <button class="vs-btn ghost" type="button" (click)="exit()">🏠 {{ i18n.t('vsai.menu') }}</button>
+      </div>
+    </div>
+  </main>
+}

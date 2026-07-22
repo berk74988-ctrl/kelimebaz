@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { Game } from './game';
 import { GameService } from '../../services/game.service';
+import { WordService } from '../../services/word.service';
 
 /**
  * Kenar durum: çok hızlı tuş basımı.
@@ -26,6 +27,9 @@ describe('Hızlı basma / çift onaylama', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({});
     game = TestBed.inject(GameService);
+    // Cevap KALEM DEĞİL: testler 'kalem' tahminini kazanmayan geçerli bir tahmin
+    // olarak kullanıp animasyon/kilit sonrası yazmaya devam ediyor.
+    vi.spyOn(TestBed.inject(WordService), 'randomWordForLevel').mockReturnValue('ÇORBA');
 
     fixture = TestBed.createComponent(Game);
     fixture.componentRef.setInput('mode', 'practice');

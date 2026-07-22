@@ -1,0 +1,1009 @@
+@use '../../../styles/variables' as v;
+
+/* =============================================================
+   ÇOK OYUNCULU ODA — menü · lobi · lider tablosu
+   Tek ekran: yükseklik viewport'a kilitli, içerik ortalı sütun.
+   ============================================================= */
+
+.rs {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: v.$space-2;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.back {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  transition: transform 0.16s cubic-bezier(0.34, 1.5, 0.64, 1), background 0.16s ease;
+
+  &:hover { transform: translateX(-2px); background: var(--surface-2); }
+  &:active { transform: scale(0.93); }
+}
+
+.title {
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.spacer { width: 38px; }
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 12px 16px 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  animation: rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+}
+
+/* ---------- Menü ---------- */
+
+.hero {
+  text-align: center;
+  padding: 8px 0 4px;
+
+  .hero-ico { font-size: 44px; }
+  h2 { margin-top: 8px; font-size: 21px; font-weight: 800; }
+  p { margin-top: 6px; font-size: 13px; color: var(--text-muted); }
+}
+
+.choose {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.big {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 16px;
+  text-align: left;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+
+  transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1), border-color 0.18s ease, box-shadow 0.18s ease;
+
+  &:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3); }
+  &:active { transform: translateY(-1px) scale(0.985); }
+
+  &.primary {
+    background: linear-gradient(135deg, var(--correct), color-mix(in srgb, var(--correct) 68%, #000));
+    border-color: transparent;
+    color: var(--on-correct);
+    box-shadow: 0 10px 26px color-mix(in srgb, var(--correct) 28%, transparent);
+
+    .b-ico { background: rgba(255, 255, 255, 0.18); }
+    .b-tx span { opacity: 0.85; }
+  }
+
+  .b-ico {
+    flex: none;
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+    background: var(--surface-2);
+    border-radius: 12px;
+  }
+
+  .b-tx {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    b { font-size: 16px; font-weight: 800; }
+    span { font-size: 12px; color: var(--text-muted); }
+  }
+}
+
+/* ---------- Kart / form ---------- */
+
+.card {
+  padding: 12px 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sec {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.lbl {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.inp {
+  width: 100%;
+  padding: 10px 12px;
+
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+}
+
+.code-in {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+}
+
+.go {
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 800;
+
+  color: var(--on-correct);
+  background: var(--correct);
+  border-radius: 14px;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--correct) 30%, transparent);
+
+  transition: transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.16s ease;
+
+  &:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.06); }
+  &:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.go.start { margin-top: 2px; }
+
+.link {
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  transition: color 0.15s ease;
+  &:hover { color: var(--text); }
+  &.center { align-self: center; }
+}
+
+.err {
+  padding: 10px 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+  color: #fff;
+  background: var(--danger);
+  border-radius: var(--radius);
+}
+
+/* ---------- Oda kodu kartı ---------- */
+
+.code-card {
+  text-align: center;
+  padding: 11px 13px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), var(--surface) 70%);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 16px;
+}
+
+.cc-lbl {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cc-code {
+  margin: 3px 0 8px;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 8px;
+  text-indent: 8px; // letter-spacing sağdaki boşluğu dengele
+  color: var(--accent);
+}
+
+.cc-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cc-btn {
+  padding: 9px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  transition: transform 0.14s ease, border-color 0.14s ease;
+  &:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); }
+  &:active { transform: scale(0.95); }
+}
+
+.cc-hint {
+  margin-top: 7px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--text-muted);
+  &.center { text-align: center; }
+}
+
+.ro-set {
+  display: flex;
+  gap: 10px;
+  div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border-radius: 12px;
+    span { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+    b { font-size: 15px; }
+  }
+}
+
+/* ---------- Oyuncular ---------- */
+
+.q-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.q-count {
+  font-size: 11.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.plist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  // Çok oyuncu olursa oyuncu listesi kendi içinde kaydırılır, sohbeti ezmez
+  max-height: 128px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.pl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 11px;
+
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+
+  &.me { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); background: color-mix(in srgb, var(--accent) 10%, var(--surface-2)); }
+}
+
+.pl-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text-muted); // varsayılan: hazır değil (gri); .ready → yeşil
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pl-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pl-tag {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  &.you { color: var(--accent); }
+}
+
+.waiting {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 6px;
+}
+
+/* ---------- Lider tablosu ---------- */
+
+.lb-head {
+  text-align: center;
+  padding: 6px 0;
+  .lb-ico { font-size: 40px; }
+  h2 { margin-top: 6px; font-size: 20px; font-weight: 800; }
+  p { margin-top: 4px; font-size: 12.5px; color: var(--text-muted); }
+}
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+
+  &.me { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+  &.top { border-color: color-mix(in srgb, var(--present) 60%, var(--border)); background: color-mix(in srgb, var(--present) 12%, var(--surface)); box-shadow: 0 6px 18px color-mix(in srgb, var(--present) 18%, transparent); }
+}
+
+.rank {
+  flex: none;
+  width: 26px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.r-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  .mini { font-size: 11px; font-weight: 700; color: var(--text-muted); &.you { color: var(--accent); } }
+}
+
+.r-info {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  .r-live { color: var(--correct); font-weight: 700; }
+}
+
+.r-score {
+  flex: none;
+  min-width: 46px;
+  text-align: right;
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--present);
+}
+
+.lb-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* ═══════════ LOBİ (yeniden tasarım) ═══════════ */
+
+.lobby {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Oda kodu başlığı — kod solda, davet butonları sağda */
+.rc {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, var(--surface)), var(--surface) 75%);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 16px;
+}
+
+.rc-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rc-lbl {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.rc-code {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 7px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+/* Tek "Kopyala" butonu — modern yumuşak-dolgu pil */
+.copy-btn {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 15px;
+
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--accent);
+
+  background: color-mix(in srgb, var(--accent) 15%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  border-radius: 999px;
+
+  transition:
+    transform 0.14s cubic-bezier(0.34, 1.5, 0.64, 1),
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+
+  .cb-ico {
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  }
+  &:active {
+    transform: translateY(0) scale(0.95);
+  }
+
+  // Kopyalanınca yeşile döner
+  &.ok {
+    color: var(--correct);
+    background: color-mix(in srgb, var(--correct) 16%, var(--surface));
+    border-color: color-mix(in srgb, var(--correct) 50%, var(--border));
+  }
+}
+
+/* "Oda kodu kopyalandı" bildirimi — ekran altında ortada */
+.copy-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  z-index: 60;
+
+  padding: 11px 18px;
+  font-size: 13.5px;
+  font-weight: 700;
+
+  color: var(--on-toast);
+  background: var(--toast-bg);
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+
+  animation: toast-in 0.25s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(12px);
+  }
+}
+
+/* Ayarlar + oyuncular tek kartta */
+.roomcard {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+
+  padding: 11px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+}
+
+/* Ayarlar şeridi — iki hücre yan yana */
+/* Ayarlar — native select yerine chip seçiciler (koyu-tema uyumlu, okunur) */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.set-block {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  .set-lbl {
+    flex: none;
+    width: 70px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+}
+
+.chips {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.chip {
+  min-width: 30px;
+  padding: 6px 8px;
+
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  transition:
+    transform 0.12s cubic-bezier(0.34, 1.5, 0.64, 1),
+    background 0.14s ease,
+    border-color 0.14s ease,
+    color 0.14s ease;
+
+  &:hover:not(.on):not(.ro) {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+    color: var(--text);
+  }
+
+  &:active:not(.ro) {
+    transform: scale(0.92);
+  }
+
+  // Seçili — vurgu rengiyle dolu, net okunur
+  &.on {
+    color: var(--on-correct);
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+
+  // Salt-okunur (üye görünümü) — seçili değer, tıklanamaz
+  &.ro {
+    cursor: default;
+  }
+}
+
+/* Oyuncular başlığı + hazır sayısı */
+.pl-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 1px;
+}
+
+.pl-title {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.pl-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  b {
+    color: var(--correct);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Hazır durumu — nokta rengi + rozet */
+.pl-dot.ready {
+  background: var(--correct);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--correct) 25%, transparent);
+}
+
+.pl-ready {
+  flex: none;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-muted);
+
+  &.on {
+    color: var(--correct);
+  }
+}
+
+/* Alt eylem çubuğu */
+.actionbar {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ab-hint {
+  font-size: 11px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* Katılan oyuncunun HAZIR toggle butonu */
+.ready-btn.on {
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--correct);
+  box-shadow: none;
+
+  &:hover:not(:disabled) {
+    filter: none;
+    transform: translateY(-1px);
+  }
+}
+
+/* ---------- 🎉 Kazanan kutlaması + konfeti ---------- */
+
+.celebrate {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti {
+  position: absolute;
+  top: -20px;
+  width: 9px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 0.9;
+  animation-name: confetti-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-20px) translateX(0) rotate(var(--rot, 0deg));
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translateY(104vh) translateX(var(--drift, 0px)) rotate(calc(var(--rot, 0deg) + 620deg));
+    opacity: 0.9;
+  }
+}
+
+.winner-head {
+  text-align: center;
+  padding: 8px 0 4px;
+
+  .wh-cup {
+    display: inline-block;
+    font-size: 50px;
+    animation:
+      cup-pop 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both,
+      cup-bob 2.4s ease-in-out 0.7s infinite;
+  }
+
+  h2 {
+    margin-top: 4px;
+    font-size: 23px;
+    font-weight: 800;
+  }
+
+  p {
+    margin-top: 3px;
+    font-size: 13px;
+    color: var(--text-muted);
+    b {
+      color: var(--present);
+      font-size: 15px;
+    }
+  }
+
+  &.mine h2 {
+    color: var(--correct);
+  }
+}
+
+@keyframes cup-pop {
+  from {
+    transform: scale(0.3) rotate(-20deg);
+    opacity: 0;
+  }
+}
+
+@keyframes cup-bob {
+  50% {
+    transform: translateY(-6px) rotate(3deg);
+  }
+}
+
+/* ---------- 🥇 Kürsü ---------- */
+
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  margin: 6px 0 2px;
+}
+
+.pod {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+
+  animation: pod-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  &.pod-1 { animation-delay: 0.14s; }
+  &.pod-2 { animation-delay: 0.04s; }
+  &.pod-3 { animation-delay: 0.24s; }
+
+  &.pod-empty {
+    visibility: hidden;
+  }
+}
+
+.pod-medal {
+  font-size: 26px;
+  line-height: 1;
+}
+.pod-1 .pod-medal {
+  font-size: 34px;
+}
+
+.pod-name {
+  max-width: 100%;
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pod-score {
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--present);
+}
+
+.pod-bar {
+  width: 100%;
+  margin-top: 3px;
+  display: grid;
+  place-items: center;
+
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-muted);
+
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+}
+
+.pod-1 .pod-bar {
+  height: 94px;
+  color: #2a1d05;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--present) 70%, var(--surface)), var(--surface));
+  border-color: color-mix(in srgb, var(--present) 55%, var(--border));
+}
+.pod-2 .pod-bar { height: 66px; }
+.pod-3 .pod-bar { height: 48px; }
+
+.pod.me {
+  .pod-name { color: var(--accent); }
+  .pod-bar { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
+}
+
+@keyframes pod-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+}
+
+.board.rest {
+  margin-top: 4px;
+}
+
+/* ---------- 📊 Oyun sırasında canlı sıralama ---------- */
+
+.live-fab {
+  position: fixed;
+  top: 62px;
+  right: 12px;
+  z-index: 40;
+
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+
+  transition: transform 0.14s ease;
+  &:active { transform: scale(0.92); }
+}
+
+.live-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--on-correct);
+  background: var(--correct);
+  border-radius: 999px;
+}
+
+.live-back {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: start center;
+  padding: 58px 14px 14px;
+  background: var(--backdrop);
+  animation: fade 0.2s ease;
+}
+
+.live-card {
+  width: 100%;
+  max-width: 360px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  animation: rise 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.live-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  b { font-size: 15px; }
+  span { font-size: 11.5px; color: var(--text-muted); }
+}
+
+.board.mini .row {
+  padding: 8px 10px;
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+}
+
+/* ---------- Mobil / kısa ekran ---------- */
+
+@media (max-height: 680px) {
+  .hero { padding: 4px 0 0; .hero-ico { font-size: 36px; } h2 { font-size: 18px; } }
+  .cc-code { font-size: 32px; }
+  .big { padding: 14px; }
+  .wh-cup { font-size: 40px; }
+  .pod-1 .pod-bar { height: 72px; }
+  .pod-2 .pod-bar { height: 52px; }
+  .pod-3 .pod-bar { height: 38px; }
+}

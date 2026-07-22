@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { Game } from './game';
 import { GameService } from '../../services/game.service';
+import { WordService } from '../../services/word.service';
 
 /**
  * Fiziksel klavye (@HostListener('window:keydown')) davranışı.
@@ -27,6 +28,7 @@ describe('Game — fiziksel klavye', () => {
     localStorage.clear();
     TestBed.configureTestingModule({});
     game = TestBed.inject(GameService);
+    vi.spyOn(TestBed.inject(WordService), 'randomWordForLevel').mockReturnValue('KALEM');
 
     fixture = TestBed.createComponent(Game);
     fixture.componentRef.setInput('mode', 'practice');

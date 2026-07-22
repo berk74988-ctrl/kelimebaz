@@ -1,0 +1,27 @@
+<section class="chat" [attr.aria-label]="i18n.t('roomchat.chatLabel')">
+  <div class="msgs" #list role="log" aria-live="polite">
+    @if (messages().length === 0) {
+      <p class="empty">{{ i18n.t('roomchat.empty') }}</p>
+    }
+    @for (m of messages(); track m.id) {
+      <div class="msg" [class.mine]="m.playerId === myId()">
+        <span class="m-name">{{ m.playerId === myId() ? i18n.t('common.you') : m.name }}</span>
+        <span class="m-text">{{ m.text }}</span>
+      </div>
+    }
+  </div>
+
+  <form class="compose" (submit)="$event.preventDefault(); submit()">
+    <input
+      class="c-inp"
+      type="text"
+      maxlength="200"
+      [placeholder]="i18n.t('roomchat.placeholder')"
+      autocomplete="off"
+      [attr.aria-label]="i18n.t('roomchat.inputLabel')"
+      [value]="draft()"
+      (input)="onInput($event)"
+    />
+    <button class="c-send" type="submit" [disabled]="!draft().trim()" [attr.aria-label]="i18n.t('roomchat.send')">➤</button>
+  </form>
+</section>

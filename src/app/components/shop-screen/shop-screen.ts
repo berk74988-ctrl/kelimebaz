@@ -8,6 +8,7 @@ import {
 } from '../../core/shop-catalog';
 import { GoldService } from '../../services/gold.service';
 import { InventoryService } from '../../services/inventory.service';
+import { LanguageService } from '../../services/language.service';
 
 /** Bir ürünün mağazadaki durumu. */
 type ItemState = 'equipped' | 'owned' | 'buyable' | 'locked';
@@ -29,6 +30,7 @@ type ItemState = 'equipped' | 'owned' | 'buyable' | 'locked';
 export class ShopScreen {
   protected readonly gold = inject(GoldService);
   protected readonly inventory = inject(InventoryService);
+  protected readonly i18n = inject(LanguageService);
 
   readonly back = output<void>();
 
@@ -40,8 +42,10 @@ export class ShopScreen {
   /** Kısa süreli geri bildirim: "satın alındı" / "yetersiz altın". */
   protected readonly flash = signal<{ id: string; ok: boolean } | null>(null);
 
-  /** Seçili kategorideki ürünler. */
-  protected readonly items = computed(() => itemsByCategory(this.activeCat()));
+  /** Seçili kategorideki ürünler — sezon-özel ödüller yalnız kazanıldıysa listelenir. */
+  protected readonly items = computed(() =>
+    itemsByCategory(this.activeCat()).filter((i) => !i.seasonOnly || this.inventory.owns(i.id)),
+  );
 
   protected state(item: ShopItem): ItemState {
     if (this.inventory.isEquipped(item.id)) return 'equipped';

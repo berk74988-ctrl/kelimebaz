@@ -2,30 +2,30 @@
   <!-- BOŞ DURUM: henüz hiç oyun bitmemiş -->
   <div class="empty">
     <p class="ico" aria-hidden="true">📊</p>
-    <p class="t">Henüz istatistik yok</p>
-    <p class="s">İlk oyununu bitir, sonuçların burada birikmeye başlasın.</p>
+    <p class="t">{{ i18n.t('statspanel.emptyTitle') }}</p>
+    <p class="s">{{ i18n.t('statspanel.emptySub') }}</p>
   </div>
 } @else {
   <div class="grid">
     <div class="stat">
       <b>{{ stats.played }}</b>
-      <span>Oynanan</span>
+      <span>{{ i18n.t('statspanel.played') }}</span>
     </div>
     <div class="stat">
-      <b>%{{ statsService.winRate() }}</b>
-      <span>Kazanma</span>
+      <b>{{ i18n.lang() === 'en' ? statsService.winRate() + '%' : '%' + statsService.winRate() }}</b>
+      <span>{{ i18n.t('statspanel.winRate') }}</span>
     </div>
     <div class="stat">
       <b>{{ stats.currentStreak }}</b>
-      <span>Seri</span>
+      <span>{{ i18n.t('statspanel.streak') }}</span>
     </div>
     <div class="stat best">
       <b>{{ stats.maxStreak }}</b>
-      <span>En iyi</span>
+      <span>{{ i18n.t('statspanel.best') }}</span>
     </div>
   </div>
 
-  <h3 class="dist-title">Tahmin dağılımı</h3>
+  <h3 class="dist-title">{{ i18n.t('statspanel.distTitle') }}</h3>
 
   <app-guess-distribution [highlight]="highlight()" />
 }

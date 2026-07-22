@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { GameMode } from '../../models/game.model';
 import { GameService } from '../../services/game.service';
 import { GoldService } from '../../services/gold.service';
+import { LeagueService } from '../../services/league.service';
 import { ProfileService } from '../../services/profile.service';
+import { LanguageService } from '../../services/language.service';
 import { StatsService } from '../../services/stats.service';
 import { WordService } from '../../services/word.service';
 import { Countdown } from '../countdown/countdown';
@@ -51,22 +53,40 @@ export class TitleScreen {
   protected readonly profile = inject(ProfileService);
   protected readonly statsService = inject(StatsService);
   protected readonly gold = inject(GoldService);
+  protected readonly league = inject(LeagueService);
+  protected readonly i18n = inject(LanguageService);
 
   readonly play = output<GameMode>();
 
-  /** Profil ve mağaza kendi sayfaları — yönlendirmeyi app yapar. */
+  /** Profil, mağaza, çok oyunculu oda ve lig kendi sayfaları — yönlendirmeyi app yapar. */
   readonly openProfile = output<void>();
   readonly openShop = output<void>();
+  readonly openRoom = output<void>();
+  readonly openLeague = output<void>();
+  readonly openVsAi = output<void>();
 
   protected readonly floaters = FLOATERS;
   protected readonly title = signal('KELİMEBAZ');
-  protected readonly dictSize = signal(this.words.dictionarySize);
   protected readonly dayNo = signal(this.words.dayIndex());
 
-  /** Bugünün günlük bulmacası bitti mi? */
-  protected readonly dailyDone = signal(this.game.dailyDone());
-  protected readonly dailyWon = signal(this.game.dailySnapshot()?.status === 'won');
-  protected readonly dailyTries = signal(this.game.dailySnapshot()?.guesses.length ?? 0);
+  // Dil değişince (i18n.lang() okunduğu için) kendiliğinden güncellenir:
+  // sözlük boyutu ve günün-kelimesi durumu aktif dile göre yeniden hesaplanır.
+  protected readonly dictSize = computed(() => {
+    this.i18n.lang();
+    return this.words.dictionarySize;
+  });
+  protected readonly dailyDone = computed(() => {
+    this.i18n.lang();
+    return this.game.dailyDone();
+  });
+  protected readonly dailyWon = computed(() => {
+    this.i18n.lang();
+    return this.game.dailySnapshot()?.status === 'won';
+  });
+  protected readonly dailyTries = computed(() => {
+    this.i18n.lang();
+    return this.game.dailySnapshot()?.guesses.length ?? 0;
+  });
 
   protected readonly settingsOpen = signal(false);
 

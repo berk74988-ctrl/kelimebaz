@@ -15,9 +15,13 @@
   position: relative;
   width: 100%;
   max-width: 400px;
-  max-height: 92dvh;
+  max-height: 96dvh;
+  padding: 20px v.$space-4 16px;
+
+  // Kısa ekranda içerik 96dvh'yi aşarsa modal KENDİ İÇİNDE kaydırılır →
+  // "Sıfırla" gibi alttaki butonlar hep erişilebilir kalır.
   overflow-y: auto;
-  padding: v.$space-5 v.$space-4 v.$space-4;
+  -webkit-overflow-scrolling: touch;
 
   background: var(--surface);
   border: 1px solid var(--border);
@@ -43,14 +47,14 @@
 }
 
 .head {
-  margin-bottom: v.$space-4;
-  font-size: 20px;
+  margin-bottom: 14px;
+  font-size: 19px;
   text-align: center;
 }
 
 /* --- bölüm başlığı --- */
 .sec {
-  margin: 0 0 8px 2px;
+  margin: 0 0 6px 2px;
   font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 1.2px;
@@ -63,8 +67,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 13px;
-  margin-bottom: 8px;
+  padding: 10px 13px;
+  margin-bottom: 7px;
 
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -139,7 +143,7 @@
 .row.audio {
   flex-direction: column;
   align-items: stretch;
-  gap: 10px;
+  gap: 8px;
 }
 
 .a-head {
@@ -290,15 +294,72 @@
 
 .rule {
   height: 1px;
-  margin: v.$space-3 0;
+  margin: 12px 0;
   background: var(--border);
 }
 
 .foot {
-  margin-top: v.$space-4;
+  margin-top: 14px;
   font-size: 11.5px;
   text-align: center;
   color: var(--text-muted);
+}
+
+/* 🌐 Dil seçici — ikili segment */
+.lang-seg {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.lang-opt {
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-muted);
+  border-radius: 9px;
+  white-space: nowrap;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+
+  &:hover:not(.on) {
+    color: var(--text);
+  }
+
+  &.on {
+    color: var(--on-correct, #06251a);
+    background: var(--accent);
+  }
+}
+
+/* Kısa ekranlarda ayarlar modalı da sığsın — satırlar biraz daha sıkı */
+@media (max-height: 640px) {
+  .modal {
+    padding: 16px v.$space-4 12px;
+  }
+
+  .head {
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+
+  .row {
+    padding: 9px 12px;
+    margin-bottom: 6px;
+  }
+
+  .rule {
+    margin: 9px 0;
+  }
+
+  .foot {
+    margin-top: 10px;
+  }
 }
 
 @keyframes fade {

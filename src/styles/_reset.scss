@@ -148,6 +148,11 @@
   --accent: #f43f5e;
   --accent-2: #fb7185;
 }
+/* 🏆 Şampiyon — sezon ödülü teması (altın → mor) */
+:root[data-skin='champion'] {
+  --accent: #e8b923;
+  --accent-2: #c084fc;
+}
 
 /** Yalnızca ekran okuyucular için — görsel olarak gizli ama okunur. */
 .sr-only {

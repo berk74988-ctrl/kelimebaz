@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { GameService } from './game.service';
 import { WordService } from './word.service';
 import { formatCountdown } from '../components/countdown/countdown';
@@ -104,6 +105,8 @@ describe('Günün Kelimesi', () => {
     });
 
     it('sayfa yenilense de bitmiş günlük oyun korunur', () => {
+      // Bu test 6 GEÇERLİ yanlış tahmin (hep 5 harf) ister → günlük kelimeyi sabitle
+      vi.spyOn(words, 'wordOfTheDay').mockReturnValue('KALEM');
       game.start('daily');
       const answer = game.answer();
       for (const w of wrongWords(answer)) play(w); // kaybetti

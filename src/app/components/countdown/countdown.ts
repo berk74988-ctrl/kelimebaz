@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, inject, signal } from '@angular/core';
+import { LanguageService } from '../../services/language.service';
 import { WordService } from '../../services/word.service';
 
 /** Saat/dakika/saniyeyi iki haneye tamamlar. */
@@ -23,13 +24,14 @@ export function formatCountdown(ms: number): string {
   selector: 'app-countdown',
   imports: [],
   template: `
-    <span class="label">Yeni kelime</span>
+    <span class="label">{{ i18n.t('countdown.newWord') }}</span>
     <time class="clock">{{ text() }}</time>
   `,
   styleUrl: './countdown.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Countdown implements OnDestroy {
+  protected readonly i18n = inject(LanguageService);
   private readonly words = inject(WordService);
 
   protected readonly text = signal(this.current());

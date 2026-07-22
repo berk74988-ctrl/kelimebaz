@@ -22,8 +22,8 @@ export interface Guess {
 /** Oyunun genel durumu. */
 export type GameStatus = 'playing' | 'won' | 'lost';
 
-/** Oyun modu. */
-export type GameMode = 'daily' | 'practice';
+/** Oyun modu. 'room' = çok oyunculu oda yarışı; 'vsai' = yapay zekâ rakibe karşı tek kişilik yarış. */
+export type GameMode = 'daily' | 'practice' | 'room' | 'vsai';
 
 /** localStorage'a yazılan oyun durumu. */
 export interface SavedGame {
@@ -32,6 +32,8 @@ export interface SavedGame {
   answer: string;
   guesses: string[];
   status: GameStatus;
+  /** Kaydın dili — dil değişince eski dildeki oyun sürdürülmez, taze başlar. */
+  lang?: 'tr' | 'en';
 }
 
 /**
@@ -79,5 +81,9 @@ export const EMPTY_STATS: Stats = {
   guesses: 0,
 };
 
+/** Varsayılan/yedek uzunluk. Oyun artık 4-7 harf kullanır (bkz. core/word-length.ts);
+    her oyunun uzunluğu cevabın harf sayısından türetilir. */
 export const WORD_LENGTH = 5;
+export const MIN_WORD_LENGTH = 4;
+export const MAX_WORD_LENGTH = 7;
 export const MAX_ATTEMPTS = 6;

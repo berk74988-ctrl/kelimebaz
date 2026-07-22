@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { GameService } from './game.service';
+import { WordService } from './word.service';
 
 /**
  * Klavye → state → tahta zinciri.
@@ -12,6 +14,7 @@ describe('Klavye girişi → tahta', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({});
+    vi.spyOn(TestBed.inject(WordService), 'randomWordForLevel').mockReturnValue('KALEM');
     game = TestBed.inject(GameService);
     game.reset('practice');
   });

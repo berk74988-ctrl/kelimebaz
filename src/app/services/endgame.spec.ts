@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { GameService } from './game.service';
 import { StatsService } from './stats.service';
 import { WordService } from './word.service';
@@ -15,8 +16,11 @@ describe('Oyun bitişi', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({});
-    game = TestBed.inject(GameService);
     words = TestBed.inject(WordService);
+    // 5 harfli deterministik oyun: hem serbest hem günlük kelimeyi sabitle
+    vi.spyOn(words, 'randomWordForLevel').mockReturnValue('KALEM');
+    vi.spyOn(words, 'wordOfTheDay').mockReturnValue('KALEM');
+    game = TestBed.inject(GameService);
     stats = TestBed.inject(StatsService);
     game.reset('practice');
   });

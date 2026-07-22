@@ -1,5 +1,5 @@
-<div class="keyboard" role="group" aria-label="Klavye">
-  @for (row of rows; track $index) {
+<div class="keyboard" role="group" [attr.aria-label]="i18n.t('keyboard.label')">
+  @for (row of rows(); track $index) {
     <div class="krow">
       @for (key of row; track key) {
         <button
@@ -9,7 +9,7 @@
           [class.correct]="stateOf(key) === 'correct'"
           [class.present]="stateOf(key) === 'present'"
           [class.absent]="stateOf(key) === 'absent'"
-          [attr.aria-label]="key === 'SİL' ? 'Sil' : key"
+          [attr.aria-label]="key === 'SİL' ? i18n.t('keyboard.delete') : key"
           (click)="press(key)"
         >
           @if (key === 'SİL') {

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { tileLabel } from '../../core/a11y';
 import { LetterState } from '../../models/game.model';
+import { LanguageService } from '../../services/language.service';
 
 /**
  * Tek bir harf kutusu.
@@ -45,8 +46,10 @@ export class LetterTile {
   /** Açılma animasyonunun gecikmesi (ms) — harfler sırayla açılsın diye. */
   readonly delay = input(0);
 
-  /** Ekran okuyucu etiketi: "K, doğru yerde" gibi. */
-  protected readonly label = computed(() => tileLabel(this.letter(), this.state()));
+  private readonly i18n = inject(LanguageService);
+
+  /** Ekran okuyucu etiketi: "K, doğru yerde" / "K, correct spot" gibi. */
+  protected readonly label = computed(() => tileLabel(this.letter(), this.state(), this.i18n.lang()));
 
   /** Harf yazılmış ama henüz değerlendirilmemiş. */
   protected isFilled(): boolean {

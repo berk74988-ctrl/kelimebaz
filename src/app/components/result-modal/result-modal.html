@@ -7,26 +7,26 @@
     role="dialog"
     aria-modal="true"
     tabindex="-1"
-    [attr.aria-label]="status() === 'won' ? 'Kazandın' : 'Kaybettin'"
+    [attr.aria-label]="status() === 'won' ? i18n.t('result.ariaWon') : i18n.t('result.ariaLost')"
     (click)="$event.stopPropagation()"
   >
-    <button class="x" type="button" aria-label="Sonuç ekranını kapat" (click)="close.emit()">✕</button>
+    <button class="x" type="button" [attr.aria-label]="i18n.t('result.closeAria')" (click)="close.emit()">✕</button>
 
     <!-- Başlık: sonuç + kaç tahminde -->
     <header class="hero">
       <span class="emoji" aria-hidden="true">{{ status() === 'won' ? '🎉' : '😔' }}</span>
-      <h2 class="head">{{ status() === 'won' ? 'Tebrikler!' : 'Bu sefer olmadı' }}</h2>
+      <h2 class="head">{{ status() === 'won' ? i18n.t('result.titleWon') : i18n.t('result.titleLost') }}</h2>
       <p class="sub">
         @if (status() === 'won') {
-          Kelimeyi <b>{{ attempts() }}/{{ maxAttempts }}</b> tahminde buldun
+          {{ i18n.t('result.wonSub', { n: attempts(), max: maxAttempts }) }}
         } @else {
-          6 hakkın da bitti — doğru kelime şuydu
+          {{ i18n.t('result.lostSub', { max: maxAttempts }) }}
         }
       </p>
     </header>
 
     <!-- Cevap: oyunun kendi kutu diliyle -->
-    <div class="answer" [attr.aria-label]="'Doğru kelime: ' + answer()">
+    <div class="answer" [attr.aria-label]="i18n.t('result.answerAria', { word: answer() })">
       @for (ch of answerLetters(); track $index) {
         <span class="a-tile" aria-hidden="true" [style.animation-delay.ms]="$index * 60">{{ ch }}</span>
       }
@@ -37,21 +37,32 @@
       <div class="gold">
         <span class="gc-ico" aria-hidden="true">🪙</span>
         <span class="gc-tx">
-          <b>+{{ goldEarned() }} altın</b>
+          <b>{{ i18n.t('result.goldEarned', { n: goldEarned() }) }}</b>
           <span>
             @if (levelGold() > 0) {
-              🏅 seviye ödülü +{{ levelGold() }}
+              🏅 {{ i18n.t('result.levelReward', { n: levelGold() }) }}
             }
             @if (levelGold() > 0 && questGold() > 0) {
               ·
             }
             @if (questGold() > 0) {
-              🎯 görevler +{{ questGold() }}
+              🎯 {{ i18n.t('result.questReward', { n: questGold() }) }}
             }
             @if (levelGold() === 0 && questGold() === 0) {
-              Toplam: {{ gold.balance().toLocaleString('tr') }}
+              {{ i18n.t('result.goldTotal', { n: i18n.num(gold.balance()) }) }}
             }
           </span>
+        </span>
+      </div>
+    }
+
+    <!-- 🏆 Lig puanı değişimi -->
+    @if (lpDelta() !== 0) {
+      <div class="lp" [class.down]="lpDelta() < 0">
+        <span class="lp-ico" aria-hidden="true">{{ league.tier().icon }}</span>
+        <span class="lp-tx">
+          <b>{{ lpDelta() > 0 ? '+' : '' }}{{ lpDelta() }} LP</b>
+          <span>{{ league.tier().name }} · {{ league.lp() }} LP</span>
         </span>
       </div>
     }
@@ -59,19 +70,19 @@
     @if (isDaily()) {
       <div class="next">
         <app-countdown />
-        <p class="note">Bugünün bulmacası bitti. Hemen devam etmek istersen "Yeni Oyun" serbest moddan başlar.</p>
+        <p class="note">{{ i18n.t('result.dailyNote') }}</p>
       </div>
     }
 
     <div class="rule"></div>
 
-    <section class="stats" aria-label="İstatistikler">
+    <section class="stats" [attr.aria-label]="i18n.t('result.statsAria')">
       <!-- Kazanılan oyunun satırı grafikte vurgulanır -->
       <app-stats-panel [highlight]="status() === 'won' ? attempts() : null" />
     </section>
 
     <!-- Paylaşılacak ızgaranın önizlemesi — harf yok, spoiler yok -->
-    <pre class="preview" aria-label="Paylaşılacak sonuç">{{ shareGrid() }}</pre>
+    <pre class="preview" [attr.aria-label]="i18n.t('result.previewAria')">{{ shareGrid() }}</pre>
 
     <div class="actions">
       <button
@@ -83,19 +94,19 @@
       >
         @switch (shareState()) {
           @case ('copied') {
-            <span class="b-ico" aria-hidden="true">✓</span> Kopyalandı
+            <span class="b-ico" aria-hidden="true">✓</span> {{ i18n.t('result.copied') }}
           }
           @case ('failed') {
-            <span class="b-ico" aria-hidden="true">✕</span> Kopyalanamadı
+            <span class="b-ico" aria-hidden="true">✕</span> {{ i18n.t('result.copyFailed') }}
           }
           @default {
-            <span class="b-ico" aria-hidden="true">📋</span> Sonucu Paylaş
+            <span class="b-ico" aria-hidden="true">📋</span> {{ i18n.t('result.share') }}
           }
         }
       </button>
 
       <button class="btn again" type="button" (click)="playAgain.emit()">
-        <span class="b-ico" aria-hidden="true">🔄</span> Yeni Oyun
+        <span class="b-ico" aria-hidden="true">🔄</span> {{ i18n.t('result.playAgain') }}
       </button>
     </div>
   </div>

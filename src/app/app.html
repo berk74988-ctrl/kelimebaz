@@ -1,11 +1,24 @@
 @if (!ready()) {
   <app-error-screen />
 } @else if (view() === 'title') {
-  <app-title-screen (play)="play($event)" (openProfile)="show('profile')" (openShop)="show('shop')" />
+  <app-title-screen
+    (play)="play($event)"
+    (openProfile)="show('profile')"
+    (openShop)="show('shop')"
+    (openRoom)="show('room')"
+    (openLeague)="show('league')"
+    (openVsAi)="show('vsai')"
+  />
 } @else if (view() === 'profile') {
   <app-profile-screen (back)="show('title')" (openShop)="show('shop')" />
 } @else if (view() === 'shop') {
   <app-shop-screen (back)="show('title')" />
+} @else if (view() === 'room') {
+  <app-room-screen (back)="show('title')" />
+} @else if (view() === 'league') {
+  <app-league-screen (back)="show('title')" />
+} @else if (view() === 'vsai') {
+  <app-vsai-screen (back)="show('title')" />
 } @else {
   <app-game [mode]="mode()" (exit)="show('title')" />
 }

@@ -100,6 +100,23 @@ export class InventoryService {
   }
 
   /**
+   * Ödül olarak ücretsiz verir (altın HARCAMAZ). Sezon ödülleri bunu kullanır.
+   * @param autoEquip true ise ürünü hemen kullanıma alır (rozetlerde uygun; temalarda
+   *   kullanıcının mevcut temasını değiştirmemek için genelde false).
+   * @returns geçerli bir ürünse true.
+   */
+  grant(id: string, autoEquip = false): boolean {
+    const item = shopItem(id);
+    if (!item) return false;
+    if (!this.owns(id)) {
+      this._owned.update((s) => new Set(s).add(id));
+      this.saveOwned();
+    }
+    if (autoEquip) this.equip(id);
+    return true;
+  }
+
+  /**
    * Sahip olunan ürünü kullanıma alır.
    * @returns başarılı mı (sahip değilse false)
    */

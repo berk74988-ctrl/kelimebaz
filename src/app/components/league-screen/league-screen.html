@@ -1,0 +1,90 @@
+<main class="screen">
+  <!-- Üst çubuk: geri · başlık · altın -->
+  <header class="bar">
+    <button class="back" type="button" [attr.aria-label]="i18n.t('common.backTitle')" (click)="back.emit()">←</button>
+    <h1 class="title">{{ i18n.t('league.title') }}</h1>
+    <div class="coin" [attr.aria-label]="i18n.t('league.goldAria', { n: gold.balance() })">
+      <span aria-hidden="true">🪙</span>
+      <b>{{ i18n.num(gold.balance()) }}</b>
+    </div>
+  </header>
+
+  <div class="content">
+    <!-- ── Rütbe (yatay: amblem + isim/LP + ilerleme) ── -->
+    <section class="hero" [style.--tier]="league.tier().color">
+      <div class="emblem" aria-hidden="true"><span>{{ league.tier().icon }}</span></div>
+      <div class="hbody">
+        <div class="hrow">
+          <h2 class="rank">{{ i18n.t('tier.' + league.tier().id) }}</h2>
+          <span class="lp"><b>{{ i18n.num(league.lp()) }}</b> LP</span>
+        </div>
+        <div class="track" role="progressbar" [attr.aria-valuenow]="league.lp()">
+          <div class="fill" [style.width.%]="league.progress() * 100"></div>
+        </div>
+        <p class="next">
+          @if (league.toNextTier() > 0) {
+            {{ i18n.t('league.nextTier', { n: league.toNextTier() }) }}
+          } @else {
+            {{ i18n.t('league.topTier') }} 👑
+          }
+        </p>
+      </div>
+    </section>
+
+    <!-- ── Sezon + istatistik + ödül ── -->
+    <section class="meta">
+      <div class="m-head">
+        <span class="s-title">{{ i18n.t('league.season', { n: league.season() }) }}</span>
+        <span class="s-left">⏳ {{ i18n.t('league.daysLeft', { n: league.daysLeft() }) }}</span>
+      </div>
+      <div class="s-stats">
+        <div class="s-cell"><b>{{ league.wins() }}</b><span>{{ i18n.t('league.wins') }}</span></div>
+        <div class="s-cell"><b>{{ league.losses() }}</b><span>{{ i18n.t('league.losses') }}</span></div>
+        <div class="s-cell"><b>{{ i18n.lang() === 'en' ? winRate() + '%' : '%' + winRate() }}</b><span>{{ i18n.t('league.winRate') }}</span></div>
+        <div class="s-cell"><b>{{ league.peakLp() }}</b><span>{{ i18n.t('league.peak') }}</span></div>
+      </div>
+      <div class="reward-strip">
+        <span class="rs-ico" aria-hidden="true">🎁</span>
+        <span class="rs-tx"><b>{{ i18n.t('league.seasonReward') }}</b> {{ i18n.t('reward.' + league.tier().id) }}</span>
+      </div>
+    </section>
+
+    <!-- ── Lig merdiveni ── -->
+    <section class="ladder" [attr.aria-label]="i18n.t('league.laddersAria')">
+      @for (t of league.tiers; track t.id) {
+        <div class="l-row" [class.on]="t.id === league.tier().id" [style.--tier]="t.color">
+          <span class="l-ico" aria-hidden="true">{{ t.icon }}</span>
+          <span class="l-name">{{ i18n.t('tier.' + t.id) }}</span>
+          @if (t.id === league.tier().id) {
+            <span class="l-here">{{ i18n.t('league.youAreHere') }}</span>
+          }
+          <span class="l-lp">{{ tierRange(t) }} LP</span>
+        </div>
+      }
+    </section>
+  </div>
+
+  <!-- ── Sezon sonu ödül modalı ── -->
+  @if (league.pending(); as p) {
+    <div class="backdrop" (click)="claim()">
+      <div class="reward-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <span class="rm-emoji" aria-hidden="true">{{ p.icon }}</span>
+        <h2 class="rm-title">{{ i18n.t('league.seasonComplete', { n: p.season }) }}</h2>
+        <p class="rm-sub">{{ i18n.t('league.finishedIn', { tier: i18n.t('tier.' + p.tierId) }) }}</p>
+
+        <div class="rm-stats">
+          <div><b>{{ p.wins }}</b><span>{{ i18n.t('league.wins') }}</span></div>
+          <div><b>{{ p.losses }}</b><span>{{ i18n.t('league.losses') }}</span></div>
+          <div><b>{{ p.peakLp }}</b><span>{{ i18n.t('league.peakLp') }}</span></div>
+        </div>
+
+        <div class="rm-loot">
+          <span class="rm-loot-ico" aria-hidden="true">🎁</span>
+          <span>{{ i18n.t('reward.' + p.tierId) }}</span>
+        </div>
+
+        <button class="rm-btn" type="button" (click)="claim()">{{ i18n.t('league.claimReward') }}</button>
+      </div>
+    </div>
+  }
+</main>

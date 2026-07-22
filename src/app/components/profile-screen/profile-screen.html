@@ -1,16 +1,18 @@
 <main class="screen">
   <!-- Üst çubuk -->
   <header class="bar">
-    <button class="back" type="button" aria-label="Geri dön" (click)="back.emit()">←</button>
-    <h1 class="title">Profil</h1>
-    <span class="spacer" aria-hidden="true"></span>
+    <button class="back" type="button" [attr.aria-label]="i18n.t('common.backTitle')" (click)="back.emit()">←</button>
+    <h1 class="title">{{ i18n.t('profile.title') }}</h1>
+    <button class="coin" type="button" [attr.aria-label]="i18n.t('profile.openShop')" (click)="openShop.emit()">
+      <span aria-hidden="true">🪙</span>
+      <b>{{ i18n.num(gold.balance()) }}</b>
+    </button>
   </header>
 
   <div class="content">
-    <!-- ── Kimlik kartı: fotoğraf · ad · seviye ── -->
-    <section class="card hero">
+    <!-- ── Kimlik başlığı — hep görünür ── -->
+    <section class="hero">
       <div class="ph-wrap">
-        <!-- Kullanımdaki ÇERÇEVE, fotoğrafı/avatarı sarar. transparent → çerçevesiz -->
         <div
           class="ph-frame"
           [class.framed]="frame() !== 'transparent'"
@@ -18,203 +20,176 @@
         >
           <div class="ph" [class.has]="profile.hasPhoto()">
             @if (profile.hasPhoto()) {
-              <img [src]="profile.photo()" alt="Profil fotoğrafın" />
+              <img [src]="profile.photo()" [attr.alt]="i18n.t('profile.photoAlt')" />
             } @else {
               <span class="ph-emoji" aria-hidden="true">{{ profile.avatar() }}</span>
             }
           </div>
         </div>
 
-        <!-- Dosya girdisi görünmez; tıklanan şey etiket (label) -->
-        <label class="ph-btn" [attr.aria-label]="profile.hasPhoto() ? 'Fotoğrafı değiştir' : 'Fotoğraf yükle'">
+        <label class="ph-btn" [attr.aria-label]="profile.hasPhoto() ? i18n.t('profile.photoChange') : i18n.t('profile.photoUpload')">
           📷
           <input type="file" accept="image/*" (change)="onPhoto($event)" />
         </label>
       </div>
 
       <div class="id">
-        <label class="field">
-          <span class="lbl">Kullanıcı adı</span>
-          <div class="name-row">
-            <input
-              class="inp"
-              type="text"
-              maxlength="16"
-              placeholder="Kelimebaz"
-              [value]="profile.name()"
-              (input)="onName($event)"
-            />
-            <!-- Kullanımdaki ROZET, adın yanında -->
-            @if (badge()) {
-              <span class="name-badge" [attr.aria-label]="'Rozet'">{{ badge() }}</span>
-            }
-          </div>
-        </label>
-
-        <!-- Seviye + ilerleme -->
-        <div class="lv">
-          <div class="lv-top">
-            <span class="lv-badge">Seviye {{ level.level }}</span>
-            <span class="lv-num">{{ level.into }} / {{ level.need }} puan</span>
-          </div>
-          <div
-            class="lv-track"
-            role="progressbar"
-            [attr.aria-valuenow]="level.into"
-            [attr.aria-valuemin]="0"
-            [attr.aria-valuemax]="level.need"
-            [attr.aria-label]="'Seviye ' + level.level + ' ilerlemesi'"
-          >
-            <div class="lv-fill" [style.width.%]="level.progress * 100"></div>
-          </div>
-          <p class="lv-hint">Sonraki seviyeye <b>{{ level.remaining }}</b> puan kaldı</p>
+        <div class="name-row">
+          <input
+            class="inp"
+            type="text"
+            maxlength="16"
+            placeholder="Kelimebaz"
+            [attr.aria-label]="i18n.t('profile.nameLabel')"
+            [value]="profile.name()"
+            (input)="onName($event)"
+          />
+          @if (badge()) {
+            <span class="name-badge" [attr.aria-label]="i18n.t('profile.badge')">{{ badge() }}</span>
+          }
         </div>
+
+        <div class="lv-top">
+          <span class="lv-badge">{{ i18n.t('profile.level', { level: level.level }) }}</span>
+          <span class="lv-num">{{ i18n.t('profile.levelPoints', { into: level.into, need: level.need }) }}</span>
+        </div>
+        <div
+          class="lv-track"
+          role="progressbar"
+          [attr.aria-valuenow]="level.into"
+          [attr.aria-valuemin]="0"
+          [attr.aria-valuemax]="level.need"
+          [attr.aria-label]="i18n.t('profile.levelProgress', { level: level.level })"
+        >
+          <div class="lv-fill" [style.width.%]="level.progress * 100"></div>
+        </div>
+
+        <p class="lv-reward">
+          <span aria-hidden="true">🏅</span>
+          {{ i18n.t('profile.everyWin') }} <b>🪙 +{{ winBonus }}</b>
+          @if (nextWinBonus > winBonus) {
+            {{ i18n.t('profile.nextLevelBonus', { bonus: nextWinBonus }) }}
+          }
+        </p>
       </div>
     </section>
-
-    <!-- Seviye ödülü — oyuncu seviyenin ne kazandırdığını görsün -->
-    <div class="lv-reward">
-      <span class="lvr-ico" aria-hidden="true">🏅</span>
-      <span class="lvr-tx">
-        <b>Seviye ödülü · her galibiyette 🪙 +{{ winBonus }}</b>
-        @if (nextWinBonus > winBonus) {
-          <span>Seviye {{ level.level + 1 }}'de 🪙 +{{ nextWinBonus }} olur</span>
-        } @else {
-          <span>En yüksek seviye ödülüne ulaştın 🎉</span>
-        }
-      </span>
-    </div>
 
     @if (photoError()) {
       <p class="err" role="alert">{{ photoError() }}</p>
     }
 
-    <!-- Fotoğraf yoksa avatar seç; varsa kaldırma seçeneği -->
-    @if (profile.hasPhoto()) {
-      <button class="ghost" type="button" (click)="profile.clearPhoto()">
-        Fotoğrafı kaldır, avatara dön
+    <!-- ── Sekmeler ── -->
+    <nav class="segs" [attr.aria-label]="i18n.t('profile.sections')">
+      <button class="seg" type="button" [class.on]="tab() === 'stats'" [attr.aria-pressed]="tab() === 'stats'" (click)="tab.set('stats')">
+        📊 {{ i18n.t('profile.tabStats') }}
       </button>
-    } @else {
-      <section class="card">
-        <h2 class="sec">Avatar</h2>
-        <div class="av-row">
-          @for (a of ownedAvatars(); track a.id) {
-            <button
-              class="av"
-              type="button"
-              [class.on]="inventory.isEquipped(a.id)"
-              [attr.aria-pressed]="inventory.isEquipped(a.id)"
-              [attr.aria-label]="a.name"
-              (click)="inventory.equip(a.id)"
-            >
-              {{ a.preview }}
-            </button>
-          }
-        </div>
-        <button class="shop-link" type="button" (click)="openShop.emit()">
-          🛒 Mağazadan daha fazla avatar
-        </button>
-      </section>
-    }
-
-    <!-- ── 🪙 Altın ── -->
-    <section class="card gold">
-      <div class="g-main">
-        <span class="g-ico" aria-hidden="true">🪙</span>
-        <div class="g-tx">
-          <b>{{ gold.balance().toLocaleString('tr') }}</b>
-          <span>Altının</span>
-        </div>
-      </div>
-
-      <div class="g-side">
-        <div class="g-row">
-          <span>Toplam kazanılan</span>
-          <b>{{ gold.earned().toLocaleString('tr') }}</b>
-        </div>
-        <div class="g-row">
-          <span>Harcanan</span>
-          <b>{{ gold.spent().toLocaleString('tr') }}</b>
-        </div>
-      </div>
-
-      <button class="g-shop" type="button" (click)="openShop.emit()">
-        🛒 Mağazayı aç
+      <button class="seg" type="button" [class.on]="tab() === 'quests'" [attr.aria-pressed]="tab() === 'quests'" (click)="tab.set('quests')">
+        🎯 {{ i18n.t('profile.tabQuests') }}
       </button>
-    </section>
+      <button class="seg" type="button" [class.on]="tab() === 'avatar'" [attr.aria-pressed]="tab() === 'avatar'" (click)="tab.set('avatar')">
+        🎨 {{ i18n.t('profile.tabAvatar') }}
+      </button>
+    </nav>
 
-    <!-- ── 📋 Günlük görevler ── -->
-    <section class="card">
-      <div class="q-head">
-        <h2 class="sec" style="margin: 0">Günlük görevler</h2>
-        <span class="q-count">{{ questService.completedCount() }} / {{ questService.quests.length }}</span>
-      </div>
-
-      <div class="quests">
-        @for (q of questService.view(); track q.quest.id) {
-          <div class="quest" [class.done]="q.done">
-            <span class="q-ico" aria-hidden="true">{{ q.done ? '✓' : q.quest.icon }}</span>
-
-            <div class="q-body">
-              <div class="q-top">
-                <span class="q-label">{{ q.quest.label }}</span>
-                <span class="q-reward">🪙 {{ q.quest.reward }}</span>
+    <!-- ── Sekme gövdesi ── -->
+    <div class="panel">
+      @switch (tab()) {
+        <!-- İSTATİSTİK -->
+        @case ('stats') {
+          <div class="stats">
+            @for (s of statCards; track s.key) {
+              <div class="stat" [attr.data-stat]="s.key">
+                <span class="s-ico" aria-hidden="true">{{ s.icon }}</span>
+                <b class="s-val">{{ s.value(stats, i18n.lang()) }}</b>
+                <span class="s-lbl">{{ i18n.t('stat.' + s.key) }}</span>
               </div>
-
-              @if (q.quest.goal > 1) {
-                <div
-                  class="q-track"
-                  role="progressbar"
-                  [attr.aria-valuenow]="q.progress"
-                  [attr.aria-valuemin]="0"
-                  [attr.aria-valuemax]="q.quest.goal"
-                  [attr.aria-label]="q.quest.label"
-                >
-                  <div class="q-fill" [style.width.%]="(q.progress / q.quest.goal) * 100"></div>
-                </div>
-                <span class="q-num">{{ q.progress }} / {{ q.quest.goal }}</span>
-              }
-            </div>
+            }
           </div>
-        }
-      </div>
 
-      <p class="q-note">
-        @if (questService.allDone()) {
-          Bugünün görevlerinin hepsini bitirdin. Yarın yenileri gelecek.
-        } @else {
-          Görevler her gün yenilenir · bugün toplam 🪙 {{ questService.totalReward }} kazanabilirsin
-        }
-      </p>
-    </section>
-
-    <!-- ── İstatistikler — kayıt defterinden çizilir ── -->
-    <section class="card">
-      <h2 class="sec">İstatistikler</h2>
-
-      <div class="stats">
-        @for (s of statCards; track s.key) {
-          <div class="stat" [attr.data-stat]="s.key">
-            <span class="s-ico" aria-hidden="true">{{ s.icon }}</span>
-            <b class="s-val">{{ s.value(stats) }}</b>
-            <span class="s-lbl">{{ s.label }}</span>
-            @if (s.hint) {
-              <span class="s-hint">{{ s.hint }}</span>
+          <div class="dist">
+            <h2 class="sec">{{ i18n.t('profile.distribution') }}</h2>
+            @if (statsService.isEmpty()) {
+              <p class="empty">{{ i18n.t('profile.distributionEmpty') }}</p>
+            } @else {
+              <app-guess-distribution [highlight]="highlight" />
             }
           </div>
         }
-      </div>
-    </section>
 
-    <!-- ── Tahmin dağılımı ── -->
-    <section class="card">
-      <h2 class="sec">Tahmin dağılımı</h2>
+        <!-- GÜNLÜK GÖREVLER -->
+        @case ('quests') {
+          <div class="q-head">
+            <h2 class="sec" style="margin: 0">{{ i18n.t('profile.dailyQuests') }}</h2>
+            <span class="q-count">{{ questService.completedCount() }} / {{ questService.quests.length }}</span>
+          </div>
 
-      @if (statsService.isEmpty()) {
-        <p class="empty">İlk oyununu bitir, dağılımın burada oluşsun.</p>
-      } @else {
-        <app-guess-distribution [highlight]="highlight" />
+          <div class="quests">
+            @for (q of questService.view(); track q.quest.id) {
+              <div class="quest" [class.done]="q.done">
+                <span class="q-ico" aria-hidden="true">{{ q.done ? '✓' : q.quest.icon }}</span>
+                <div class="q-body">
+                  <div class="q-top">
+                    <span class="q-label">{{ i18n.t('quest.' + q.quest.id) }}</span>
+                    <span class="q-reward">🪙 {{ q.quest.reward }}</span>
+                  </div>
+                  @if (q.quest.goal > 1) {
+                    <div
+                      class="q-track"
+                      role="progressbar"
+                      [attr.aria-valuenow]="q.progress"
+                      [attr.aria-valuemin]="0"
+                      [attr.aria-valuemax]="q.quest.goal"
+                      [attr.aria-label]="i18n.t('quest.' + q.quest.id)"
+                    >
+                      <div class="q-fill" [style.width.%]="(q.progress / q.quest.goal) * 100"></div>
+                    </div>
+                  }
+                </div>
+                @if (q.quest.goal > 1) {
+                  <span class="q-num">{{ q.progress }}/{{ q.quest.goal }}</span>
+                }
+              </div>
+            }
+          </div>
+
+          <p class="q-note">
+            @if (questService.allDone()) {
+              {{ i18n.t('profile.questsAllDone') }}
+            } @else {
+              {{ i18n.t('profile.questsRefresh', { reward: questService.totalReward }) }}
+            }
+          </p>
+        }
+
+        <!-- AVATAR -->
+        @case ('avatar') {
+          @if (profile.hasPhoto()) {
+            <p class="av-note">{{ i18n.t('profile.photoShowing') }}</p>
+            <button class="ghost" type="button" (click)="profile.clearPhoto()">
+              {{ i18n.t('profile.photoRemove') }}
+            </button>
+          } @else {
+            <h2 class="sec">{{ i18n.t('profile.chooseAvatar') }}</h2>
+            <div class="av-row">
+              @for (a of ownedAvatars(); track a.id) {
+                <button
+                  class="av"
+                  type="button"
+                  [class.on]="inventory.isEquipped(a.id)"
+                  [attr.aria-pressed]="inventory.isEquipped(a.id)"
+                  [attr.aria-label]="a.name"
+                  (click)="inventory.equip(a.id)"
+                >
+                  {{ a.preview }}
+                </button>
+              }
+            </div>
+          }
+          <button class="shop-link" type="button" (click)="openShop.emit()">
+            🛒 {{ i18n.t('profile.shopMore') }}
+          </button>
+        }
       }
-    </section>
+    </div>
   </div>
 </main>

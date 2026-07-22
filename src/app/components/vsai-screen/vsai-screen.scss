@@ -1,0 +1,416 @@
+:host {
+  display: block;
+}
+
+/* ============ ZORLUK SEÇİMİ ============ */
+.vs-pick {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: max(env(safe-area-inset-top, 0px), 14px) 16px 26px;
+  box-sizing: border-box;
+  max-width: 560px;
+  margin: 0 auto;
+}
+.vs-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  h1 {
+    margin: 0;
+    font-size: clamp(19px, 5vw, 24px);
+    font-weight: 900;
+  }
+}
+.vs-x {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border: none;
+  border-radius: 12px;
+  background: var(--surface, #1b2733);
+  color: var(--text, #e8eef2);
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+  &:hover {
+    background: var(--border, #2c3a48);
+  }
+}
+.vs-sub {
+  color: var(--muted, #93a6b3);
+  font-size: 13.5px;
+  margin: 2px 2px 18px;
+  line-height: 1.45;
+}
+.vs-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.vs-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  padding: 16px 15px;
+  border-radius: 18px;
+  cursor: pointer;
+  border: 1px solid var(--border, #2c3a48);
+  background: linear-gradient(160deg, var(--surface, #1b2733), color-mix(in srgb, var(--surface, #16202a) 80%, #000));
+  color: var(--text, #e8eef2);
+  transition: transform 0.12s, border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
+  }
+  &:active {
+    transform: translateY(0);
+  }
+  &[data-d='easy'] {
+    border-left: 5px solid #58c37a;
+  }
+  &[data-d='medium'] {
+    border-left: 5px solid #e0a63a;
+  }
+  &[data-d='hard'] {
+    border-left: 5px solid #e0645c;
+  }
+}
+.vs-card-ic {
+  font-size: 34px;
+  flex: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+.vs-card-tx {
+  flex: 1;
+  min-width: 0;
+  b {
+    display: block;
+    font-size: 17px;
+    font-weight: 900;
+  }
+  span {
+    display: block;
+    color: var(--muted, #93a6b3);
+    font-size: 12.5px;
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+}
+.vs-card-go {
+  flex: none;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent, #4caf82);
+  align-self: flex-end;
+}
+
+/* ============ CANLI RAKİP HUD (oyun sırasında) ============ */
+.vs-hud {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 90px); /* oyun başlığının altında — örtüşmez */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(94vw, 340px);
+  padding: 7px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface, #16202a) 92%, transparent);
+  border: 1px solid var(--border, #2c3a48);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  animation: vsHudIn 0.3s ease;
+  &.won {
+    border-color: #58c37a;
+    box-shadow: 0 0 0 2px #58c37a55, 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+  &.lost {
+    border-color: #7c8a97;
+  }
+}
+@keyframes vsHudIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.vs-hud-face {
+  font-size: 24px;
+  flex: none;
+}
+.vs-hud-mid {
+  min-width: 0;
+  flex: 1;
+}
+.vs-hud-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted, #93a6b3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.vs-tag {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: #10161c;
+  &[data-d='easy'] {
+    background: #58c37a;
+  }
+  &[data-d='medium'] {
+    background: #e0a63a;
+  }
+  &[data-d='hard'] {
+    background: #e0645c;
+  }
+}
+.vs-hud-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 4px;
+}
+.vs-row {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  &.ghost {
+    opacity: 0.28;
+    .vs-dot,
+    & {
+      background: transparent;
+    }
+    min-width: 14px;
+    min-height: 10px;
+    border: 1px dashed var(--border, #2c3a48);
+  }
+}
+.vs-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--absent, #3a4a57);
+  &.correct {
+    background: var(--correct, #4caf82);
+  }
+  &.present {
+    background: var(--present, #e0a63a);
+  }
+  &.absent {
+    background: var(--absent, #3a4a57);
+  }
+}
+.vs-hud-st {
+  flex: none;
+  text-align: right;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+.vs-ok {
+  color: #58c37a;
+}
+.vs-fail {
+  color: #9aa8b4;
+}
+.vs-hud-n {
+  color: var(--muted, #93a6b3);
+  margin-top: 2px;
+}
+.vs-think {
+  color: var(--accent, #4caf82);
+  i {
+    display: inline-block;
+    width: 3px;
+    height: 3px;
+    margin-left: 1px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: vsBlink 1.2s infinite;
+    &:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    &:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+  }
+}
+@keyframes vsBlink {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+/* ============ SONUÇ ============ */
+.vs-result {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  box-sizing: border-box;
+}
+.vs-res-card {
+  width: min(94vw, 420px);
+  background: linear-gradient(165deg, var(--surface, #1b2733), color-mix(in srgb, var(--surface, #16202a) 82%, #000));
+  border: 1px solid var(--border, #2c3a48);
+  border-radius: 22px;
+  padding: 26px 22px 22px;
+  text-align: center;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.5);
+  animation: vsPop 0.3s ease;
+}
+@keyframes vsPop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.vs-res-emoji {
+  font-size: 54px;
+  line-height: 1;
+}
+.vs-res-title {
+  margin: 10px 0 4px;
+  font-size: 24px;
+  font-weight: 900;
+  [data-o='win'] & {
+    color: #5fd08a;
+  }
+  [data-o='lose'] & {
+    color: #e88;
+  }
+}
+.vs-res-sub {
+  margin: 0 0 14px;
+  color: var(--muted, #93a6b3);
+  font-size: 13px;
+}
+.vs-answer {
+  font-size: 13px;
+  color: var(--muted, #93a6b3);
+  margin-bottom: 16px;
+  b {
+    color: var(--text, #e8eef2);
+    font-size: 17px;
+    letter-spacing: 2px;
+    margin-left: 4px;
+  }
+}
+.vs-vs {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.vs-side {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 8px;
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--surface, #16202a) 60%, #000);
+  border: 1.5px solid var(--border, #2c3a48);
+  &.winner {
+    border-color: #5fd08a;
+    background: color-mix(in srgb, #1d5140 40%, var(--surface, #16202a));
+    box-shadow: 0 0 0 3px #5fd08a26;
+  }
+}
+.vs-side-top {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text, #e8eef2);
+}
+.vs-side-res {
+  font-size: 22px;
+  font-weight: 900;
+  margin-top: 6px;
+}
+.vs-side-time {
+  font-size: 11.5px;
+  color: var(--muted, #93a6b3);
+  margin-top: 2px;
+}
+.vs-vs-x {
+  align-self: center;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--muted, #93a6b3);
+}
+.vs-bonus {
+  display: inline-block;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f6c453, #e0a63a);
+  color: #3a2a06;
+  font-weight: 900;
+  font-size: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 16px rgba(224, 166, 58, 0.4);
+}
+.vs-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.vs-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: 13px;
+  font: inherit;
+  font-weight: 800;
+  font-size: 14.5px;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.1s, filter 0.15s;
+  &:active {
+    transform: translateY(1px);
+  }
+  &.primary {
+    color: #06180f;
+    background: linear-gradient(180deg, #5fd699, #3fa96c);
+    border-bottom: 4px solid #2c7d49;
+  }
+  &.ghost {
+    background: transparent;
+    border: 1.5px solid var(--border, #2c3a48);
+    color: var(--text, #e8eef2);
+    &:hover {
+      background: color-mix(in srgb, var(--surface, #16202a) 60%, transparent);
+    }
+  }
+}
+
+/* Masaüstünde HUD biraz daha büyük */
+@media (min-width: 720px) {
+  .vs-hud {
+    max-width: 400px;
+    padding: 9px 14px;
+  }
+  .vs-dot {
+    width: 9px;
+    height: 9px;
+  }
+}

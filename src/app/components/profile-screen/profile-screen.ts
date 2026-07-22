@@ -4,6 +4,7 @@ import { PROFILE_STATS } from '../../core/profile-stats';
 import { itemsByCategory } from '../../core/shop-catalog';
 import { GoldService } from '../../services/gold.service';
 import { InventoryService } from '../../services/inventory.service';
+import { LanguageService } from '../../services/language.service';
 import { ProfileService } from '../../services/profile.service';
 import { QuestService } from '../../services/quest.service';
 import { StatsService } from '../../services/stats.service';
@@ -33,11 +34,16 @@ export class ProfileScreen {
   protected readonly gold = inject(GoldService);
   protected readonly questService = inject(QuestService);
   protected readonly inventory = inject(InventoryService);
+  protected readonly i18n = inject(LanguageService);
 
   readonly back = output<void>();
   readonly openShop = output<void>();
 
   protected readonly statCards = PROFILE_STATS;
+
+  /** Aktif sekme. İçerik tek ekrana sığsın diye profil üç bölüme ayrıldı:
+      istatistik · günlük görevler · avatar. Kimlik başlığı hep görünür. */
+  protected readonly tab = signal<'stats' | 'quests' | 'avatar'>('stats');
 
   /** Avatar seçicide gösterilen SAHİP OLUNAN avatarlar (mağazadan gelenler dâhil). */
   protected readonly ownedAvatars = computed(() =>
@@ -86,7 +92,7 @@ export class ProfileScreen {
     if (!file) return;
 
     const ok = await this.profile.setPhotoFromFile(file);
-    this.photoError.set(ok ? '' : 'Bu dosya bir resim değil ya da okunamadı.');
+    this.photoError.set(ok ? '' : this.i18n.t('profile.photoError'));
 
     // Aynı dosyayı tekrar seçebilmek için girdiyi boşalt — yoksa
     // "change" olayı ikinci kez tetiklenmez.

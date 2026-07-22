@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { LanguageService } from '../../services/language.service';
 import { StatsService } from '../../services/stats.service';
 import { GuessDistribution } from '../guess-distribution/guess-distribution';
 
@@ -18,6 +19,7 @@ import { GuessDistribution } from '../guess-distribution/guess-distribution';
 })
 export class StatsPanel {
   protected readonly statsService = inject(StatsService);
+  protected readonly i18n = inject(LanguageService);
 
   /**
    * Grafikte vurgulanacak satır (kaç tahminde kazanıldı).

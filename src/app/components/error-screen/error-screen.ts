@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { LanguageService } from '../../services/language.service';
 
 /**
  * Oyun başlatılamadığında gösterilir (kelime havuzu boş/bozuk).
@@ -11,12 +12,9 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     <main class="wrap">
       <section class="card" role="alert">
         <p class="ico" aria-hidden="true">😕</p>
-        <h1>Oyun başlatılamadı</h1>
-        <p class="msg">
-          Kelime listesi yüklenemedi. Bu genelde geçici bir sorundur —
-          sayfayı yenilemek çoğu zaman çözer.
-        </p>
-        <button class="btn" type="button" (click)="reload()">Sayfayı yenile</button>
+        <h1>{{ i18n.t('error.title') }}</h1>
+        <p class="msg">{{ i18n.t('error.message') }}</p>
+        <button class="btn" type="button" (click)="reload()">{{ i18n.t('error.reload') }}</button>
       </section>
     </main>
   `,
@@ -24,6 +22,8 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ErrorScreen {
+  protected readonly i18n = inject(LanguageService);
+
   protected reload(): void {
     location.reload();
   }

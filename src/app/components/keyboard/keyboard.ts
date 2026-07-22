@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { LetterState } from '../../models/game.model';
+import { LanguageService } from '../../services/language.service';
 
 /** Türkçe klavye düzeni — alfabenin 29 harfinin tamamı (Q, W, X yok). */
 export const TR_ROWS: readonly (readonly string[])[] = [
@@ -8,10 +9,18 @@ export const TR_ROWS: readonly (readonly string[])[] = [
   ['ENTER', 'Z', 'C', 'V', 'B', 'N', 'M', 'Ö', 'Ç', 'SİL'],
 ];
 
+/** İngilizce klavye düzeni — standart QWERTY (26 harf). */
+export const EN_ROWS: readonly (readonly string[])[] = [
+  ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+  ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'SİL'],
+];
+
 /** Geçerli Türkçe harfler (fiziksel klavye girişini süzmek için). */
-export const TR_LETTERS = new Set(
-  TR_ROWS.flat().filter((k) => k !== 'ENTER' && k !== 'SİL'),
-);
+export const TR_LETTERS = new Set(TR_ROWS.flat().filter((k) => k !== 'ENTER' && k !== 'SİL'));
+
+/** Geçerli İngilizce harfler. */
+export const EN_LETTERS = new Set(EN_ROWS.flat().filter((k) => k !== 'ENTER' && k !== 'SİL'));
 
 /**
  * TÜRKÇE OLMAYAN FİZİKSEL KLAVYELER İÇİN TUŞ KONUMU EŞLEMESİ.
@@ -50,13 +59,16 @@ export const TR_KEY_POSITIONS: Readonly<Record<string, string>> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Keyboard {
+  protected readonly i18n = inject(LanguageService);
+
   readonly keyStates = input.required<Record<string, LetterState>>();
 
   readonly letter = output<string>();
   readonly enter = output<void>();
   readonly backspace = output<void>();
 
-  protected readonly rows = TR_ROWS;
+  /** Aktif dile göre klavye düzeni (TR: 29 harf · EN: QWERTY). */
+  protected readonly rows = computed(() => (this.i18n.lang() === 'en' ? EN_ROWS : TR_ROWS));
 
   protected press(key: string): void {
     if (key === 'ENTER') this.enter.emit();

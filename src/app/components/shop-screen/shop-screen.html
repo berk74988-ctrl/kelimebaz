@@ -1,16 +1,16 @@
 <main class="screen">
   <!-- Üst çubuk: geri · başlık · altın -->
   <header class="bar">
-    <button class="back" type="button" aria-label="Geri dön" (click)="back.emit()">←</button>
-    <h1 class="title">Mağaza</h1>
-    <div class="coin" [attr.aria-label]="'Altının: ' + gold.balance()">
+    <button class="back" type="button" [attr.aria-label]="i18n.t('common.backTitle')" (click)="back.emit()">←</button>
+    <h1 class="title">{{ i18n.t('shop.title') }}</h1>
+    <div class="coin" [attr.aria-label]="i18n.t('shop.goldAria', { balance: gold.balance() })">
       <span aria-hidden="true">🪙</span>
-      <b>{{ gold.balance().toLocaleString('tr') }}</b>
+      <b>{{ i18n.num(gold.balance()) }}</b>
     </div>
   </header>
 
   <!-- Kategori sekmeleri -->
-  <nav class="tabs" aria-label="Ürün kategorileri">
+  <nav class="tabs" [attr.aria-label]="i18n.t('shop.categoriesAria')">
     @for (cat of categories; track cat) {
       <button
         class="tab"
@@ -20,7 +20,7 @@
         (click)="activeCat.set(cat)"
       >
         <span aria-hidden="true">{{ meta[cat].icon }}</span>
-        {{ meta[cat].label }}
+        {{ i18n.t('shopcat.' + cat) }}
       </button>
     }
   </nav>
@@ -35,7 +35,7 @@
         [class.equipped]="st === 'equipped'"
         [class.locked]="st === 'locked'"
         [disabled]="st === 'locked'"
-        [attr.aria-label]="item.name + (st === 'equipped' ? ' (kullanımda)' : st === 'owned' ? ' (sahipsin, kullan)' : ' — ' + item.price + ' altın')"
+        [attr.aria-label]="i18n.t('shopitem.' + item.id) + (st === 'equipped' ? i18n.t('shop.ariaEquipped') : st === 'owned' ? i18n.t('shop.ariaOwned') : i18n.t('shop.ariaBuyable', { price: item.price }))"
         (click)="onItem(item)"
       >
         <!-- Önizleme -->
@@ -55,20 +55,20 @@
           }
         </div>
 
-        <span class="i-name">{{ item.name }}</span>
+        <span class="i-name">{{ i18n.t('shopitem.' + item.id) }}</span>
 
         <!-- Durum satırı: fiyat / sahipsin / kullanımda -->
         <span class="i-foot">
           @switch (st) {
             @case ('equipped') {
-              <span class="tag on">✓ Kullanımda</span>
+              <span class="tag on">✓ {{ i18n.t('shop.inUse') }}</span>
             }
             @case ('owned') {
-              <span class="tag own">Kullan</span>
+              <span class="tag own">{{ i18n.t('shop.use') }}</span>
             }
             @default {
               @if (item.price === 0) {
-                <span class="tag own">Kullan</span>
+                <span class="tag own">{{ i18n.t('shop.use') }}</span>
               } @else {
                 <span class="price" [class.no]="st === 'locked'">🪙 {{ item.price }}</span>
               }
@@ -79,12 +79,12 @@
         <!-- Satın alma geri bildirimi -->
         @if (flash()?.id === item.id) {
           <span class="flash" [class.bad]="!flash()!.ok">
-            {{ flash()!.ok ? '✓ Alındı' : 'Yetersiz altın' }}
+            {{ flash()!.ok ? '✓ ' + i18n.t('shop.bought') : i18n.t('shop.insufficientGold') }}
           </span>
         }
       </button>
     }
   </div>
 
-  <p class="note">Satın aldıkların kalıcıdır · istediğinde kullanıp geri çıkarabilirsin</p>
+  <p class="note">{{ i18n.t('shop.note') }}</p>
 </main>

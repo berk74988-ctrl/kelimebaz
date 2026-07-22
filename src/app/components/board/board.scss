@@ -8,7 +8,8 @@
 
 .row {
   display: grid;
-  grid-template-columns: repeat(5, var(--tile-size));
+  // Sütun sayısı kelime uzunluğuna göre (4-7); her satır kendi uzunluğunu bilir.
+  grid-template-columns: repeat(var(--cols, 5), var(--tile-size));
   gap: var(--tile-gap);
 
   // Kutular çevrilirken gerçek 3B derinlik hissi versin.

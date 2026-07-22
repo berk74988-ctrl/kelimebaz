@@ -14,9 +14,18 @@
  * Böylece hiçbir zaman taşma/kaydırma olmaz.
  */
 .game {
+  // Sütun sayısı kelime uzunluğuna göre (4-7) dışarıdan verilir.
+  --cols: 5;
+
   // Mobil temel ölçüler — ekranın hem genişliğine hem yüksekliğine bakar
-  --tile-size: clamp(40px, min(15.5vw, 7.6dvh), 62px);
   --tile-gap: clamp(4px, 1.1vw, 6px);
+  // Kutu boyutu = min(estetik/yükseklik tavanı, GENİŞLİĞE sığan boyut).
+  // Genişlik terimi sütun sayısına bağlı → 7 harfli kelime bile dar ekranda taşmaz.
+  --tile-cap: clamp(40px, min(15.5vw, 7.6dvh), 62px);
+  --tile-size: min(
+    var(--tile-cap),
+    calc((min(100vw, 640px) - 26px - (var(--cols) - 1) * var(--tile-gap)) / var(--cols))
+  );
   --key-h: clamp(46px, 7dvh, 58px);
   --key-gap: clamp(3px, 1vw, 6px);
 
@@ -56,6 +65,42 @@
     font-size: 11px;
     color: var(--text-muted);
     margin-top: 1px;
+  }
+}
+
+// Oda süre sayacı
+.clock {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  padding: 0 12px;
+
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+
+  // Son 10 saniye: dikkat çekici kırmızı nabız
+  &.low {
+    color: #fff;
+    background: var(--danger);
+    border-color: var(--danger);
+    animation: clock-pulse 1s ease-in-out infinite;
+  }
+}
+
+@keyframes clock-pulse {
+  50% {
+    transform: scale(1.06);
   }
 }
 
@@ -126,7 +171,7 @@ app-board {
 /* ---------- TABLET (≥640px) ---------- */
 @media (min-width: 640px) {
   .game {
-    --tile-size: clamp(52px, 7.4dvh, 64px);
+    --tile-cap: clamp(52px, 7.4dvh, 64px);
     --tile-gap: 7px;
     --key-h: clamp(50px, 7dvh, 58px);
     --key-gap: 6px;
@@ -143,7 +188,7 @@ app-board {
 /* ---------- MASAÜSTÜ (≥900px) ---------- */
 @media (min-width: 900px) {
   .game {
-    --tile-size: clamp(56px, 7.6dvh, 66px);
+    --tile-cap: clamp(56px, 7.6dvh, 66px);
     --tile-gap: 8px;
     --key-h: 56px;
     --key-gap: 7px;
@@ -160,7 +205,7 @@ app-board {
 /* ---------- Kısa ekranlar (yatay telefon, küçük dizüstü) ---------- */
 @media (max-height: 620px) {
   .game {
-    --tile-size: clamp(34px, 6.4dvh, 48px);
+    --tile-cap: clamp(34px, 6.4dvh, 48px);
     gap: 4px;
     padding: 6px 8px 8px;
   }
@@ -182,7 +227,7 @@ app-board {
  */
 @media (max-height: 430px) {
   .game {
-    --tile-size: clamp(24px, 6.2dvh, 34px);
+    --tile-cap: clamp(24px, 6.2dvh, 34px);
     --tile-gap: 2px;
     --key-h: clamp(28px, 8dvh, 38px);
     --key-gap: 3px;
@@ -223,4 +268,51 @@ app-board {
   .icon {
     height: 32px;
   }
+}
+
+/* 💡 İPUCU (yalnızca İngilizce mod) */
+.hint-bar {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 6px;
+}
+.hint-btn {
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border));
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 5px 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.hint-btn:hover { background: color-mix(in srgb, var(--accent) 24%, var(--surface)); }
+.hint-btn:active { transform: scale(0.97); }
+.hint-card {
+  display: block;
+  text-align: left;
+  max-width: min(94vw, 480px);
+  padding: 6px 13px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--present) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--present) 34%, var(--border));
+  line-height: 1.4;
+  animation: hintIn 0.25s ease;
+}
+.hint-cat {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+.hint-cat b { color: var(--present); }
+.hint-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+@keyframes hintIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }

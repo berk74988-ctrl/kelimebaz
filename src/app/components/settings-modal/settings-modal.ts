@@ -11,6 +11,7 @@ import { AudioService } from '../../services/audio.service';
 import { ContrastService } from '../../services/contrast.service';
 import { GoldService } from '../../services/gold.service';
 import { InventoryService } from '../../services/inventory.service';
+import { LanguageService } from '../../services/language.service';
 import { StatsService } from '../../services/stats.service';
 import { ThemeService } from '../../services/theme.service';
 import { WordService } from '../../services/word.service';
@@ -31,15 +32,24 @@ export class SettingsModal implements AfterViewInit {
   private readonly gold = inject(GoldService);
   private readonly inventory = inject(InventoryService);
   private readonly words = inject(WordService);
+  protected readonly i18n = inject(LanguageService);
 
   readonly close = output<void>();
 
   private readonly dialog = viewChild<ElementRef<HTMLElement>>('dialog');
 
-  protected readonly dictSize = this.words.dictionarySize;
+  /** Getter — dil değişince (CD tetiklenince) aktif dilin sözlük boyutunu verir. */
+  protected get dictSize(): number {
+    return this.words.dictionarySize;
+  }
 
   ngAfterViewInit(): void {
     this.dialog()?.nativeElement.focus();
+  }
+
+  /** Dili değiştir — anında uygulanır (metinler ve kelime havuzu). */
+  protected setLang(l: 'tr' | 'en'): void {
+    this.i18n.set(l);
   }
 
   /** Kaydırıcı 0–100 gösterir, servis 0–1 ile çalışır. */
@@ -61,7 +71,7 @@ export class SettingsModal implements AfterViewInit {
     // İstatistik, altın ve satın alınan kozmetikler BİRLİKTE sıfırlanır;
     // altını istatistikten, kozmetikleri altından kazandığın için ayrı ayrı
     // sıfırlamak tutarsız bir durum bırakırdı.
-    if (!confirm('Tüm istatistiklerin, altının ve satın aldıkların silinecek. Emin misin?')) return;
+    if (!confirm(this.i18n.t('settings.resetConfirm'))) return;
 
     this.statsService.reset();
     this.gold.reset();

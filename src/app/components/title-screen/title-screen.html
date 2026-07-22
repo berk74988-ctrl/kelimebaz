@@ -23,7 +23,7 @@
 
   <!-- ── Üst çubuk: oyuncu · profil · ayarlar ── -->
   <header class="bar">
-    <button class="who" type="button" aria-label="Profil" (click)="openProfile.emit()">
+    <button class="who" type="button" [attr.aria-label]="i18n.t('title.profile')" (click)="openProfile.emit()">
       <!-- Fotoğraf yüklenmişse o, yoksa emoji avatar -->
       @if (profile.hasPhoto()) {
         <img class="who-av ph" [src]="profile.photo()" alt="" />
@@ -35,9 +35,9 @@
         <b>{{ profile.displayName() }}</b>
         <span>
           @if (stats.played > 0) {
-            Seviye {{ statsService.level().level }} · {{ stats.points.toLocaleString('tr') }} puan
+            {{ i18n.t('title.levelPoints', { level: statsService.level().level, points: i18n.num(stats.points) }) }}
           } @else {
-            Hoş geldin
+            {{ i18n.t('title.welcome') }}
           }
         </span>
       </span>
@@ -48,16 +48,16 @@
       <button
         class="coin"
         type="button"
-        [attr.aria-label]="'Altının: ' + gold.balance() + ' — Mağazayı aç'"
+        [attr.aria-label]="i18n.t('title.coinAria', { n: gold.balance() })"
         (click)="openShop.emit()"
       >
         <span aria-hidden="true">🪙</span>
-        <b>{{ gold.balance().toLocaleString('tr') }}</b>
+        <b>{{ i18n.num(gold.balance()) }}</b>
       </button>
 
-      <button class="tool" type="button" aria-label="Mağaza" (click)="openShop.emit()">🛒</button>
-      <button class="tool" type="button" aria-label="Profil" (click)="openProfile.emit()">👤</button>
-      <button class="tool" type="button" aria-label="Ayarlar" (click)="settingsOpen.set(true)">⚙️</button>
+      <button class="tool" type="button" [attr.aria-label]="i18n.t('title.shop')" (click)="openShop.emit()">🛒</button>
+      <button class="tool" type="button" [attr.aria-label]="i18n.t('title.profile')" (click)="openProfile.emit()">👤</button>
+      <button class="tool" type="button" [attr.aria-label]="i18n.t('title.settings')" (click)="settingsOpen.set(true)">⚙️</button>
     </div>
   </header>
 
@@ -65,7 +65,7 @@
   <div class="content">
     <!-- Kahraman bölüm -->
     <section class="hero">
-      <p class="eyebrow">Türkçe Kelime Oyunu</p>
+      <p class="eyebrow">{{ i18n.t('title.eyebrow') }}</p>
 
       <h1 class="logo" [attr.aria-label]="title()">
         @for (ch of title().split(''); track $index) {
@@ -75,29 +75,29 @@
         }
       </h1>
 
-      <p class="tagline">5 harfli gizli kelimeyi <b>6 tahminde</b> bul.</p>
+      <p class="tagline">{{ i18n.t('title.taglineBefore') }} <b>{{ i18n.t('title.taglineBold') }}</b> {{ i18n.t('title.taglineAfter') }}</p>
 
       <ul class="legend">
-        <li class="chip correct"><span class="sw"></span> doğru yerde</li>
-        <li class="chip present"><span class="sw"></span> kelimede var</li>
-        <li class="chip absent"><span class="sw"></span> yok</li>
+        <li class="chip correct"><span class="sw"></span> {{ i18n.t('title.legendCorrect') }}</li>
+        <li class="chip present"><span class="sw"></span> {{ i18n.t('title.legendPresent') }}</li>
+        <li class="chip absent"><span class="sw"></span> {{ i18n.t('title.legendAbsent') }}</li>
       </ul>
     </section>
 
     <!-- Mod seçimi -->
-    <nav class="modes" aria-label="Oyun modu">
+    <nav class="modes" [attr.aria-label]="i18n.t('title.gameMode')">
       @if (dailyDone()) {
         <!-- Bugün oynandı: sonuç + geri sayım + tahtayı görüntüle, tek kart içinde -->
         <div class="done" [class.won]="dailyWon()">
           <div class="d-head">
             <span class="d-badge">{{ dailyWon() ? '✓' : '✕' }}</span>
             <span class="d-tx">
-              <b>{{ dailyWon() ? 'Bugünkü kelimeyi buldun' : 'Bugünkü kelimeyi bulamadın' }}</b>
+              <b>{{ dailyWon() ? i18n.t('title.dailyWon') : i18n.t('title.dailyLost') }}</b>
               <span>
                 @if (dailyWon()) {
-                  {{ dailyTries() }}/6 tahminde · bulmaca #{{ dayNo() }}
+                  {{ i18n.t('title.dailyWonMeta', { n: dailyTries(), day: dayNo() }) }}
                 } @else {
-                  Bulmaca #{{ dayNo() }}
+                  {{ i18n.t('title.puzzleNo', { day: dayNo() }) }}
                 }
               </span>
             </span>
@@ -108,8 +108,8 @@
           <button class="mode ghost inset" type="button" (click)="play.emit('daily')">
             <span class="m-ico">📋</span>
             <span class="m-tx">
-              <b>Sonucu Gör</b>
-              <span>Bugünün tahtası</span>
+              <b>{{ i18n.t('title.viewResult') }}</b>
+              <span>{{ i18n.t('title.todaysBoard') }}</span>
             </span>
             <span class="m-arw" aria-hidden="true">→</span>
           </button>
@@ -118,8 +118,8 @@
         <button class="mode primary" type="button" (click)="play.emit('daily')">
           <span class="m-ico">📅</span>
           <span class="m-tx">
-            <b>Günün Kelimesi</b>
-            <span>Herkese aynı · günde bir kez</span>
+            <b>{{ i18n.t('title.dailyWord') }}</b>
+            <span>{{ i18n.t('title.dailyWordSub') }}</span>
           </span>
           <span class="m-tag">#{{ dayNo() }}</span>
           <span class="m-arw" aria-hidden="true">→</span>
@@ -129,30 +129,60 @@
       <button class="mode ghost" type="button" (click)="play.emit('practice')">
         <span class="m-ico">🎲</span>
         <span class="m-tx">
-          <b>Serbest Oyna</b>
-          <span>Rastgele kelime · sınırsız</span>
+          <b>{{ i18n.t('title.practice') }}</b>
+          <span>{{ i18n.t('title.practiceSub') }}</span>
         </span>
+        <span class="m-arw" aria-hidden="true">→</span>
+      </button>
+
+      <button class="mode ghost" type="button" (click)="openRoom.emit()">
+        <span class="m-ico">🎮</span>
+        <span class="m-tx">
+          <b>{{ i18n.t('title.friends') }}</b>
+          <span>{{ i18n.t('title.friendsSub') }}</span>
+        </span>
+        <span class="m-arw" aria-hidden="true">→</span>
+      </button>
+
+      <button class="mode ghost" type="button" (click)="openVsAi.emit()">
+        <span class="m-ico">🤖</span>
+        <span class="m-tx">
+          <b>{{ i18n.t('title.vsai') }}</b>
+          <span>{{ i18n.t('title.vsaiSub') }}</span>
+        </span>
+        <span class="m-arw" aria-hidden="true">→</span>
+      </button>
+
+      <button class="mode ghost" type="button" (click)="openLeague.emit()">
+        <span class="m-ico">{{ league.tier().icon }}</span>
+        <span class="m-tx">
+          <b>{{ i18n.t('title.league') }}</b>
+          <span>{{ i18n.t('title.leagueSub', { tier: i18n.t('tier.' + league.tier().id), lp: league.lp(), season: league.season() }) }}</span>
+        </span>
+        @if (league.pending()) {
+          <span class="m-tag reward">🎁 {{ i18n.t('title.reward') }}</span>
+        }
         <span class="m-arw" aria-hidden="true">→</span>
       </button>
     </nav>
 
     <!-- İstatistikler — hep görünür (boşken 0), tıklayınca profil SAYFASI açılır -->
-    <section class="stats" aria-label="İstatistiklerin">
-      <button class="stat" type="button" aria-label="İstatistikleri göster" (click)="openProfile.emit()">
+    <section class="stats" [attr.aria-label]="i18n.t('title.statsAria')">
+      <button class="stat" type="button" [attr.aria-label]="i18n.t('title.showStats')" (click)="openProfile.emit()">
         <b>{{ stats.played }}</b>
-        <span>Oyun</span>
+        <span>{{ i18n.t('title.statGames') }}</span>
       </button>
-      <button class="stat" type="button" aria-label="İstatistikleri göster" (click)="openProfile.emit()">
-        <b>%{{ statsService.winRate() }}</b>
-        <span>Kazanma</span>
+      <button class="stat" type="button" [attr.aria-label]="i18n.t('title.showStats')" (click)="openProfile.emit()">
+        <b>{{ i18n.lang() === 'en' ? statsService.winRate() + '%' : '%' + statsService.winRate() }}</b>
+        <span>{{ i18n.t('title.statWinRate') }}</span>
       </button>
-      <button class="stat" type="button" aria-label="İstatistikleri göster" (click)="openProfile.emit()">
+      <button class="stat" type="button" [attr.aria-label]="i18n.t('title.showStats')" (click)="openProfile.emit()">
         <b>🔥 {{ stats.currentStreak }}</b>
-        <span>Seri</span>
+        <span>{{ i18n.t('title.statStreak') }}</span>
       </button>
     </section>
 
-    <p class="foot">📚 {{ dictSize().toLocaleString('tr') }} kelimelik Türkçe sözlük</p>
+    <p class="foot">📚 {{ i18n.t('title.dictFoot', { n: dictSize().toLocaleString(i18n.lang() === 'en' ? 'en' : 'tr') }) }}</p>
   </div>
 
   @if (settingsOpen()) {

@@ -37,6 +37,8 @@ export interface ShopItem {
    */
   preview: string;
   preview2?: string;
+  /** Yalnızca sezon ödülüyle kazanılır — mağazada satılmaz (kazanılınca listede görünür). */
+  seasonOnly?: boolean;
 }
 
 export const SHOP_ITEMS: readonly ShopItem[] = [
@@ -47,6 +49,8 @@ export const SHOP_ITEMS: readonly ShopItem[] = [
   { id: 'theme.forest', category: 'theme', name: 'Orman', price: 200, preview: '#22c55e', preview2: '#84cc16' },
   { id: 'theme.grape', category: 'theme', name: 'Mor Gece', price: 250, preview: '#a855f7', preview2: '#6366f1' },
   { id: 'theme.rose', category: 'theme', name: 'Gül', price: 250, preview: '#f43f5e', preview2: '#fb7185' },
+  // 🏆 Sezon ödülü — mağazada satılmaz, yalnız üst liglerde kazanılır
+  { id: 'theme.champion', category: 'theme', name: 'Şampiyon', price: 9999, preview: '#ffd75a', preview2: '#c084fc', seasonOnly: true },
 
   // ---- ÇERÇEVELER (profil fotoğrafı kenarı) ----
   { id: 'frame.none', category: 'frame', name: 'Çerçevesiz', price: 0, preview: 'transparent' },
@@ -62,6 +66,8 @@ export const SHOP_ITEMS: readonly ShopItem[] = [
   { id: 'badge.crown', category: 'badge', name: 'Taç', price: 200, preview: '👑' },
   { id: 'badge.diamond', category: 'badge', name: 'Elmas', price: 250, preview: '💎' },
   { id: 'badge.trophy', category: 'badge', name: 'Kupa', price: 300, preview: '🏆' },
+  // 🎖️ Sezon ödülü rozeti — mağazada satılmaz, lig performansıyla kazanılır
+  { id: 'badge.league', category: 'badge', name: 'Lig Madalyası', price: 9999, preview: '🎖️', seasonOnly: true },
 
   // ---- AVATARLAR ----
   // Ücretsiz sekiz emoji (eskiden ProfileService'teydi) + satın alınabilir özel avatarlar.

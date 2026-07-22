@@ -1,34 +1,47 @@
-<div class="game">
+<div class="game" [style.--cols]="game.wordLength()">
   <header class="bar">
-    <button class="icon" type="button" aria-label="Başlık ekranına dön" (click)="exit.emit()">←</button>
+    <button class="icon" type="button" [attr.aria-label]="i18n.t('game.backToTitle')" (click)="exit.emit()">←</button>
 
     <div class="titles">
       <h1>KELİMEBAZ</h1>
       <!-- servisten okunur: "tekrar oyna" serbest moda geçince başlık da güncellenir -->
-      <p>{{ game.mode() === 'daily' ? 'Günün Kelimesi' : 'Serbest Oyun' }}</p>
+      @if (isRoom()) {
+        @if (game.mode() === 'vsai') {
+          <p>🤖 {{ i18n.t('game.vsaiMatch') }}</p>
+        } @else {
+          <p>🎮 {{ i18n.t('game.friendMatch') }}</p>
+        }
+      } @else {
+        <p>{{ game.mode() === 'daily' ? i18n.t('game.dailyWord') : i18n.t('game.freePlay') }}</p>
+      }
     </div>
+
+    <!-- Oda süre sayacı -->
+    @if (isRoom() && roomTimeLimit() > 0) {
+      <div class="clock" [class.low]="remaining() <= 10" role="timer" [attr.aria-label]="i18n.t('game.timeLeft')">
+        ⏱ {{ clock() }}
+      </div>
+    }
 
     <button
       class="icon"
       type="button"
       [class.active]="contrast.high()"
       [attr.aria-pressed]="contrast.high()"
-      [attr.aria-label]="
-        contrast.high() ? 'Yüksek kontrast modunu kapat' : 'Yüksek kontrast (renk körü) modunu aç'
-      "
+      [attr.aria-label]="contrast.high() ? i18n.t('game.contrastOff') : i18n.t('game.contrastOn')"
       (click)="contrast.toggle()"
     >
       👁
     </button>
 
-    <button class="icon" type="button" aria-label="İstatistikleri göster" (click)="statsOpen.set(true)">
+    <button class="icon" type="button" [attr.aria-label]="i18n.t('game.showStats')" (click)="statsOpen.set(true)">
       📊
     </button>
 
     <button
       class="icon"
       type="button"
-      [attr.aria-label]="theme.theme() === 'dark' ? 'Aydınlık moda geç' : 'Karanlık moda geç'"
+      [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('game.lightMode') : i18n.t('game.darkMode')"
       (click)="theme.toggle()"
     >
       {{ theme.theme() === 'dark' ? '☀️' : '🌙' }}
@@ -43,7 +56,23 @@
   -->
   <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ announcement() }}</p>
 
-  <app-toast [text]="game.message()" />
+  <!-- uyarı + ipucu tek grid satırında (tahta 1fr'de kalsın) -->
+  <div class="notice">
+    <app-toast [text]="game.message()" />
+
+    <!-- 💡 İPUCU — yalnızca İngilizce modda (hint.for() TR'de null döner) -->
+    @if (hint.for(game.answer()); as h) {
+      <div class="hint-bar">
+        @if (hintShown()) {
+          <div class="hint-card">
+            <span class="hint-cat">🏷️ <b>{{ h.c }}</b></span>@if (h.h) {<span class="hint-desc"> — {{ h.h }}</span>}
+          </div>
+        } @else {
+          <button class="hint-btn" type="button" (click)="hintShown.set(true)">💡 {{ i18n.t('hint.show') }}</button>
+        }
+      </div>
+    }
+  </div>
 
   <app-board
     [rows]="game.board()"
@@ -70,8 +99,8 @@
     />
   }
 
-  @if (game.isOver() && !resultOpen()) {
-    <button class="reopen" type="button" (click)="resultOpen.set(true)">Sonucu göster</button>
+  @if (game.isOver() && !resultOpen() && !isRoom()) {
+    <button class="reopen" type="button" (click)="resultOpen.set(true)">{{ i18n.t('game.showResult') }}</button>
   }
 
   @if (statsOpen()) {

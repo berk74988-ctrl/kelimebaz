@@ -1,0 +1,365 @@
+<!-- Oyun tahtası tam ekran açılır; diğer tüm aşamalar .rs kabuğunda -->
+@if (room()?.status === 'playing' && showGame()) {
+  <app-game
+    mode="room"
+    [roomAnswer]="word()"
+    [roomTimeLimit]="room()!.settings.timeLimit"
+    (finished)="onFinished($event)"
+    (exit)="leaveRoom()"
+  />
+
+  <!-- Oyun sırasında CANLI puan tablosu — istendiğinde açılır -->
+  <button
+    class="live-fab"
+    type="button"
+    [attr.aria-label]="i18n.t('room.liveRankAria', { done: room()!.finishedCount, total: room()!.playerCount })"
+    (click)="liveOpen.set(!liveOpen())"
+  >
+    📊
+    @if (room()!.finishedCount > 0) {
+      <span class="live-badge">{{ room()!.finishedCount }}</span>
+    }
+  </button>
+
+  @if (liveOpen()) {
+    <div class="live-back" (click)="liveOpen.set(false)">
+      <div class="live-card" (click)="$event.stopPropagation()">
+        <div class="live-top">
+          <b>{{ i18n.t('room.liveRank') }}</b>
+          <span>{{ room()!.finishedCount }}/{{ room()!.playerCount }} {{ i18n.t('room.finishedWord') }}</span>
+        </div>
+        <ol class="board mini">
+          @for (p of room()!.players; track p.id; let i = $index) {
+            <li class="row" [class.me]="p.id === rooms.myId">
+              <span class="rank">{{ p.finished ? i + 1 : '·' }}</span>
+              <span class="r-name">
+                {{ p.name }}
+                @if (p.id === rooms.myId) { <span class="mini you">{{ i18n.t('common.you') }}</span> }
+              </span>
+              <span class="r-info">
+                @if (p.finished) { {{ p.solved ? '✓ ' + p.attempts : '✕' }} }
+                @else { <span class="r-live">{{ i18n.t('room.playing') }}</span> }
+              </span>
+              <span class="r-score">{{ p.score }}</span>
+            </li>
+          }
+        </ol>
+        <button class="link center" type="button" (click)="liveOpen.set(false)">{{ i18n.t('common.close') }}</button>
+      </div>
+    </div>
+  }
+} @else {
+  <main class="rs">
+    <header class="bar">
+      <button class="back" type="button" [attr.aria-label]="i18n.t('common.backTitle')" (click)="goBack()">←</button>
+      <h1 class="title">{{ i18n.t('room.title') }}</h1>
+      <span class="spacer" aria-hidden="true"></span>
+    </header>
+
+    <div class="body">
+      <!-- ═══════════ ODA YOK: MENÜ ═══════════ -->
+      @if (!room()) {
+        @switch (menuMode()) {
+          @case ('choose') {
+            <div class="hero">
+              <span class="hero-ico" aria-hidden="true">🎮</span>
+              <h2>{{ i18n.t('room.heroTitle') }}</h2>
+              <p>{{ i18n.t('room.heroDesc') }}</p>
+            </div>
+            <div class="choose">
+              <button class="big primary" type="button" (click)="menuMode.set('create')">
+                <span class="b-ico">➕</span>
+                <span class="b-tx"><b>{{ i18n.t('room.create') }}</b><span>{{ i18n.t('room.createSub') }}</span></span>
+              </button>
+              <button class="big" type="button" (click)="menuMode.set('join')">
+                <span class="b-ico">🔑</span>
+                <span class="b-tx"><b>{{ i18n.t('room.join') }}</b><span>{{ i18n.t('room.joinSub') }}</span></span>
+              </button>
+            </div>
+          }
+
+          @case ('create') {
+            <div class="card">
+              <h2 class="sec">{{ i18n.t('room.create') }}</h2>
+              <label class="field">
+                <span class="lbl">{{ i18n.t('room.yourName') }}</span>
+                <input class="inp" type="text" maxlength="16" [value]="name()" (input)="onName($event)" [placeholder]="i18n.t('room.namePlaceholder')" />
+              </label>
+              <label class="field">
+                <span class="lbl">{{ i18n.t('room.maxPlayers') }}</span>
+                <select class="inp" (change)="newMaxPlayers.set(+$any($event.target).value)">
+                  @for (n of playerOptions; track n) { <option [value]="n" [selected]="n === newMaxPlayers()">{{ i18n.t('room.nPlayers', { n: n }) }}</option> }
+                </select>
+              </label>
+              <label class="field">
+                <span class="lbl">{{ i18n.t('room.timeLimit') }}</span>
+                <select class="inp" (change)="newTimeLimit.set(+$any($event.target).value)">
+                  @for (t of timeOptions; track t.v) { <option [value]="t.v" [selected]="t.v === newTimeLimit()">{{ i18n.t(t.key) }}</option> }
+                </select>
+              </label>
+              <button class="go" type="button" [disabled]="rooms.busy()" (click)="create()">
+                {{ rooms.busy() ? i18n.t('room.creating') : i18n.t('room.create') }}
+              </button>
+              <button class="link" type="button" (click)="menuMode.set('choose')">← {{ i18n.t('common.back') }}</button>
+            </div>
+          }
+
+          @case ('join') {
+            <div class="card">
+              <h2 class="sec">{{ i18n.t('room.join') }}</h2>
+              <label class="field">
+                <span class="lbl">{{ i18n.t('room.yourName') }}</span>
+                <input class="inp" type="text" maxlength="16" [value]="name()" (input)="onName($event)" [placeholder]="i18n.t('room.namePlaceholder')" />
+              </label>
+              <label class="field">
+                <span class="lbl">{{ i18n.t('room.roomCode') }}</span>
+                <input class="inp code-in" type="text" maxlength="4" autocapitalize="characters" [value]="joinCode()" (input)="onJoinCode($event)" [placeholder]="i18n.t('room.codePlaceholder')" />
+              </label>
+              <button class="go" type="button" [disabled]="rooms.busy() || joinCode().length < 4" (click)="join()">
+                {{ rooms.busy() ? i18n.t('room.joining') : i18n.t('room.join') }}
+              </button>
+              <button class="link" type="button" (click)="menuMode.set('choose')">← {{ i18n.t('common.back') }}</button>
+            </div>
+          }
+        }
+
+        @if (rooms.error()) {
+          <p class="err" role="alert">{{ rooms.error() }}</p>
+        }
+      }
+
+      <!-- ═══════════ LOBİ (yeniden tasarım) ═══════════ -->
+      @else if (room()!.status === 'lobby') {
+        <div class="lobby">
+          <!-- Oda kodu — kompakt başlık + davet -->
+          <div class="rc">
+            <div class="rc-main">
+              <span class="rc-lbl">{{ i18n.t('room.roomCode') }}</span>
+              <span class="rc-code" [attr.aria-label]="i18n.t('room.roomCode')">{{ room()!.code }}</span>
+            </div>
+            <button
+              class="copy-btn"
+              type="button"
+              [class.ok]="copied()"
+              (click)="copyCode()"
+              [attr.aria-label]="i18n.t('room.copyCodeAria')"
+            >
+              <span class="cb-ico" aria-hidden="true">{{ copied() ? '✓' : '📋' }}</span>
+              <span class="cb-tx">{{ copied() ? i18n.t('room.copied') : i18n.t('room.copy') }}</span>
+            </button>
+          </div>
+
+          <!-- Ayarlar + oyuncular tek kartta -->
+          <div class="roomcard">
+            <!-- Ayarlar — chip seçiciler (native select yerine, koyu-tema uyumlu) -->
+            <div class="settings">
+              <div class="set-block">
+                <span class="set-lbl">👥 {{ i18n.t('room.playersLabel') }}</span>
+                <div class="chips">
+                  @if (isOwner()) {
+                    @for (n of playerOptions; track n) {
+                      <button
+                        type="button"
+                        class="chip"
+                        [class.on]="n === settingsOf().maxPlayers"
+                        [attr.aria-pressed]="n === settingsOf().maxPlayers"
+                        (click)="onMaxPlayers(n)"
+                      >
+                        {{ n }}
+                      </button>
+                    }
+                  } @else {
+                    <span class="chip on ro">{{ i18n.t('room.nPeople', { n: settingsOf().maxPlayers }) }}</span>
+                  }
+                </div>
+              </div>
+
+              <div class="set-block">
+                <span class="set-lbl">⏱ {{ i18n.t('room.durationLabel') }}</span>
+                <div class="chips">
+                  @if (isOwner()) {
+                    @for (t of timeOptions; track t.v) {
+                      <button
+                        type="button"
+                        class="chip"
+                        [class.on]="t.v === settingsOf().timeLimit"
+                        [attr.aria-pressed]="t.v === settingsOf().timeLimit"
+                        (click)="onTimeLimit(t.v)"
+                      >
+                        {{ t.v === 0 ? i18n.t('room.unlimited') : i18n.t('room.minutesShort', { n: t.v / 60 }) }}
+                      </button>
+                    }
+                  } @else {
+                    <span class="chip on ro">{{ settingsOf().timeLimit === 0 ? i18n.t('room.unlimited') : i18n.t('room.minutesShort', { n: settingsOf().timeLimit / 60 }) }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Oyuncular + hazır durumu -->
+            <div class="pl-head">
+              <span class="pl-title">{{ i18n.t('room.players') }}</span>
+              <span class="pl-count">
+                <b>{{ room()!.readyCount }}</b>/{{ room()!.playerCount }} {{ i18n.t('room.ready') }}
+              </span>
+            </div>
+            <ul class="plist">
+              @for (p of room()!.players; track p.id) {
+                <li class="pl" [class.me]="p.id === rooms.myId">
+                  <span class="pl-dot" [class.ready]="p.ready" aria-hidden="true"></span>
+                  <span class="pl-name">{{ p.name }}</span>
+                  @if (p.isOwner) { <span class="pl-tag">👑</span> }
+                  @if (p.id === rooms.myId) { <span class="pl-tag you">{{ i18n.t('common.you') }}</span> }
+                  <span class="pl-ready" [class.on]="p.ready">{{ p.ready ? i18n.t('room.readyMark') : i18n.t('room.waiting') }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <!-- 💬 Sohbet — kalan alanı doldurur (sayfa kaymaz) -->
+          <app-room-chat [fill]="true" [messages]="messages()" [myId]="rooms.myId" (send)="sendChat($event)" />
+
+          <!-- Eylem çubuğu -->
+          <div class="actionbar">
+            @if (isOwner()) {
+              <button
+                class="go start"
+                type="button"
+                [disabled]="room()!.playerCount < 1"
+                (click)="start()"
+              >
+                🚀 {{ i18n.t('room.startGame') }}
+              </button>
+              <p class="ab-hint">
+                @if (room()!.playerCount < 2) {
+                  {{ i18n.t('room.waitForFriend') }}
+                } @else if (allReady()) {
+                  {{ i18n.t('room.allReadyHint') }}
+                } @else {
+                  {{ i18n.t('room.playersReady', { done: room()!.readyCount, total: room()!.playerCount }) }}
+                }
+              </p>
+            } @else {
+              <button
+                class="go ready-btn"
+                type="button"
+                [class.on]="iAmReady()"
+                (click)="toggleReady()"
+              >
+                {{ iAmReady() ? i18n.t('room.readyCancel') : i18n.t('room.getReady') }}
+              </button>
+              <p class="ab-hint">⏳ {{ i18n.t('room.ownerWillStart') }} · {{ room()!.readyCount }}/{{ room()!.playerCount }} {{ i18n.t('room.ready') }}</p>
+            }
+            <button class="link center" type="button" (click)="leaveRoom()">{{ i18n.t('room.leave') }}</button>
+          </div>
+        </div>
+      }
+
+      <!-- ═══════════ SONUÇ (bitti → kürsü+kutlama / ben bitirdim → canlı) ═══════════ -->
+      @else {
+        @if (isFinal()) {
+          <!-- 🎉 Kazanan kutlaması + konfeti -->
+          <div class="celebrate" aria-hidden="true">
+            @for (c of confetti; track $index) {
+              <span
+                class="confetti"
+                [style.left.%]="c.left"
+                [style.background]="c.color"
+                [style.animation-delay.s]="c.delay"
+                [style.animation-duration.s]="c.duration"
+                [style.--drift.px]="c.drift"
+                [style.--rot.deg]="c.rot"
+              ></span>
+            }
+          </div>
+
+          <div class="winner-head" [class.mine]="iWon()">
+            <span class="wh-cup" aria-hidden="true">🏆</span>
+            @if (winner()) {
+              <h2>{{ iWon() ? i18n.t('room.youWon') : i18n.t('room.playerWon', { name: winner()!.name }) }}</h2>
+              <p>
+                <b>{{ winner()!.score }}</b> {{ i18n.t('common.points') }}
+                @if (winner()!.solved) { · {{ i18n.t('room.guessesN', { n: winner()!.attempts }) }} }
+              </p>
+            } @else {
+              <h2>{{ i18n.t('room.results') }}</h2>
+              <p>{{ i18n.t('room.nobodyFound') }}</p>
+            }
+          </div>
+
+          <!-- 🥇 Kürsü — ilk 3 -->
+          <div class="podium">
+            @for (slot of podiumSlots(); track slot.place) {
+              @if (slot.player) {
+                <div class="pod pod-{{ slot.place }}" [class.me]="slot.player.id === rooms.myId">
+                  <span class="pod-medal">{{ slot.place === 1 ? '🥇' : slot.place === 2 ? '🥈' : '🥉' }}</span>
+                  <span class="pod-name">{{ slot.player.name }}</span>
+                  <span class="pod-score">{{ slot.player.score }}</span>
+                  <div class="pod-bar"><span>{{ slot.place }}</span></div>
+                </div>
+              } @else {
+                <div class="pod pod-{{ slot.place }} pod-empty"><div class="pod-bar"></div></div>
+              }
+            }
+          </div>
+
+          <!-- 4. ve sonrası -->
+          @if (rest().length) {
+            <ol class="board rest">
+              @for (p of rest(); track p.id; let i = $index) {
+                <li class="row" [class.me]="p.id === rooms.myId">
+                  <span class="rank">{{ i + 4 }}</span>
+                  <span class="r-name">
+                    {{ p.name }}
+                    @if (p.id === rooms.myId) { <span class="mini you">{{ i18n.t('common.you') }}</span> }
+                  </span>
+                  <span class="r-info">{{ p.solved ? i18n.t('room.guessesN', { n: p.attempts }) : i18n.t('room.notFound') }}</span>
+                  <span class="r-score">{{ p.score }}</span>
+                </li>
+              }
+            </ol>
+          }
+        } @else {
+          <!-- Ben bitirdim, diğerleri bekleniyor: CANLI tablo -->
+          <div class="lb-head">
+            <span class="lb-ico" aria-hidden="true">⏳</span>
+            <h2>{{ i18n.t('room.scoreSaved') }}</h2>
+            <p>{{ i18n.t('room.waitingOthers') }} · {{ room()!.finishedCount }}/{{ room()!.playerCount }} {{ i18n.t('room.finishedWord') }}</p>
+          </div>
+
+          <ol class="board">
+            @for (p of room()!.players; track p.id; let i = $index) {
+              <li class="row" [class.me]="p.id === rooms.myId">
+                <span class="rank">{{ p.finished ? i + 1 : '·' }}</span>
+                <span class="r-name">
+                  {{ p.name }}
+                  @if (p.id === rooms.myId) { <span class="mini you">{{ i18n.t('common.you') }}</span> }
+                </span>
+                <span class="r-info">
+                  @if (p.finished) { {{ p.solved ? i18n.t('room.guessesN', { n: p.attempts }) : i18n.t('room.notFound') }} }
+                  @else { <span class="r-live">{{ i18n.t('room.playing') }}</span> }
+                </span>
+                <span class="r-score">{{ p.score }}</span>
+              </li>
+            }
+          </ol>
+        }
+
+        <!-- 💬 Oyun sonrası sohbet devam eder -->
+        <app-room-chat [messages]="messages()" [myId]="rooms.myId" (send)="sendChat($event)" />
+
+        <div class="lb-actions">
+          @if (isOwner() && isFinal()) {
+            <button class="go" type="button" (click)="playAgain()">🔄 {{ i18n.t('room.newRound') }}</button>
+          }
+          <button class="link center" type="button" (click)="leaveRoom()">{{ i18n.t('room.leave') }}</button>
+        </div>
+      }
+    </div>
+
+    <!-- "Oda kodu kopyalandı" bildirimi -->
+    @if (copiedToast()) {
+      <div class="copy-toast" role="status" aria-live="polite">{{ i18n.t('room.codeCopiedToast') }}</div>
+    }
+  </main>
+}

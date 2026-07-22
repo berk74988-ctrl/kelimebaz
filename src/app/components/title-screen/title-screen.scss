@@ -12,7 +12,7 @@
 
 .screen {
   position: relative;
-  min-height: 100dvh;
+  height: 100dvh; // tek ekran: içerik ortada, asla kaydırma yok
   display: grid;
   place-items: center;
   padding: 76px v.$space-3 v.$space-4; // üst çubuğun altına düşmesin
@@ -544,6 +544,20 @@
 
   background: rgba(255, 255, 255, 0.18);
   border-radius: 999px;
+
+  /* 🎁 Sezon ödülü bekliyor — dikkat çeksin */
+  &.reward {
+    color: #fff;
+    background: var(--danger);
+    animation: reward-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes reward-pulse {
+  50% {
+    transform: scale(1.08);
+    filter: brightness(1.15);
+  }
 }
 
 .m-arw {
@@ -711,15 +725,97 @@
   }
 }
 
-// Çok kısa ekranlarda (yatay telefon) dekoratif kısımları kısarak yeri içeriğe ver
-@media (max-height: 620px) {
+/* Dar telefonlar (≤360px): üst çubuktaki araçlar (🪙 · 🛒 · 👤 · ⚙️) 320px'e
+   sığsın — hiçbiri kenardan kesilmesin. Ölçüler okunabilir kalır. */
+@media (max-width: 360px) {
+  .bar {
+    padding: 12px 10px;
+    gap: 6px;
+  }
+  .who {
+    max-width: 46vw;
+    padding: 5px 9px 5px 5px;
+    gap: 7px;
+  }
+  .who-av {
+    width: 27px;
+    height: 27px;
+    font-size: 14px;
+  }
+  .who-tx b {
+    font-size: 12px;
+  }
+  .tools {
+    gap: 5px;
+  }
+  .coin {
+    height: 36px;
+    padding: 0 9px;
+    font-size: 12px;
+  }
+  .tool {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+}
+
+/* Kısa/orta telefonlar (≤720px yükseklik: 640·667·720…): dekoratif kısımları
+   kıs + tüm menü (4 mod kartı + istatistik) tek ekrana sığsın — hiçbir şey alta
+   taşıp kırpılmasın. Uzun telefonlar (≥721px) tam görünümde kalır. */
+@media (max-height: 720px) {
   .legend,
   .foot {
     display: none;
   }
 
+  .screen {
+    padding-top: 58px;
+    padding-bottom: 12px;
+  }
   .content {
-    gap: 13px;
+    gap: 10px;
+    padding: 13px 14px 12px;
+  }
+  .eyebrow {
+    margin-bottom: 7px;
+    letter-spacing: 3px;
+  }
+  .tile {
+    max-width: 36px;
+    border-radius: 9px;
+  }
+  .tagline {
+    margin-top: 8px;
+    font-size: 12.5px;
+  }
+  .modes {
+    gap: 8px;
+  }
+  .mode {
+    padding: 11px 13px;
+    gap: 11px;
+  }
+  .mode.primary {
+    padding: 12px 13px;
+  }
+  .m-ico {
+    width: 34px;
+    height: 34px;
+    font-size: 17px;
+  }
+  .m-tx b {
+    font-size: 14.5px;
+  }
+  .stats {
+    gap: 7px;
+  }
+  .stat {
+    padding: 9px 6px;
+
+    b {
+      font-size: 16px;
+    }
   }
 }
 

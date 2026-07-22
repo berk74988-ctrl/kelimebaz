@@ -1,8 +1,9 @@
-<div class="board" role="grid" aria-label="Oyun tahtası">
+<div class="board" role="grid" [attr.aria-label]="i18n.t('game.boardLabel')">
   @for (row of rows(); track $index; let r = $index) {
     <div
       class="row"
       role="row"
+      [style.--cols]="row.length"
       [class.shake]="shaking() && isActiveRow(r)"
       [class.win]="isWinRow(r)"
     >

@@ -1,0 +1,157 @@
+@use '../../../styles/variables' as v;
+
+:host {
+  display: block;
+}
+
+// fill: kalan dikey alanı doldur (lobi tek ekran, sayfa kaymaz)
+:host(.fill) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  padding: 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+
+  :host(.fill) & {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+/* Mesaj listesi — içinde kaydırılır (sayfayı itmez). Sonuç ekranında sabit
+   yükseklik; lobide (fill) kalan alanı doldurur. */
+.msgs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  height: 148px;
+  overflow-y: auto;
+  padding-right: 2px;
+
+  scrollbar-width: thin;
+
+  :host(.fill) & {
+    height: auto;
+    flex: 1 1 0;
+    min-height: 56px;
+  }
+}
+
+.empty {
+  margin: auto;
+  font-size: 12px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.msg {
+  max-width: 82%;
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+
+  padding: 6px 10px;
+  background: var(--surface-2);
+  border-radius: 12px;
+  border-top-left-radius: 4px;
+
+  // Kendi mesajın sağda, vurgu rengiyle
+  &.mine {
+    align-self: flex-end;
+    background: color-mix(in srgb, var(--accent) 20%, var(--surface-2));
+    border-top-left-radius: 12px;
+    border-top-right-radius: 4px;
+  }
+}
+
+.m-name {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--accent);
+
+  .mine & {
+    color: color-mix(in srgb, var(--accent) 80%, var(--text));
+  }
+}
+
+.m-text {
+  font-size: 13px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.compose {
+  display: flex;
+  gap: 8px;
+}
+
+.c-inp {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+}
+
+.c-send {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+
+  color: var(--on-correct);
+  background: var(--correct);
+  border-radius: 50%;
+
+  transition: transform 0.14s ease, filter 0.14s ease;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.9);
+  }
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+@media (max-height: 700px) {
+  .msgs {
+    height: 110px;
+  }
+}

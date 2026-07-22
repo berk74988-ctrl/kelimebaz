@@ -12,8 +12,9 @@ import {
 import { evaluateGuess, keyStatesFrom } from '../core/evaluate';
 import { goldForGame, levelBonus } from '../core/gold';
 import { buildShareText } from '../core/share';
-import { trUpper } from '../core/turkish';
 import { GoldService } from './gold.service';
+import { LanguageService } from './language.service';
+import { LeagueService } from './league.service';
 import { QuestService } from './quest.service';
 import { StatsService } from './stats.service';
 import { WordService } from './word.service';
@@ -30,6 +31,8 @@ export class GameService {
   private readonly stats = inject(StatsService);
   private readonly gold = inject(GoldService);
   private readonly quests = inject(QuestService);
+  private readonly league = inject(LeagueService);
+  private readonly lang = inject(LanguageService);
 
   // --- Durum (signals) ---
   private readonly _answer = signal('');
@@ -46,6 +49,8 @@ export class GameService {
   private readonly _questGold = signal(0);
   /** Bunun ne kadarı SEVİYE ödülünden geldi (kademeli bonus). */
   private readonly _levelGold = signal(0);
+  /** Bu maçta kazanılan/kaybedilen LP (lig puanı) — sonuç ekranı gösterir. */
+  private readonly _lpDelta = signal(0);
 
   readonly answer = this._answer.asReadonly();
   readonly status = this._status.asReadonly();
@@ -56,6 +61,13 @@ export class GameService {
   readonly goldEarned = this._goldEarned.asReadonly();
   readonly questGold = this._questGold.asReadonly();
   readonly levelGold = this._levelGold.asReadonly();
+  readonly lpDelta = this._lpDelta.asReadonly();
+
+  /** Bu oyunun kelime uzunluğu (4-7) — cevabın harf sayısından türetilir. */
+  readonly wordLength = computed(() => {
+    const n = [...this._answer()].length;
+    return n > 0 ? n : WORD_LENGTH;
+  });
 
   /** Değerlendirilmiş tahmin satırları. */
   readonly guesses = computed<Guess[]>(() =>
@@ -69,10 +81,12 @@ export class GameService {
   readonly board = computed<Tile[][]>(() => {
     const rows: Tile[][] = this.guesses().map((g) => g.tiles);
 
+    const cols = this.wordLength();
+
     if (this._status() === 'playing' && rows.length < MAX_ATTEMPTS) {
       const typed = [...this._current()];
       rows.push(
-        Array.from({ length: WORD_LENGTH }, (_, i) => ({
+        Array.from({ length: cols }, (_, i) => ({
           letter: typed[i] ?? '',
           state: 'empty' as LetterState,
         })),
@@ -81,7 +95,7 @@ export class GameService {
 
     while (rows.length < MAX_ATTEMPTS) {
       rows.push(
-        Array.from({ length: WORD_LENGTH }, () => ({ letter: '', state: 'empty' as LetterState })),
+        Array.from({ length: cols }, () => ({ letter: '', state: 'empty' as LetterState })),
       );
     }
     return rows;
@@ -105,6 +119,7 @@ export class GameService {
     this._goldEarned.set(0);
     this._questGold.set(0);
     this._levelGold.set(0);
+    this._lpDelta.set(0);
     this.quests.refresh(); // gün dönmüşse görevler tazelensin
 
     const saved = this.load(mode);
@@ -121,11 +136,42 @@ export class GameService {
     this.reset(mode);
   }
 
+  /**
+   * Çok oyunculu oda oyununu başlat — kelime SUNUCUDAN gelir (seed → kelime).
+   *
+   * Günlük/serbest akışından ayrıdır: kayıtlı oyun YÜKLENMEZ (her oda oyunu
+   * sıfırdan ve sunucunun verdiği kelimeyle başlar), localStorage'a da yazılmaz.
+   */
+  startRoom(answer: string, mode: GameMode = 'room'): void {
+    this._mode.set(mode);
+    this._goldEarned.set(0);
+    this._questGold.set(0);
+    this._levelGold.set(0);
+    this._lpDelta.set(0);
+    this._answer.set(this.lang.upper(answer));
+    this._guesses.set([]);
+    this._current.set('');
+    this._status.set('playing');
+    this.clearMessage();
+  }
+
+  /**
+   * Süre doldu — oda oyununu kayıp olarak bitirir (yalnızca oynanıyorsa).
+   * Sonuç sunucuya bildirilecek; istatistik/altın normal akıştaki gibi işlenir.
+   */
+  timeout(): void {
+    if (this.isOver()) return;
+    this._status.set('lost');
+    this.endGame(false, Math.max(1, this._guesses().length));
+  }
+
   /** Sıfırdan yeni oyun. */
   reset(mode: GameMode = this._mode()): void {
     this._mode.set(mode);
     this._answer.set(
-      mode === 'daily' ? this.wordService.wordOfTheDay() : this.wordService.randomWord(),
+      mode === 'daily'
+        ? this.wordService.wordOfTheDay()
+        : this.wordService.randomWordForLevel(this.stats.level().level),
     );
     this._guesses.set([]);
     this._current.set('');
@@ -154,8 +200,8 @@ export class GameService {
   type(letter: string): void {
     if (this.isOver()) return;
     const cur = this._current();
-    if ([...cur].length >= WORD_LENGTH) return;
-    this._current.set(cur + trUpper(letter));
+    if ([...cur].length >= this.wordLength()) return;
+    this._current.set(cur + this.lang.upper(letter));
     this.clearMessage();
   }
 
@@ -173,12 +219,12 @@ export class GameService {
     const guess = this._current();
 
     // Geçersiz tahminde satır KİLİTLENMEZ — uyarı verilir, oyuncu düzeltip tekrar dener.
-    if ([...guess].length < WORD_LENGTH) {
-      this.reject('5 harf girin');
+    if ([...guess].length < this.wordLength()) {
+      this.reject(this.lang.t('game.enterNLetters', { n: this.wordLength() }));
       return;
     }
     if (!this.wordService.isValid(guess)) {
-      this.reject('Sözlükte yok');
+      this.reject(this.lang.t('game.notInDict'));
       return;
     }
 
@@ -224,6 +270,11 @@ export class GameService {
     this._goldEarned.set(fromGame + fromQuests);
     this._questGold.set(fromQuests);
     this._levelGold.set(won ? levelBonus(level) : 0);
+
+    // 🏆 Lig puanı (LP): kazan → +LP, kaybet → -LP. Değişimi sonuç ekranı gösterir.
+    // YZ modu CASUAL — ligi (rekabetçi merdiven) etkilemez.
+    const m = this._mode();
+    this._lpDelta.set(m === 'vsai' ? 0 : this.league.recordResult(won, attempts, m));
   }
 
   /** Sonucu emoji ızgarası olarak paylaş metnine çevirir (harf içermez). */
@@ -285,12 +336,15 @@ export class GameService {
 
   private save(): void {
     const mode = this._mode();
+    if (mode === 'room' || mode === 'vsai') return; // oda ve YZ oyunları geçicidir, diske yazılmaz
+
     const data: SavedGame = {
       mode,
       dayIndex: mode === 'daily' ? this.wordService.dayIndex() : -1,
       answer: this._answer(),
       guesses: this._guesses(),
       status: this._status(),
+      lang: this.lang.lang(),
     };
     try {
       localStorage.setItem(this.key(mode), JSON.stringify(data));
@@ -304,7 +358,10 @@ export class GameService {
       const raw = localStorage.getItem(this.key(mode));
       if (!raw) return null;
       const saved = JSON.parse(raw) as SavedGame;
-      return saved.mode === mode ? saved : null;
+      if (saved.mode !== mode) return null;
+      // Dil değiştiyse eski dildeki oyun sürdürülmez → taze (yeni dilde) başlar.
+      if ((saved.lang ?? 'tr') !== this.lang.lang()) return null;
+      return saved;
     } catch {
       return null;
     }

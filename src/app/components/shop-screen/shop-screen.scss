@@ -1,25 +1,25 @@
 @use '../../../styles/variables' as v;
 
+/* Tek ekran: sayfa yüksekliği viewport'a kilitlenir, kaydırma olmaz.
+   Üst çubuk + sekmeler + not sabit; ürün ızgarası kalan alanı doldurur. */
 .screen {
-  min-height: 100dvh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--bg);
-  padding-bottom: v.$space-5;
 }
 
 /* ---------- Üst çubuk ---------- */
 
 .bar {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-
+  flex: none;
   display: flex;
   align-items: center;
   gap: v.$space-2;
   padding: 12px 14px;
 
   background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 }
 
@@ -78,9 +78,11 @@
 /* ---------- Kategori sekmeleri ---------- */
 
 .tabs {
+  flex: none;
   display: flex;
   gap: 7px;
-  padding: 12px 14px 4px;
+  padding: 10px 14px 6px;
+  width: 100%;
   max-width: 720px;
   margin: 0 auto;
 
@@ -127,14 +129,26 @@
    auto-fill: kart sayısı sabit değil, ekran genişledikçe daha çok sütun.
    Yeni ürün eklemek düzeni bozmaz. */
 
+/* Kalan alanı doldurur ve içine sığar; sığmayan olursa kırpılır, sayfa
+   kaydırılmaz. Ürünler kompakt — en kalabalık kategori (14 avatar) bile
+   dar ekranda 3 sütuna, geniş ekranda tek bakışta sığar. */
 .grid {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   max-width: 720px;
   margin: 0 auto;
-  padding: 12px 14px 0;
+  padding: 12px 14px calc(14px + env(safe-area-inset-bottom, 0px));
 
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  grid-auto-rows: min-content;
+  align-content: start;
+  gap: 9px;
+
+  // Ürünler ekrandan uzunsa KAYDIRILIR → hiçbir kart/ürün ekran dışında kalmaz.
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .item {
@@ -142,12 +156,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px 12px 12px;
+  gap: 5px;
+  padding: 11px 8px 9px;
 
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 14px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
 
   transition:
@@ -181,19 +195,19 @@
 .pv {
   display: grid;
   place-items: center;
-  height: 56px;
+  height: 44px;
 }
 
 .pv-swatch {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .pv-frame {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   padding: 3px;
@@ -205,27 +219,28 @@
   height: 100%;
   display: grid;
   place-items: center;
-  font-size: 24px;
+  font-size: 20px;
 
   background: var(--surface-2);
   border-radius: 50%;
 }
 
 .pv-emoji {
-  font-size: 44px;
+  font-size: 34px;
   line-height: 1;
 }
 
 .i-name {
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 800;
   text-align: center;
+  line-height: 1.15;
 }
 
 .i-foot {
   display: flex;
   align-items: center;
-  min-height: 22px;
+  min-height: 20px;
 }
 
 .price {
@@ -291,20 +306,67 @@
 }
 
 .note {
+  flex: none;
+  width: 100%;
   max-width: 720px;
-  margin: 18px auto 0;
-  padding: 0 14px;
+  margin: 0 auto;
+  padding: 8px 14px calc(10px + env(safe-area-inset-bottom, 0px));
 
-  font-size: 11.5px;
+  font-size: 11px;
   text-align: center;
   color: var(--text-muted);
+  border-top: 1px solid var(--border);
 }
 
 /* ---------- Mobil ---------- */
 
 @media (max-width: 420px) {
   .grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 9px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .item {
+    padding: 9px 6px 8px;
+    border-radius: 12px;
+  }
+
+  .pv,
+  .pv-swatch,
+  .pv-frame {
+    height: 38px;
+  }
+
+  .pv-swatch,
+  .pv-frame {
+    width: 38px;
+  }
+
+  .pv-emoji {
+    font-size: 28px;
+  }
+
+  .i-name {
+    font-size: 11px;
+  }
+}
+
+/* Kısa ekranlarda ürünleri biraz daha sık — dikeyde kesinlikle sığsın */
+@media (max-height: 640px) {
+  .pv,
+  .pv-swatch,
+  .pv-frame {
+    height: 36px;
+  }
+
+  .pv-swatch,
+  .pv-frame {
+    width: 36px;
+  }
+
+  .item {
+    gap: 4px;
+    padding: 8px 6px 7px;
   }
 }

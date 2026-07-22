@@ -4,26 +4,57 @@
     class="modal"
     role="dialog"
     aria-modal="true"
-    aria-label="Ayarlar"
+    [attr.aria-label]="i18n.t('settings.title')"
     tabindex="-1"
     (click)="$event.stopPropagation()"
   >
-    <button class="x" type="button" aria-label="Ayarları kapat" (click)="close.emit()">✕</button>
+    <button class="x" type="button" [attr.aria-label]="i18n.t('common.close')" (click)="close.emit()">✕</button>
 
-    <h2 class="head">Ayarlar</h2>
+    <h2 class="head">{{ i18n.t('settings.title') }}</h2>
 
-    <h3 class="sec">Ses</h3>
+    <!-- Dil -->
+    <h3 class="sec">{{ i18n.t('settings.sectionLanguage') }}</h3>
+    <div class="row">
+      <div class="txt">
+        <b>🌐 {{ i18n.t('settings.language') }}</b>
+        <span>{{ i18n.t('settings.languageDesc') }}</span>
+      </div>
+      <div class="lang-seg" role="group" [attr.aria-label]="i18n.t('settings.language')">
+        <button
+          type="button"
+          class="lang-opt"
+          [class.on]="i18n.lang() === 'tr'"
+          [attr.aria-pressed]="i18n.lang() === 'tr'"
+          (click)="setLang('tr')"
+        >
+          {{ i18n.t('settings.langTr') }}
+        </button>
+        <button
+          type="button"
+          class="lang-opt"
+          [class.on]="i18n.lang() === 'en'"
+          [attr.aria-pressed]="i18n.lang() === 'en'"
+          (click)="setLang('en')"
+        >
+          {{ i18n.t('settings.langEn') }}
+        </button>
+      </div>
+    </div>
+
+    <div class="rule"></div>
+
+    <h3 class="sec">{{ i18n.t('settings.sectionSound') }}</h3>
 
     <!-- Müzik: aç/kapa + seviye -->
     <div class="row audio">
       <div class="a-head">
         <div class="txt">
-          <b>🎵 Müzik</b>
+          <b>🎵 {{ i18n.t('settings.music') }}</b>
           <span>
             @if (audio.blocked() && audio.musicOn()) {
-              Tarayıcı otomatik başlatmayı engelledi — ekrana dokun
+              {{ i18n.t('settings.musicBlocked') }}
             } @else {
-              Arka plan müziği
+              {{ i18n.t('settings.musicDesc') }}
             }
           </span>
         </div>
@@ -33,7 +64,7 @@
           role="switch"
           [class.on]="audio.musicOn()"
           [attr.aria-checked]="audio.musicOn()"
-          [attr.aria-label]="audio.musicOn() ? 'Müziği kapat' : 'Müziği aç'"
+          [attr.aria-label]="audio.musicOn() ? i18n.t('settings.musicOff') : i18n.t('settings.musicOn')"
           (click)="audio.toggleMusic()"
         >
           <i></i>
@@ -47,12 +78,12 @@
           min="0"
           max="100"
           step="1"
-          aria-label="Müzik ses seviyesi"
+          [attr.aria-label]="i18n.t('settings.musicVolume')"
           [disabled]="!audio.musicOn()"
           [value]="pct(audio.musicVol())"
           (input)="onMusicVol($event)"
         />
-        <span class="pc">%{{ pct(audio.musicVol()) }}</span>
+        <span class="pc">{{ i18n.lang() === 'en' ? pct(audio.musicVol()) + '%' : '%' + pct(audio.musicVol()) }}</span>
       </div>
     </div>
 
@@ -60,8 +91,8 @@
     <div class="row audio">
       <div class="a-head">
         <div class="txt">
-          <b>🔔 Efekt sesleri</b>
-          <span>Tuş, kutu açılışı, kazanma</span>
+          <b>🔔 {{ i18n.t('settings.sfx') }}</b>
+          <span>{{ i18n.t('settings.sfxDesc') }}</span>
         </div>
         <button
           class="sw"
@@ -69,7 +100,7 @@
           role="switch"
           [class.on]="audio.sfxOn()"
           [attr.aria-checked]="audio.sfxOn()"
-          [attr.aria-label]="audio.sfxOn() ? 'Efekt seslerini kapat' : 'Efekt seslerini aç'"
+          [attr.aria-label]="audio.sfxOn() ? i18n.t('settings.sfxOff') : i18n.t('settings.sfxOn')"
           (click)="audio.toggleSfx()"
         >
           <i></i>
@@ -83,24 +114,24 @@
           min="0"
           max="100"
           step="1"
-          aria-label="Efekt sesleri seviyesi"
+          [attr.aria-label]="i18n.t('settings.sfxVolume')"
           [disabled]="!audio.sfxOn()"
           [value]="pct(audio.sfxVol())"
           (input)="onSfxVol($event)"
         />
-        <span class="pc">%{{ pct(audio.sfxVol()) }}</span>
+        <span class="pc">{{ i18n.lang() === 'en' ? pct(audio.sfxVol()) + '%' : '%' + pct(audio.sfxVol()) }}</span>
       </div>
     </div>
 
     <div class="rule"></div>
 
-    <h3 class="sec">Görünüm</h3>
+    <h3 class="sec">{{ i18n.t('settings.sectionAppearance') }}</h3>
 
     <!-- Tema -->
     <div class="row">
       <div class="txt">
-        <b>Karanlık tema</b>
-        <span>Açılışta sistem tercihine uyar</span>
+        <b>{{ i18n.t('settings.darkTheme') }}</b>
+        <span>{{ i18n.t('settings.darkThemeDesc') }}</span>
       </div>
       <button
         class="sw"
@@ -108,7 +139,7 @@
         role="switch"
         [class.on]="theme.theme() === 'dark'"
         [attr.aria-checked]="theme.theme() === 'dark'"
-        [attr.aria-label]="theme.theme() === 'dark' ? 'Aydınlık moda geç' : 'Karanlık moda geç'"
+        [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('settings.lightMode') : i18n.t('settings.darkMode')"
         (click)="theme.toggle()"
       >
         <i></i>
@@ -118,8 +149,8 @@
     <!-- Renk körü modu -->
     <div class="row">
       <div class="txt">
-        <b>Renk körü modu</b>
-        <span>Yüksek kontrast: mavi / turuncu</span>
+        <b>{{ i18n.t('settings.colorBlind') }}</b>
+        <span>{{ i18n.t('settings.colorBlindDesc') }}</span>
       </div>
       <button
         class="sw"
@@ -128,7 +159,7 @@
         [class.on]="contrast.high()"
         [attr.aria-checked]="contrast.high()"
         [attr.aria-label]="
-          contrast.high() ? 'Yüksek kontrast modunu kapat' : 'Yüksek kontrast (renk körü) modunu aç'
+          contrast.high() ? i18n.t('settings.contrastOff') : i18n.t('settings.contrastOn')
         "
         (click)="contrast.toggle()"
       >
@@ -138,25 +169,25 @@
 
     <div class="rule"></div>
 
-    <h3 class="sec">Veri</h3>
+    <h3 class="sec">{{ i18n.t('settings.sectionData') }}</h3>
 
     <!-- Veri -->
     <div class="row">
       <div class="txt">
-        <b>İstatistikler</b>
+        <b>{{ i18n.t('settings.stats') }}</b>
         <span>
           @if (statsService.isEmpty()) {
-            Henüz kayıt yok
+            {{ i18n.t('settings.noRecords') }}
           } @else {
-            {{ statsService.stats().played }} oyun kayıtlı
+            {{ i18n.t('settings.gamesSaved', { count: statsService.stats().played }) }}
           }
         </span>
       </div>
       <button class="danger" type="button" [disabled]="statsService.isEmpty()" (click)="resetStats()">
-        Sıfırla
+        {{ i18n.t('common.reset') }}
       </button>
     </div>
 
-    <p class="foot">📚 {{ dictSize.toLocaleString('tr') }} kelimelik Türkçe sözlük</p>
+    <p class="foot">📚 {{ i18n.t('settings.dictFooter', { count: dictSize.toLocaleString(i18n.lang() === 'en' ? 'en' : 'tr') }) }}</p>
   </div>
 </div>

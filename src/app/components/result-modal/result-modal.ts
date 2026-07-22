@@ -15,6 +15,8 @@ import { buildShareGrid } from '../../core/share';
 import { GameStatus, MAX_ATTEMPTS } from '../../models/game.model';
 import { GameService } from '../../services/game.service';
 import { GoldService } from '../../services/gold.service';
+import { LanguageService } from '../../services/language.service';
+import { LeagueService } from '../../services/league.service';
 import { Countdown } from '../countdown/countdown';
 import { StatsPanel } from '../stats-panel/stats-panel';
 
@@ -29,6 +31,8 @@ import { StatsPanel } from '../stats-panel/stats-panel';
 export class ResultModal implements AfterViewInit {
   private readonly game = inject(GameService);
   protected readonly gold = inject(GoldService);
+  protected readonly league = inject(LeagueService);
+  protected readonly i18n = inject(LanguageService);
 
   readonly status = input.required<GameStatus>();
   readonly answer = input.required<string>();
@@ -61,6 +65,9 @@ export class ResultModal implements AfterViewInit {
   protected readonly goldEarned = this.game.goldEarned;
   protected readonly questGold = this.game.questGold;
   protected readonly levelGold = this.game.levelGold;
+
+  /** Bu maçta kazanılan/kaybedilen lig puanı (LP). */
+  protected readonly lpDelta = this.game.lpDelta;
 
   /**
    * Sonucu paylaş: önce cihazın yerel paylaşımını dener (mobil),

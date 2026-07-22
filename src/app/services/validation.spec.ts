@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { GameService } from './game.service';
+import { WordService } from './word.service';
 
 /**
  * Geçersiz tahmin akışı:
@@ -15,6 +16,8 @@ describe('Tahmin doğrulama ve uyarılar', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({});
+    // Testler 5 harfli kelime varsayar → serbest modun uzunluğunu sabitle
+    vi.spyOn(TestBed.inject(WordService), 'randomWordForLevel').mockReturnValue('KALEM');
     game = TestBed.inject(GameService);
     game.reset('practice');
   });

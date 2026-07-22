@@ -54,25 +54,40 @@ describe('WordService — sözlük', () => {
       }
     });
 
-    it('5 harfli olmayan girdileri reddeder', () => {
-      expect(words.isValid('KAL')).toBe(false);
-      expect(words.isValid('KALEMLER')).toBe(false);
+    it('4-7 harf aralığı dışını reddeder, içindeki gerçek kelimeleri kabul eder', () => {
+      expect(words.isValid('KAL')).toBe(false); // 3 harf — çok kısa
+      expect(words.isValid('KALEMLER')).toBe(false); // 8 harf — çok uzun
       expect(words.isValid('')).toBe(false);
+      // 4-7 harf gerçek kelimeler kabul edilir
+      expect(words.isValid('ADAM')).toBe(true); // 4
+      expect(words.isValid('DOKTOR')).toBe(true); // 6
+      expect(words.isValid('TELEFON')).toBe(true); // 7
     });
   });
 
   describe('gizli kelime seçimi', () => {
-    it('gizli kelime her zaman CEVAP havuzundan gelir', () => {
+    it('gizli kelime 4-7 harflidir ve sözlükte geçerlidir', () => {
       for (let i = 0; i < 50; i++) {
         const w = words.randomWord();
-        expect([...w].length).toBe(5);
+        expect([...w].length).toBeGreaterThanOrEqual(4);
+        expect([...w].length).toBeLessThanOrEqual(7);
         expect(words.isValid(w)).toBe(true); // sözlükte de var
       }
     });
 
-    it('günün kelimesi de cevap havuzundan gelir', () => {
+    it('seviyeye göre seçilen kelime de geçerlidir (düşük seviye = kısa eğilimli)', () => {
+      for (let i = 0; i < 50; i++) {
+        const w = words.randomWordForLevel(1);
+        expect([...w].length).toBeGreaterThanOrEqual(4);
+        expect([...w].length).toBeLessThanOrEqual(7);
+        expect(words.isValid(w)).toBe(true);
+      }
+    });
+
+    it('günün kelimesi de cevap havuzundan gelir (4-7 harf)', () => {
       const w = words.wordOfTheDay();
-      expect([...w].length).toBe(5);
+      expect([...w].length).toBeGreaterThanOrEqual(4);
+      expect([...w].length).toBeLessThanOrEqual(7);
       expect(words.isValid(w)).toBe(true);
     });
   });

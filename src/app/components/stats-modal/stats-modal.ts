@@ -7,6 +7,7 @@ import {
   output,
   viewChild,
 } from '@angular/core';
+import { LanguageService } from '../../services/language.service';
 import { StatsService } from '../../services/stats.service';
 import { StatsPanel } from '../stats-panel/stats-panel';
 
@@ -20,6 +21,7 @@ import { StatsPanel } from '../stats-panel/stats-panel';
 })
 export class StatsModal implements AfterViewInit {
   protected readonly statsService = inject(StatsService);
+  protected readonly i18n = inject(LanguageService);
 
   readonly close = output<void>();
 
@@ -36,7 +38,7 @@ export class StatsModal implements AfterViewInit {
   }
 
   protected resetStats(): void {
-    const ok = confirm('Tüm istatistiklerin silinecek. Emin misin?');
+    const ok = confirm(this.i18n.t('statsmodal.resetConfirm'));
     if (ok) this.statsService.reset();
   }
 }

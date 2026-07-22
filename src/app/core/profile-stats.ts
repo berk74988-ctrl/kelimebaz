@@ -1,4 +1,5 @@
 import { Stats } from '../models/game.model';
+import { Lang } from './lang';
 
 /**
  * ===========================================================================
@@ -22,25 +23,32 @@ export interface ProfileStat {
   label: string;
   /** Kartın altındaki küçük açıklama (isteğe bağlı). */
   hint?: string;
-  /** Ekranda gösterilecek değer. */
-  value: (s: Stats) => string;
+  /** Ekranda gösterilecek değer (aktif dile göre biçimlenir). */
+  value: (s: Stats, lang?: Lang) => string;
 }
 
-const tr = (n: number) => n.toLocaleString('tr');
+/** Sayıyı aktif dilin binlik ayracıyla biçimler (tr: 1.000 · en: 1,000). */
+const fmt = (n: number, lang: Lang = 'tr') => n.toLocaleString(lang === 'en' ? 'en' : 'tr');
+
+/** Kazanma oranı — yüzde işareti dile göre konumlanır (tr: %89 · en: 89%). */
+const rate = (s: Stats, lang: Lang = 'tr') => {
+  const r = s.played === 0 ? 0 : Math.round((s.won / s.played) * 100);
+  return lang === 'en' ? `${r}%` : `%${r}`;
+};
 
 export const PROFILE_STATS: readonly ProfileStat[] = [
   {
     key: 'played',
     icon: '🎮',
     label: 'Oynanan oyun',
-    value: (s) => tr(s.played),
+    value: (s, lang) => fmt(s.played, lang),
   },
   {
     key: 'winRate',
     icon: '🎯',
     label: 'Kazanma oranı',
     // Türetilmiş: Stats'ta saklanmaz, buradan hesaplanır.
-    value: (s) => (s.played === 0 ? '%0' : `%${Math.round((s.won / s.played) * 100)}`),
+    value: (s, lang) => rate(s, lang),
   },
   {
     key: 'wordsFound',
@@ -49,32 +57,32 @@ export const PROFILE_STATS: readonly ProfileStat[] = [
     hint: 'Gizli kelimeyi bulduğun oyunlar',
     // Bulunan kelime = kazanılan oyun. Ayrı alan tutmuyorum; aynı sayıyı iki
     // yerde saklamak ikisinin zamanla ayrışması demek olurdu.
-    value: (s) => tr(s.won),
+    value: (s, lang) => fmt(s.won, lang),
   },
   {
     key: 'maxStreak',
     icon: '🏆',
     label: 'En uzun seri',
-    value: (s) => tr(s.maxStreak),
+    value: (s, lang) => fmt(s.maxStreak, lang),
   },
   {
     key: 'currentStreak',
     icon: '🔥',
     label: 'Güncel seri',
-    value: (s) => tr(s.currentStreak),
+    value: (s, lang) => fmt(s.currentStreak, lang),
   },
   {
     key: 'points',
     icon: '⭐',
     label: 'Toplam puan',
     hint: 'Hızlı bulmak ve seri yapmak puan kazandırır',
-    value: (s) => tr(s.points),
+    value: (s, lang) => fmt(s.points, lang),
   },
   {
     key: 'guesses',
     icon: '⌨️',
     label: 'Yazılan kelime',
     hint: 'Tahtaya girdiğin geçerli kelimeler',
-    value: (s) => tr(s.guesses),
+    value: (s, lang) => fmt(s.guesses, lang),
   },
 ];

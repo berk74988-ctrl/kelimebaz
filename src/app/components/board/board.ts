@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, effect, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
 import { GameStatus, Tile } from '../../models/game.model';
+import { LanguageService } from '../../services/language.service';
 import { LetterTile } from '../tile/tile';
 
 /**
@@ -14,6 +15,8 @@ import { LetterTile } from '../tile/tile';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Board {
+  protected readonly i18n = inject(LanguageService);
+
   /** 6×5 tahta durumu. */
   readonly rows = input.required<Tile[][]>();
 
