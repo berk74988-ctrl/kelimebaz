@@ -12,7 +12,7 @@
  *   theme  — vurgu rengi paleti (<html data-skin> ile uygulanır)
  *   frame  — profil fotoğrafı/avatar çerçevesi (CSS)
  *   badge  — isim yanında amblem (emoji)
- *   avatar — özel profil emojisi (ücretsiz sekizin ötesinde)
+ *   avatar — özel profil emojisi (ücretsiz on ikinin ötesinde)
  *
  * Her kategoride ÜCRETSİZ bir "varsayılan" vardır (price 0) — oyuncu ona her
  * zaman sahiptir ve "kullanımda"ya döndürebilir. Böylece satın alınan bir
@@ -70,7 +70,7 @@ export const SHOP_ITEMS: readonly ShopItem[] = [
   { id: 'badge.league', category: 'badge', name: 'Lig Madalyası', price: 9999, preview: '🎖️', seasonOnly: true },
 
   // ---- AVATARLAR ----
-  // Ücretsiz sekiz emoji (eskiden ProfileService'teydi) + satın alınabilir özel avatarlar.
+  // Ücretsiz on iki emoji (eskiden ProfileService'teydi) + satın alınabilir özel avatarlar.
   // Hepsi tek sistemde: iki ayrı avatar seçici olmasın.
   { id: 'avatar.owl', category: 'avatar', name: 'Baykuş', price: 0, preview: '🦉' },
   { id: 'avatar.bee', category: 'avatar', name: 'Arı', price: 0, preview: '🐝' },
@@ -80,12 +80,70 @@ export const SHOP_ITEMS: readonly ShopItem[] = [
   { id: 'avatar.eagle', category: 'avatar', name: 'Kartal', price: 0, preview: '🦅' },
   { id: 'avatar.octopus', category: 'avatar', name: 'Ahtapot', price: 0, preview: '🐙' },
   { id: 'avatar.deer', category: 'avatar', name: 'Geyik', price: 0, preview: '🦌' },
+  { id: 'avatar.cat', category: 'avatar', name: 'Kedi', price: 0, preview: '🐱' },
+  { id: 'avatar.dog', category: 'avatar', name: 'Köpek', price: 0, preview: '🐶' },
+  { id: 'avatar.panda', category: 'avatar', name: 'Panda', price: 0, preview: '🐼' },
+  { id: 'avatar.koala', category: 'avatar', name: 'Koala', price: 0, preview: '🐨' },
   { id: 'avatar.dragon', category: 'avatar', name: 'Ejderha', price: 120, preview: '🐉' },
   { id: 'avatar.unicorn', category: 'avatar', name: 'Tek Boynuz', price: 120, preview: '🦄' },
   { id: 'avatar.robot', category: 'avatar', name: 'Robot', price: 150, preview: '🤖' },
   { id: 'avatar.alien', category: 'avatar', name: 'Uzaylı', price: 150, preview: '👾' },
   { id: 'avatar.wizard', category: 'avatar', name: 'Büyücü', price: 200, preview: '🧙' },
   { id: 'avatar.ninja', category: 'avatar', name: 'Ninja', price: 200, preview: '🥷' },
+
+  // 100 — kara hayvanları
+  { id: 'avatar.lion', category: 'avatar', name: 'Aslan', price: 100, preview: '🦁' },
+  { id: 'avatar.tiger', category: 'avatar', name: 'Kaplan', price: 100, preview: '🐯' },
+  { id: 'avatar.wolf', category: 'avatar', name: 'Kurt', price: 100, preview: '🐺' },
+  { id: 'avatar.bear', category: 'avatar', name: 'Ayı', price: 100, preview: '🐻' },
+  { id: 'avatar.monkey', category: 'avatar', name: 'Maymun', price: 100, preview: '🐵' },
+  { id: 'avatar.rabbit', category: 'avatar', name: 'Tavşan', price: 100, preview: '🐰' },
+  { id: 'avatar.hamster', category: 'avatar', name: 'Hamster', price: 100, preview: '🐹' },
+  { id: 'avatar.hedgehog', category: 'avatar', name: 'Kirpi', price: 100, preview: '🦔' },
+
+  // 120 — deniz ve kuşlar
+  { id: 'avatar.dolphin', category: 'avatar', name: 'Yunus', price: 120, preview: '🐬' },
+  { id: 'avatar.whale', category: 'avatar', name: 'Balina', price: 120, preview: '🐳' },
+  { id: 'avatar.shark', category: 'avatar', name: 'Köpekbalığı', price: 120, preview: '🦈' },
+  { id: 'avatar.frog', category: 'avatar', name: 'Kurbağa', price: 120, preview: '🐸' },
+  { id: 'avatar.crab', category: 'avatar', name: 'Yengeç', price: 120, preview: '🦀' },
+  { id: 'avatar.parrot', category: 'avatar', name: 'Papağan', price: 120, preview: '🦜' },
+  { id: 'avatar.peacock', category: 'avatar', name: 'Tavus Kuşu', price: 120, preview: '🦚' },
+  { id: 'avatar.flamingo', category: 'avatar', name: 'Flamingo', price: 120, preview: '🦩' },
+
+  // 150 — doğa
+  { id: 'avatar.bolt', category: 'avatar', name: 'Şimşek', price: 150, preview: '⚡' },
+  { id: 'avatar.flame', category: 'avatar', name: 'Ateş', price: 150, preview: '🔥' },
+  { id: 'avatar.rainbow', category: 'avatar', name: 'Gökkuşağı', price: 150, preview: '🌈' },
+  { id: 'avatar.cactus', category: 'avatar', name: 'Kaktüs', price: 150, preview: '🌵' },
+  { id: 'avatar.mushroom', category: 'avatar', name: 'Mantar', price: 150, preview: '🍄' },
+  { id: 'avatar.clover', category: 'avatar', name: 'Yonca', price: 150, preview: '🍀' },
+
+  // 200 — gökyüzü
+  { id: 'avatar.moon', category: 'avatar', name: 'Ay', price: 200, preview: '🌙' },
+  { id: 'avatar.star', category: 'avatar', name: 'Yıldız', price: 200, preview: '🌟' },
+  { id: 'avatar.comet', category: 'avatar', name: 'Kuyrukluyıldız', price: 200, preview: '☄️' },
+  { id: 'avatar.planet', category: 'avatar', name: 'Gezegen', price: 200, preview: '🪐' },
+
+  // 250 — karakterler
+  { id: 'avatar.cowboy', category: 'avatar', name: 'Kovboy', price: 250, preview: '🤠' },
+  { id: 'avatar.clown', category: 'avatar', name: 'Palyaço', price: 250, preview: '🤡' },
+  { id: 'avatar.ghost', category: 'avatar', name: 'Hayalet', price: 250, preview: '👻' },
+  { id: 'avatar.vampire', category: 'avatar', name: 'Vampir', price: 250, preview: '🧛' },
+  { id: 'avatar.zombie', category: 'avatar', name: 'Zombi', price: 250, preview: '🧟' },
+  { id: 'avatar.fairy', category: 'avatar', name: 'Peri', price: 250, preview: '🧚' },
+
+  // 300 — efsanevi
+  { id: 'avatar.mermaid', category: 'avatar', name: 'Deniz Kızı', price: 300, preview: '🧜' },
+  { id: 'avatar.elf', category: 'avatar', name: 'Elf', price: 300, preview: '🧝' },
+  { id: 'avatar.hero', category: 'avatar', name: 'Süper Kahraman', price: 300, preview: '🦸' },
+  { id: 'avatar.villain', category: 'avatar', name: 'Süper Kötü', price: 300, preview: '🦹' },
+
+  // 400 — nadir
+  { id: 'avatar.ufo', category: 'avatar', name: 'UFO', price: 400, preview: '🛸' },
+  { id: 'avatar.crystal', category: 'avatar', name: 'Kristal Küre', price: 400, preview: '🔮' },
+  { id: 'avatar.dino', category: 'avatar', name: 'Dinozor', price: 400, preview: '🦕' },
+  { id: 'avatar.moai', category: 'avatar', name: 'Moai', price: 400, preview: '🗿' },
 ];
 
 /** Kategori başına başlangıçta seçili (ve ücretsiz sahip olunan) ürün. */

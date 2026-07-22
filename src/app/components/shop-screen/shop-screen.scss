@@ -129,9 +129,9 @@
    auto-fill: kart sayısı sabit değil, ekran genişledikçe daha çok sütun.
    Yeni ürün eklemek düzeni bozmaz. */
 
-/* Kalan alanı doldurur ve içine sığar; sığmayan olursa kırpılır, sayfa
-   kaydırılmaz. Ürünler kompakt — en kalabalık kategori (14 avatar) bile
-   dar ekranda 3 sütuna, geniş ekranda tek bakışta sığar. */
+/* Kalan alanı doldurur; sığmayan ürünler için ızgaranın kendisi kaydırılır,
+   sayfa kaymaz. Ürünler kompakt — en kalabalık kategori (58 avatar) dar
+   ekranda 3 sütuna dizilir, listenin devamı kaydırarak gelir. */
 .grid {
   flex: 1;
   min-height: 0;
