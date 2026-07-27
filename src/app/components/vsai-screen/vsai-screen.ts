@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
-import { AI_CONFIG, aiOpener, AiSolver, Difficulty } from '../../core/ai-opponent';
+import { AI_CONFIG, aiOpeners, AiSolver, Difficulty } from '../../core/ai-opponent';
 import { LetterState, MAX_ATTEMPTS } from '../../models/game.model';
 import { AudioService } from '../../services/audio.service';
 import { GameService } from '../../services/game.service';
@@ -100,7 +100,7 @@ export class VsaiScreen {
       AI_CONFIG[diff],
       this.MAX,
       Math.random,
-      aiOpener(this.i18n.lang(), len), // 🤖 derleme zamanı açılışı → ilk tur gecikmesiz
+      aiOpeners(this.i18n.lang(), len), // 🤖 derleme zamanı sıralı açılış → ilk tur gecikmesiz
     );
     this.phase.set('playing');
     this.scheduleAi();

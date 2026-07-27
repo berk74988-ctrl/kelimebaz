@@ -12,11 +12,14 @@ import { Lang } from './lang';
  * tahmin ortalamada en çok eler" sorusunu Shannon entropisiyle yanıtlar
  * (bkz. guessEntropy). Rastgele aday seçmez — en bilgilendirici olanı seçer.
  *
- * ZORLUK iki koldan gelir:
- *   1. HIZ  — düşünme aralığı (nextDelay): kolay yavaş, zor hızlı.
- *   2. AKIL — `smart`: entropiye göre en iyi tahmini yapma olasılığı.
- *      Düşükse ara sıra aday-DIŞI (tutarsız) kelime dener → tur harcar,
- *      yani daha zayıf oynar (kolay seviye).
+ * ZORLUK = OYUN GÜCÜ. Bot her zorlukta MANTIKLI oynar (asla ipuçlarıyla çelişen
+ * tahmin yapmaz); sadece optimallikten uzaklaşır. Ölçü: entropi sıralamasında
+ * kaçıncı en iyi tahmini seçtiği (`topK`).
+ *   - Zor  (topK 1)  → hep en iyi tahmin (en çok eleyen).
+ *   - Orta (topK ~6) → ilk birkaç iyi tahminden biri.
+ *   - Kolay(topK ~24)→ ilk yirmi küsur tahminden biri — hâlâ geçerli, ama daha
+ *     az bilgi çıkaran → daha çok tur harcar (zayıf ama tutarlı bir oyuncu gibi).
+ * Düşünme SÜRESİ (nextDelay) artık zorluğun kaynağı DEĞİL — yalnız tempo hissi.
  * ============================================================
  */
 
@@ -26,15 +29,21 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 const SAMPLE_THRESHOLD = 300;
 
 export interface AiConfig {
-  minMs: number; // düşünme aralığı alt sınır (ms)
+  minMs: number; // düşünme aralığı alt sınır (ms) — yalnız tempo
   maxMs: number; // üst sınır (ms)
-  smart: number; // 0..1 — filtrelenmiş adaydan tahmin etme olasılığı
+  /** Entropi sıralamasında İLK KAÇ aday arasından seçim yapılır (1 = hep en iyi). */
+  topK: number;
 }
 
+// topK, ULAŞILABİLİR hedef ortalamaya göre kalibre edildi (scripts/vsai-solver-test.mjs,
+// 5 harfli TR havuz, 500 maç): Kolay ≈ 3.15 · Orta ≈ 2.9 · Zor ≈ 2.75.
+// NOT: Yalnız-tutarlı (ipuçlarına uyan) oyunla ulaşılabilir tavan bu havuzda ~3.3'tür;
+// daha yüksek "Kolay" ortalaması ancak botun ipucunu boşa harcamasıyla (anlamsız
+// tahmin) olurdu — bilinçli olarak yapılmadı. Fark ~0.4 tahmin; hız/tempo destekler.
 export const AI_CONFIG: Record<Difficulty, AiConfig> = {
-  easy: { minMs: 4200, maxMs: 6800, smart: 0.35 }, // yavaş + sık hata → rahat yenilir (~çözüm 18-27s)
-  medium: { minMs: 2800, maxMs: 4300, smart: 0.85 }, // dengeli (~çözüm 11-16s)
-  hard: { minMs: 1900, maxMs: 2900, smart: 1.0 }, // hızlı + hep en iyi aday → zorlu ama adil (~çözüm 8-11s)
+  easy: { minMs: 3200, maxMs: 5200, topK: 140 }, // geniş seçim → zayıf ama HÂLÂ tutarlı
+  medium: { minMs: 2400, maxMs: 3600, topK: 8 }, // ilk ~8'den biri → dengeli
+  hard: { minMs: 1700, maxMs: 2600, topK: 1 }, // hep en iyi → zorlu ama adil
 };
 
 /** İki renk deseni birebir aynı mı? */
@@ -75,12 +84,14 @@ export function guessEntropy(guess: string, candidates: readonly string[]): numb
   return h;
 }
 
-/** Derleme zamanında hesaplanmış açılış kelimesi (ilk tur gecikmesiz). */
-export function aiOpener(lang: Lang, length: number): string | null {
-  return AI_OPENERS[lang]?.[length] ?? null;
+/** Derleme zamanında hesaplanmış SIRALI açılış listesi (ilk tur gecikmesiz). */
+export function aiOpeners(lang: Lang, length: number): readonly string[] {
+  return AI_OPENERS[lang]?.[length] ?? [];
 }
 
 export interface AiGuess {
+  /** Tahmin edilen kelime (test/analiz: tutarlılık doğrulanabilir). */
+  word: string;
   pattern: LetterState[];
   solved: boolean;
 }
@@ -96,8 +107,8 @@ export class AiSolver {
     private readonly cfg: AiConfig,
     private readonly maxAttempts: number,
     private readonly rnd: () => number = Math.random,
-    /** Derleme zamanında hesaplanmış açılış kelimesi — ilk tur gecikmesiz. */
-    private readonly opener: string | null = null,
+    /** Derleme zamanı SIRALI açılış listesi — ilk tur gecikmesiz (topK ile seçilir). */
+    private readonly openers: readonly string[] = [],
   ) {
     this.candidates = pool.length ? [...pool] : [answer];
   }
@@ -120,7 +131,7 @@ export class AiSolver {
     const pick = this.pickGuess();
     const pattern = evaluateGuess(pick, this.answer);
     const solved = pick === this.answer;
-    this.guesses.push({ pattern, solved });
+    this.guesses.push({ word: pick, pattern, solved });
     if (solved) {
       this.solved = true;
       return;
@@ -133,47 +144,41 @@ export class AiSolver {
   private pickGuess(): string {
     const c = this.candidates;
     // Son düzlük: 1-2 aday kaldıysa doğrudan dene (biri cevaptır).
-    if (c.length <= 2) {
-      return c.length ? c[0] : this.pool[Math.floor(this.rnd() * this.pool.length)];
+    if (c.length <= 2) return c.length ? c[0] : this.pool[Math.floor(this.rnd() * this.pool.length)];
+    // İlk tur: açılış derleme zamanında SIRALI hesaplandı → hesap yok, gecikme yok.
+    // Zor listenin başını (en iyi açılış), Kolay ilk topK'dan birini alır → güç farkı.
+    if (this.attempts === 0 && this.openers.length) {
+      const k = Math.min(this.cfg.topK, this.openers.length);
+      return this.openers[Math.floor(this.rnd() * k)];
     }
-    // "Akıllı" oynuyorsa entropiye göre en çok eleyen tahmini seç.
-    if (this.rnd() < this.cfg.smart) {
-      // İlk tur: açılış kelimesi derleme zamanında hesaplandı → hesap yok, gecikme yok.
-      if (this.attempts === 0 && this.opener) return this.opener;
-      return this.bestGuess();
-    }
-    // "Hata" (kolay YZ): aday olmayan rastgele kelime → tur harcar, zayıf oynar.
-    return this.pool[Math.floor(this.rnd() * this.pool.length)];
+    // Sonraki turlar: entropi sıralamasında ilk topK aday arasından seç.
+    return this.rankedGuess();
   }
 
   /**
-   * ENTROPİ TABANLI SEÇİM — adaylar arasından havuzu en çok bölen (en yüksek
-   * entropili) tahmini seçer. Beraberlikte cevap havuzunda olanı tercih eder
-   * (o tur kazanma şansı). Aday çoksa örnekleme yapar → tarayıcıda < 100 ms.
+   * ENTROPİ SIRALAMASINDAN SEÇİM — adayları "havuzu ne kadar eler" (entropi)
+   * ölçüsüne göre sıralar, ilk `topK` arasından RASTGELE birini seçer.
+   *   topK 1  → hep en iyi tahmin (Zor).
+   *   topK N  → ilk N iyi tahminden biri (Orta/Kolay) — hâlâ MANTIKLI (ipuçlarıyla
+   *             çelişmez), sadece daha az bilgi çıkarır → daha çok tur.
+   * Beraberlikte cevap havuzunda olan üste alınır (o tur kazanma şansı). Aday
+   * çoksa örnekleme yapar → tarayıcıda < 100 ms.
    */
-  private bestGuess(): string {
+  private rankedGuess(): string {
     const c = this.candidates;
     // Aday çoksa hem tahmin hem skorlama kümesini örnekle → maliyet O(SAMPLE²).
-    // (İlk tur zaten önceden hesaplanmış açılışı kullanır; buraya sonraki, küçük
-    //  aday kümeleriyle gelinir — örnekleme pratikte devreye girmez, güvenlik ağı.)
+    // (İlk tur önceden hesaplanmış açılışı kullanır; buraya küçük aday kümeleriyle
+    //  gelinir — örnekleme pratikte devreye girmez, güvenlik ağı.)
     const guesses = c.length > SAMPLE_THRESHOLD ? this.sample(c, SAMPLE_THRESHOLD) : c;
     const scoreSet = c.length > SAMPLE_THRESHOLD ? this.sample(c, SAMPLE_THRESHOLD) : c;
     const answerPool = this.poolSet();
 
-    let best = guesses[0];
-    let bestH = -1;
-    let bestInPool = false;
-    for (const g of guesses) {
-      const h = guessEntropy(g, scoreSet);
-      const inPool = answerPool.has(g);
-      // Daha yüksek entropi kazanır; eşit entropide cevap havuzundaki tercih edilir.
-      if (h > bestH + 1e-9 || (Math.abs(h - bestH) <= 1e-9 && inPool && !bestInPool)) {
-        best = g;
-        bestH = h;
-        bestInPool = inPool;
-      }
-    }
-    return best;
+    const scored = guesses.map((g) => ({ g, h: guessEntropy(g, scoreSet), inPool: answerPool.has(g) }));
+    // Entropi azalan; eşitlikte cevap havuzundaki (kazanma şansı) üstte.
+    scored.sort((a, b) => b.h - a.h || Number(b.inPool) - Number(a.inPool));
+
+    const k = Math.min(this.cfg.topK, scored.length);
+    return scored[Math.floor(this.rnd() * k)].g;
   }
 
   private _poolSet: Set<string> | null = null;

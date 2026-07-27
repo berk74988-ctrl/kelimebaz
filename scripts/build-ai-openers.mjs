@@ -1,13 +1,15 @@
 /**
  * KELİMEBAZ — YZ AÇILIŞ KELİMELERİNİ DERLEME ZAMANINDA HESAPLAR.
  *
- * Açılış kelimesi her maçta AYNIDIR (ilk turda henüz ipucu yok, adaylar = tüm
- * havuz). Bu yüzden entropi maksimumu bir kez burada hesaplanır ve
- * `src/app/core/ai-openers.ts` sabitine gömülür → çalışma zamanında ilk tur
- * maliyeti SIFIRA iner (tarayıcıda gecikme olmaz).
+ * İlk turda henüz ipucu yok → adaylar = tüm havuz, en iyi açılış her maçta AYNI.
+ * Bu yüzden havuzu SIRALI biçimde (en yüksek entropiden aşağıya) bir kez burada
+ * hesaplanıp `src/app/core/ai-openers.ts` sabitine gömülür → çalışma zamanında
+ * ilk tur maliyeti SIFIRA iner (tarayıcıda gecikme olmaz).
  *
- * "En iyi açılış" = aday havuzunu en çok bölen (en yüksek Shannon entropili)
- * tahmin. Renk deseni mantığı `core/evaluate.ts` ile birebir aynıdır.
+ * Neden LİSTE (tek kelime değil): zorluk = entropi sıralamasında kaçıncı en iyiyi
+ * seçtiğin (topK). Zor bot listenin başını (en iyi açılış), Kolay bot ilk N'den
+ * birini alır. Tek açılış olsaydı tüm zorluklar aynı açılışı yapar, güç farkı
+ * kaybolurdu. Renk deseni mantığı `core/evaluate.ts` ile birebir aynıdır.
  *
  * Kullanım: node scripts/build-ai-openers.mjs
  */
@@ -15,6 +17,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 
 const LANGS = /** @type {const} */ (['tr', 'en']);
 const LENGTHS = [4, 5, 6, 7];
+const TOP_N = 128; // her uzunluk için saklanan sıralı açılış sayısı (Kolay'ın en yüksek topK'sını karşılar)
 const SCORE_CAP = 600; // entropiyi bu kadar adaya karşı örnekle (build hızı; sonuç kararlı)
 
 // Dile göre büyük harf — core/lang.ts upperFor ile aynı.
@@ -80,20 +83,13 @@ function sample(list, k, rnd) {
   return out;
 }
 
-/** Havuzdaki en yüksek entropili açılış kelimesi. */
-function bestOpener(pool, rnd) {
-  if (pool.length <= 1) return pool[0] || '';
+/** Havuzu entropiye göre SIRALAR, en iyi TOP_N açılışı döndürür. */
+function rankedOpeners(pool, rnd) {
+  if (pool.length <= 1) return [...pool];
   const scoreSet = pool.length > SCORE_CAP ? sample(pool, SCORE_CAP, rnd) : pool;
-  let best = pool[0];
-  let bestH = -1;
-  for (const g of pool) {
-    const h = entropy(g, scoreSet);
-    if (h > bestH) {
-      bestH = h;
-      best = g;
-    }
-  }
-  return best;
+  const scored = pool.map((g) => ({ g, h: entropy(g, scoreSet) }));
+  scored.sort((a, b) => b.h - a.h);
+  return scored.slice(0, TOP_N).map((x) => x.g);
 }
 
 async function loadAnswers(file, lang) {
@@ -114,26 +110,34 @@ for (const lang of LANGS) {
   for (const L of LENGTHS) {
     const pool = byLen[L] || [];
     const rnd = makeRng(2026_07 + L); // uzunluğa göre sabit seed
-    const opener = bestOpener(pool, rnd);
-    openers[lang][L] = opener;
-    report.push(`  ${lang} ${L} harf: ${opener || '(havuz boş)'}  [${pool.length} aday]`);
+    const list = rankedOpeners(pool, rnd);
+    openers[lang][L] = list;
+    report.push(`  ${lang} ${L} harf: ${list[0] || '(boş)'} … (${list.length} sıralı) [${pool.length} aday]`);
   }
 }
+
+const arr = (list) => '[' + list.map((w) => `'${w}'`).join(', ') + ']';
+const langBlock = (lang) =>
+  `  ${lang}: {\n` +
+  LENGTHS.map((L) => `    ${L}: ${arr(openers[lang][L])},`).join('\n') +
+  `\n  },`;
 
 const body =
   `/**\n` +
   ` * OTOMATİK ÜRETİLDİ — scripts/build-ai-openers.mjs (elle düzenleme).\n` +
   ` *\n` +
-  ` * YZ açılış kelimeleri: her dil × kelime uzunluğu için EN YÜKSEK ENTROPİLİ ilk\n` +
-  ` * tahmin. Derleme zamanında hesaplanır → çalışma zamanında ilk tur gecikmesi yok.\n` +
-  ` * Yeniden üretmek: node scripts/build-ai-openers.mjs\n` +
+  ` * YZ açılış kelimeleri: her dil × uzunluk için entropiye göre SIRALI liste\n` +
+  ` * (en iyi açılıştan aşağıya, en fazla ${TOP_N} kelime). Zorluk (topK) bu listenin\n` +
+  ` * ilk kaçından seçtiğini belirler. Derleme zamanında hesaplanır → çalışma\n` +
+  ` * zamanında ilk tur gecikmesi yok. Yeniden üretmek: node scripts/build-ai-openers.mjs\n` +
   ` */\n` +
-  `export const AI_OPENERS: Record<'tr' | 'en', Record<number, string>> = {\n` +
-  `  tr: { 4: '${openers.tr[4]}', 5: '${openers.tr[5]}', 6: '${openers.tr[6]}', 7: '${openers.tr[7]}' },\n` +
-  `  en: { 4: '${openers.en[4]}', 5: '${openers.en[5]}', 6: '${openers.en[6]}', 7: '${openers.en[7]}' },\n` +
-  `};\n`;
+  `export const AI_OPENERS: Record<'tr' | 'en', Record<number, readonly string[]>> = {\n` +
+  langBlock('tr') +
+  '\n' +
+  langBlock('en') +
+  '\n};\n';
 
 await writeFile(new URL('../src/app/core/ai-openers.ts', import.meta.url), body, 'utf8');
 
-console.log('YZ açılış kelimeleri hesaplandı → src/app/core/ai-openers.ts\n');
+console.log('YZ sıralı açılış listeleri hesaplandı → src/app/core/ai-openers.ts\n');
 console.log(report.join('\n'));
