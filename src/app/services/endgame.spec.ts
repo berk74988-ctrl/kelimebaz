@@ -115,6 +115,47 @@ describe('Oyun bitişi', () => {
     });
   });
 
+  describe('YZ (vsai) modu — ana ilerlemeyi cezalandırmaz', () => {
+    beforeEach(() => {
+      guess(game.answer()); // önce SERBEST modda bir galibiyet → ana seri 1
+      expect(stats.stats().currentStreak).toBe(1);
+      game.startRoom('KALEM', 'vsai'); // sonra bir YZ maçı başlat
+    });
+
+    it('YZ maçı KAZANMAK ana seriyi/oynananı artırmaz, YZ sayacı işler', () => {
+      const anaOynanan = stats.stats().played;
+
+      guess('KALEM'); // YZ maçını kazan
+
+      expect(game.status()).toBe('won');
+      expect(stats.stats().played).toBe(anaOynanan); // ana oynanan DEĞİŞMEDİ
+      expect(stats.stats().currentStreak).toBe(1); // ANA SERİ artmadı
+      expect(stats.stats().vsaiPlayed).toBe(1);
+      expect(stats.stats().vsaiWon).toBe(1);
+    });
+
+    it('YZ maçı KAYBETMEK (6 hak biter) kazanma serisini SIFIRLAMAZ', () => {
+      for (const w of wrongWords('KALEM')) guess(w); // 6 yanlış → maçı kaybet
+
+      expect(game.status()).toBe('lost');
+      expect(stats.stats().currentStreak).toBe(1); // ANA SERİ korundu
+      expect(stats.stats().vsaiPlayed).toBe(1);
+      expect(stats.stats().vsaiWon).toBe(0);
+    });
+
+    it('rakip ÖNCE çözünce oyun "lost" değil "ended" olur, seri korunur', () => {
+      guess(wrongWords('KALEM')[0]); // oyuncunun daha tahmin hakkı var
+
+      game.endVsaiMatch(); // 🤖 bot önce çözdü → maç biter
+
+      expect(game.status()).toBe('ended'); // 'lost' DEĞİL → kalan haklar cezaya dönüşmez
+      expect(game.isOver()).toBe(true);
+      expect(stats.stats().currentStreak).toBe(1); // ANA SERİ korundu
+      expect(stats.stats().vsaiPlayed).toBe(1);
+      expect(stats.stats().vsaiWon).toBe(0);
+    });
+  });
+
   describe('tekrar oyna', () => {
     it('oyunu TEMİZ başlatır: tahta boş, durum playing', () => {
       guess(game.answer()); // kazan

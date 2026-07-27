@@ -19,8 +19,12 @@ export interface Guess {
   tiles: Tile[];
 }
 
-/** Oyunun genel durumu. */
-export type GameStatus = 'playing' | 'won' | 'lost';
+/**
+ * Oyunun genel durumu.
+ * 'ended' = maç, oyuncu KAYBETMEDEN sona erdi (YZ modunda rakip önce çözünce).
+ *           'lost' değildir: oyuncunun kalan hakları mağlubiyete/cezaya dönüşmez.
+ */
+export type GameStatus = 'playing' | 'won' | 'lost' | 'ended';
 
 /** Oyun modu. 'room' = çok oyunculu oda yarışı; 'vsai' = yapay zekâ rakibe karşı tek kişilik yarış. */
 export type GameMode = 'daily' | 'practice' | 'room' | 'vsai';
@@ -68,6 +72,13 @@ export interface Stats {
   points: number;
   /** Şimdiye kadar tahtaya yazılan geçerli kelime sayısı (kazanılan + kaybedilen). */
   guesses: number;
+  /**
+   * YZ (vsai) modu AYRI tutulur — ana ilerlemeyi (seri/oynanan/puan) etkilemez.
+   * Yapay zekâya karşı oynanan maç sayısı.
+   */
+  vsaiPlayed: number;
+  /** YZ'ye karşı KAZANILAN maç sayısı. */
+  vsaiWon: number;
 }
 
 export const EMPTY_STATS: Stats = {
@@ -79,6 +90,8 @@ export const EMPTY_STATS: Stats = {
   lastWinAttempts: null,
   points: 0,
   guesses: 0,
+  vsaiPlayed: 0,
+  vsaiWon: 0,
 };
 
 /** Varsayılan/yedek uzunluk. Oyun artık 4-7 harf kullanır (bkz. core/word-length.ts);

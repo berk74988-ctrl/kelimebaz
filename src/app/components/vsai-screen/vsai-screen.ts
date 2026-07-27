@@ -139,13 +139,15 @@ export class VsaiScreen {
     // aksi halde YZ'yi bekle (YZ çözerse kaybedersin, YZ de çözemezse berabere)
   }
 
-  /** 🤖 YZ önce çözdü → insan bitmemişse oyununu KAYIPLA kapat (istatistik/altın işlensin), sonra bitir. */
+  /** 🤖 YZ önce çözdü → insan bitmemişse oyununu MAÇ BİTTİ olarak kapat (YZ sayacı + altın işlensin), sonra bitir. */
   private onAiSolvedFirst(): void {
     if (this.ended) return;
     if (!this.human) {
       const attempts = Math.max(1, this.game.rowIndex());
       try {
-        if (!this.game.isOver()) this.game.timeout(); // insan oyununu kayıpla kapat → endGame istatistik/altın işler
+        // 'lost' DEĞİL: oyuncu kaybetmedi, YZ daha hızlıydı. endVsaiMatch() ana
+        // seriyi/istatistiği korur, yalnız YZ sayaçlarını + altını işler.
+        if (!this.game.isOver()) this.game.endVsaiMatch();
       } catch {
         /* yok say */
       }

@@ -38,6 +38,9 @@ export class StatsService {
       // Puan, oyun SONRASI seriye göre hesaplanır — üst üste kazanmak ödüllendirilir
       points: s.points + scoreFor(won, attempts, streak),
       guesses: s.guesses + attempts,
+      // YZ sayaçlarına ANA oyun dokunmaz — olduğu gibi korunur
+      vsaiPlayed: s.vsaiPlayed,
+      vsaiWon: s.vsaiWon,
     };
 
     if (won && attempts >= 1 && attempts <= MAX_ATTEMPTS) {
@@ -46,6 +49,31 @@ export class StatsService {
 
     this._stats.set(next);
     this.persist(next);
+  }
+
+  /**
+   * YZ (vsai) maç sonucunu işler — ANA istatistiklere DOKUNMAZ.
+   *
+   * Kazanma serisi, oynanan/kazanılan, dağılım ve puan ETKİLENMEZ; yalnız
+   * ayrı YZ sayaçları güncellenir. YZ modu eğlenceli bir yan moddur; oyuncunun
+   * 20 maçlık serisi, bot 2 saniye hızlı diye sıfırlanmamalı.
+   */
+  recordVsai(won: boolean): void {
+    const s = this._stats();
+    const next: Stats = {
+      ...s,
+      distribution: [...s.distribution],
+      vsaiPlayed: s.vsaiPlayed + 1,
+      vsaiWon: s.vsaiWon + (won ? 1 : 0),
+    };
+    this._stats.set(next);
+    this.persist(next);
+  }
+
+  /** YZ'ye karşı kazanma yüzdesi (tam sayı). Hiç oynanmadıysa 0. */
+  vsaiWinRate(): number {
+    const s = this._stats();
+    return s.vsaiPlayed === 0 ? 0 : Math.round((s.vsaiWon / s.vsaiPlayed) * 100);
   }
 
   /** Puandan hesaplanan seviye ve ilerleme (core/level.ts). */
@@ -109,6 +137,8 @@ export class StatsService {
         maxStreak: num(parsed.maxStreak),
         points: num(parsed.points),
         guesses: num(parsed.guesses),
+        vsaiPlayed: num(parsed.vsaiPlayed),
+        vsaiWon: num(parsed.vsaiWon),
         // Eski/bozuk kayıtlarda dağılım dizisi hatalı olabilir
         distribution:
           Array.isArray(dist) && dist.length === MAX_ATTEMPTS ? [...dist] : emptyDistribution(),

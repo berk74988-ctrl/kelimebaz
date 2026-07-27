@@ -30,11 +30,16 @@ export interface ProfileStat {
 /** Sayıyı aktif dilin binlik ayracıyla biçimler (tr: 1.000 · en: 1,000). */
 const fmt = (n: number, lang: Lang = 'tr') => n.toLocaleString(lang === 'en' ? 'en' : 'tr');
 
+/** Yüzdeyi dile göre biçimler (tr: %89 · en: 89%). */
+const pct = (r: number, lang: Lang = 'tr') => (lang === 'en' ? `${r}%` : `%${r}`);
+
 /** Kazanma oranı — yüzde işareti dile göre konumlanır (tr: %89 · en: 89%). */
-const rate = (s: Stats, lang: Lang = 'tr') => {
-  const r = s.played === 0 ? 0 : Math.round((s.won / s.played) * 100);
-  return lang === 'en' ? `${r}%` : `%${r}`;
-};
+const rate = (s: Stats, lang: Lang = 'tr') =>
+  pct(s.played === 0 ? 0 : Math.round((s.won / s.played) * 100), lang);
+
+/** YZ'ye karşı kazanma oranı — 0/0 durumunda NaN değil %0. */
+const vsaiRate = (s: Stats, lang: Lang = 'tr') =>
+  pct(s.vsaiPlayed === 0 ? 0 : Math.round((s.vsaiWon / s.vsaiPlayed) * 100), lang);
 
 export const PROFILE_STATS: readonly ProfileStat[] = [
   {
@@ -84,5 +89,19 @@ export const PROFILE_STATS: readonly ProfileStat[] = [
     label: 'Yazılan kelime',
     hint: 'Tahtaya girdiğin geçerli kelimeler',
     value: (s, lang) => fmt(s.guesses, lang),
+  },
+  {
+    key: 'vsaiPlayed',
+    icon: '🤖',
+    label: 'YZ maçları',
+    hint: 'Yapay zekâya karşı oynanan maçlar (ana ilerlemeyi etkilemez)',
+    value: (s, lang) => fmt(s.vsaiPlayed, lang),
+  },
+  {
+    key: 'vsaiWinRate',
+    icon: '🏅',
+    label: 'YZ galibiyet oranı',
+    // Türetilmiş: Stats'ta saklanmaz, vsaiWon/vsaiPlayed'den hesaplanır.
+    value: (s, lang) => vsaiRate(s, lang),
   },
 ];

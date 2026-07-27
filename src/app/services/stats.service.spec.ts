@@ -235,6 +235,58 @@ describe('StatsService', () => {
     });
   });
 
+  describe('YZ (vsai) modu — ANA istatistikten ayrı', () => {
+    it('YZ maçı KAZANMAK ana seriyi/oynananı/puanı ARTIRMAZ', () => {
+      stats.record(true, 3); // ana: 1 galibiyet, seri 1
+      const before = stats.stats();
+
+      stats.recordVsai(true);
+      stats.recordVsai(true);
+
+      const s = stats.stats();
+      expect(s.played).toBe(before.played); // ana oynanan değişmedi
+      expect(s.won).toBe(before.won); // ana kazanılan değişmedi
+      expect(s.currentStreak).toBe(before.currentStreak); // ANA SERİ artmadı
+      expect(s.points).toBe(before.points); // puan/seviye etkilenmedi
+      expect(s.distribution).toEqual(before.distribution);
+      // YZ sayaçları güncellendi
+      expect(s.vsaiPlayed).toBe(2);
+      expect(s.vsaiWon).toBe(2);
+    });
+
+    it('YZ maçı KAYBETMEK kazanma serisini SIFIRLAMAZ', () => {
+      stats.record(true, 3);
+      stats.record(true, 2); // ana seri 2
+
+      stats.recordVsai(false); // YZ maçı kaybedildi (bot daha hızlı)
+
+      expect(stats.stats().currentStreak).toBe(2); // seri KORUNDU
+      expect(stats.stats().maxStreak).toBe(2);
+      expect(stats.stats().played).toBe(2); // ana oynanan artmadı
+      expect(stats.stats().vsaiPlayed).toBe(1);
+      expect(stats.stats().vsaiWon).toBe(0);
+    });
+
+    it('YZ galibiyet oranı doğru hesaplanır (0/0 → %0)', () => {
+      expect(stats.vsaiWinRate()).toBe(0);
+
+      stats.recordVsai(true);
+      stats.recordVsai(false);
+      stats.recordVsai(true);
+
+      expect(stats.vsaiWinRate()).toBe(67); // 2/3
+    });
+
+    it('YZ sayaçları sayfa yenilenince korunur', () => {
+      stats.recordVsai(true);
+      stats.recordVsai(false);
+
+      const reloaded = freshService().stats();
+      expect(reloaded.vsaiPlayed).toBe(2);
+      expect(reloaded.vsaiWon).toBe(1);
+    });
+  });
+
   describe('sıfırlama', () => {
     it('istatistikleri temizler ve kalıcı yazar', () => {
       stats.record(true, 3);

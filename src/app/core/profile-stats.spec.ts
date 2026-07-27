@@ -15,6 +15,8 @@ describe('Profil istatistik kayıt defteri', () => {
     lastWinAttempts: 4,
     points: 3450,
     guesses: 98,
+    vsaiPlayed: 16,
+    vsaiWon: 9,
   };
 
   it('kullanıcının istediği istatistiklerin hepsi var', () => {
@@ -25,6 +27,8 @@ describe('Profil istatistik kayıt defteri', () => {
     expect(keys).toContain('maxStreak'); // en uzun seri
     expect(keys).toContain('wordsFound'); // toplam bulunan kelime
     expect(keys).toContain('points'); // toplam puan
+    expect(keys).toContain('vsaiPlayed'); // YZ maçları (ayrı sayaç)
+    expect(keys).toContain('vsaiWinRate'); // YZ galibiyet oranı
   });
 
   it('anahtarlar BENZERSİZ (kart tekrarı olmaz)', () => {
@@ -66,5 +70,7 @@ describe('Profil istatistik kayıt defteri', () => {
     it('en uzun seri', () => expect(byKey('maxStreak')).toBe('11'));
     it('puan binlik ayraçla yazılır', () => expect(byKey('points')).toBe('3.450'));
     it('yazılan kelime', () => expect(byKey('guesses')).toBe('98'));
+    it('YZ maçları', () => expect(byKey('vsaiPlayed')).toBe('16'));
+    it('YZ galibiyet oranı yuvarlanır', () => expect(byKey('vsaiWinRate')).toBe('%56')); // 9/16 = %56.25
   });
 });

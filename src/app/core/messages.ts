@@ -325,6 +325,8 @@ export const MESSAGES: Record<string, { tr: string; en: string }> = {
   'stat.currentStreak': { tr: 'Güncel seri', en: 'Current streak' },
   'stat.points': { tr: 'Toplam puan', en: 'Total points' },
   'stat.guesses': { tr: 'Yazılan kelime', en: 'Words typed' },
+  'stat.vsaiPlayed': { tr: 'YZ maçları', en: 'AI matches' },
+  'stat.vsaiWinRate': { tr: 'YZ galibiyet oranı', en: 'AI win rate' },
 
   // ---- Ayarlar ----
   'settings.title': { tr: 'Ayarlar', en: 'Settings' },

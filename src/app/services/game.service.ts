@@ -165,6 +165,19 @@ export class GameService {
     this.endGame(false, Math.max(1, this._guesses().length));
   }
 
+  /**
+   * YZ (vsai) maçı, rakip önce çözdüğü için kapanır.
+   *
+   * 'lost' DEĞİL 'ended' kullanılır: oyuncu kalan haklarıyla KAYBETMEDİ, maç
+   * sona erdi. Böylece kalan tahmin hakları mağlubiyete/cezaya dönüşmez ve
+   * endGame() bunu YZ sonucu olarak işler (ana seri/istatistik korunur).
+   */
+  endVsaiMatch(): void {
+    if (this.isOver()) return;
+    this._status.set('ended');
+    this.endGame(false, Math.max(1, this._guesses().length));
+  }
+
   /** Sıfırdan yeni oyun. */
   reset(mode: GameMode = this._mode()): void {
     this._mode.set(mode);
@@ -254,14 +267,20 @@ export class GameService {
    * Sonuç ekranı bu toplamı gösterir.
    */
   private endGame(won: boolean, attempts: number): void {
-    const isDaily = this._mode() === 'daily';
+    const mode = this._mode();
+    const isDaily = mode === 'daily';
+    const isVsai = mode === 'vsai';
 
     // Seviye ödülü, bu oyunun puanı EKLENMEDEN önceki seviyeyle hesaplanır:
     // oyuncu bu oyuna hangi seviyeyle girdiyse onun ödülünü hak eder.
     const level = this.stats.level().level;
 
-    this.stats.record(won, attempts);
+    // 🤖 YZ modu CASUAL: ana istatistiklere (seri/oynanan/kazanılan/dağılım/puan)
+    // DOKUNMA — yalnız ayrı YZ sayaçları güncellenir. Ana ilerleme cezalanmaz.
+    if (isVsai) this.stats.recordVsai(won);
+    else this.stats.record(won, attempts);
 
+    // Altın KORUNUR — oynamanın karşılığı YZ modunda da verilir.
     const fromGame = goldForGame(won, attempts, isDaily, level);
     this.gold.earn(fromGame);
 
@@ -273,8 +292,7 @@ export class GameService {
 
     // 🏆 Lig puanı (LP): kazan → +LP, kaybet → -LP. Değişimi sonuç ekranı gösterir.
     // YZ modu CASUAL — ligi (rekabetçi merdiven) etkilemez.
-    const m = this._mode();
-    this._lpDelta.set(m === 'vsai' ? 0 : this.league.recordResult(won, attempts, m));
+    this._lpDelta.set(isVsai ? 0 : this.league.recordResult(won, attempts, mode));
   }
 
   /** Sonucu emoji ızgarası olarak paylaş metnine çevirir (harf içermez). */
