@@ -14,6 +14,7 @@
     "check:scenarios": "node scripts/scenarios-check.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "screenshots:menu": "node scripts/menu-shots.mjs",
+    "screenshots:modes": "node scripts/mode-shots.mjs",
     "screenshots:result": "node scripts/result-shots.mjs",
     "check:profile": "node scripts/profile-check.mjs",
     "check:gold": "node scripts/gold-check.mjs",

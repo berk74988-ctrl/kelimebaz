@@ -22,11 +22,15 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 | 🟨 **Sarı** | Harf kelimede **var** ama yeri yanlış |
 | ⬜ **Gri** | Harf kelimede **hiç yok** |
 
-**6 hakkın var.** Bitmeden bulursan kazanırsın; bulamazsan doğru kelime gösterilir.
+**6 hakkın var.** Kelime uzunluğu **seviyene göre 4-7 harf** arasında değişir. Bitmeden bulursan kazanırsın; bulamazsan doğru kelime gösterilir.
 
-**İki mod:**
-- **Günün Kelimesi** — herkes aynı kelimeyi oynar, her gün yenilenir, günde bir hak
-- **Serbest Oyna** — rastgele kelime, sınırsız
+**Dört oyun modu:**
+- 📅 **Günün Kelimesi** — herkes aynı kelimeyi oynar, her gün yenilenir, günde bir hak
+- 🎲 **Serbest Oyna** — rastgele kelime, sınırsız
+- 🎮 **Arkadaşlarla Oyna** — oda kur, kodla davet et, aynı kelimede yarış (sohbet + lider tablosu + süre sınırı)
+- 🤖 **Yapay Zekâya Karşı** — bota karşı yarış, 3 zorluk (Kolay / Orta / Zor); ilk çözen kazanır
+
+Ayrıca 🏆 **Lig**: günlük/serbest/oda maçları LP kazandırır, Bronz'dan Usta'ya yükselirsin, her sezon ödül dağıtılır. YZ modu casual'dır — ligi ve ana istatistikleri etkilemez.
 
 ---
 
@@ -44,11 +48,24 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 | --- | --- |
 | ![](docs/screenshots/6-renk-koru-modu.png) | <img src="docs/screenshots/menu-5-mobil.png" width="260"> |
 
+| 🤖 Yapay zekâya karşı | 🎮 Çok oyunculu oda |
+| --- | --- |
+| ![](docs/screenshots/mod-vsai.png) | ![](docs/screenshots/mod-oda.png) |
+
+| 🏆 Lig | |
+| --- | --- |
+| ![](docs/screenshots/mod-lig.png) | |
+
 ---
 
 ## Özellikler
 
-- 📚 **14.000+ kelimelik Türkçe sözlük** — çekimli biçimler dâhil (`GELDİ`, `OLSUN`, `ÜTÜYE`)
+- 🤖 **Yapay zekâya karşı mod** — 3 zorluk (Kolay / Orta / Zor). Bot gerçek bir çözücüdür: renk ipuçlarıyla aday kelimeleri eleyerek yaklaşır. İlk çözen kazanır. Casual — ana istatistik/seriyi bozmaz
+- 🎮 **Çok oyunculu oda** — oda kur, 4 haneli kodla davet et, aynı kelimede yarış. Sohbet, canlı lider tablosu, süre sınırı. Bağımsız Node sunucusu (`rooms-server/`)
+- 🏆 **Lig sistemi** — maçlar LP kazandırır; Bronz → Gümüş → Altın → Platin → Elmas → Usta. 14 günlük sezonlar, sezon sonu ödülleri (altın + üst liglerde tema/rozet), yumuşak sıfırlama
+- 🌍 **İngilizce dil desteği** — anlık dil değişimi (yeniden yükleme yok), ayrı TR/EN sözlükleri, İngilizce için ipucu sistemi
+- 📚 **100.000+ kelimelik Türkçe sözlük** — 100.410 geçerli tahmin + 860 elle seçilmiş cevap (4-7 harf), çekimli biçimler dâhil (`GELDİ`, `OLSUN`, `ÜTÜYE`). İngilizce: 19.538 tahmin + 2.840 cevap
+- 📏 **4-7 harf** — kelime uzunluğu oyuncu seviyesine göre artar (`core/word-length.ts`)
 - 🎯 **Doğru renk mantığı** — harf tekrarlarında bile (Wordle klonlarının en sık hata yaptığı yer)
 - ⌨️ **Tam Türk alfabesi** — 29 harf; `İ`/`I` ayrımı doğru. Türkçe klavyesi olmayanlar da `Ç Ğ Ö Ş Ü` yazabilir
 - 📅 **Günün kelimesi** — tarihe göre deterministik, herkese aynı, geri sayımlı
@@ -65,7 +82,7 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 - ♿ **Erişilebilir** — sadece klavyeyle oynanabilir, ekran okuyucu her hamleyi okur
 - 📱 **Responsive** — 320px'den 4K'ya
 - 💾 **Kalıcı** — yarım oyun, istatistik ve tercihler `localStorage`'da
-- 🚫 **Backend yok** — kelime listesi JSON, tamamen istemci tarafı
+- 🧩 **Tek kişilik modlar backend'siz** — kelime listeleri JSON, tamamen istemci tarafı. Yalnızca çok oyunculu oda için hafif bir Node sunucusu var (`rooms-server/`)
 
 ---
 
@@ -100,24 +117,50 @@ npm test           # birim testler
 src/app/
 ├── core/                    # SAF mantık — Angular'a bağımsız, kolay test edilir
 │   ├── evaluate.ts          #   renk algoritması (oyunun kalbi)
+│   ├── ai-opponent.ts       #   🤖 yapay zekâ çözücü (AiSolver)
+│   ├── league.ts            #   🏆 lig: LP, kademeler, sezon ödülleri
+│   ├── word-length.ts       #   📏 4-7 harf: seviyeye göre uzunluk
+│   ├── lang.ts              #   🌍 dil türü + Türkçe/İngilizce yardımcıları
+│   ├── messages.ts          #   🌍 tüm arayüz metinleri (tr + en)
+│   ├── score.ts  level.ts   #   puan ve seviye (saf fonksiyonlar)
+│   ├── gold.ts              #   altın ekonomisi
+│   ├── quests.ts            #   günlük görev kayıt defteri
+│   ├── shop-catalog.ts      #   mağaza kayıt defteri
+│   ├── profile-stats.ts     #   profil istatistik kayıt defteri
 │   ├── share.ts             #   emoji ızgarası
 │   ├── a11y.ts              #   ekran okuyucu metinleri
 │   ├── clipboard.ts         #   panoya kopyalama (HTTP yedekli)
 │   └── turkish.ts           #   Türkçe büyük harf (i → İ)
 ├── components/              # standalone bileşenler
-│   ├── board/  tile/  keyboard/  toast/
-│   ├── game/   title-screen/  error-screen/
-│   ├── result-modal/  stats-modal/  stats-panel/  countdown/
+│   ├── board/  tile/  keyboard/  toast/  countdown/
+│   ├── game/  title-screen/  error-screen/  guess-distribution/
+│   ├── result-modal/  stats-modal/  stats-panel/  settings-modal/
+│   ├── vsai-screen/         #   🤖 yapay zekâya karşı yarış
+│   ├── room-screen/  room-chat/   # 🎮 çok oyunculu oda + sohbet
+│   ├── league-screen/       #   🏆 lig tablosu, kademeler, sezon
+│   ├── shop-screen/         #   🛒 mağaza
+│   └── profile-screen/      #   👤 profil sayfası
 ├── services/                # durum ve kalıcılık (signals)
 │   ├── game.service.ts      #   oyun akışı
 │   ├── word.service.ts      #   kelime havuzu, günün kelimesi
-│   ├── stats.service.ts     #   istatistikler
+│   ├── stats.service.ts     #   istatistikler (YZ ayrı sayaçta)
+│   ├── league.service.ts    #   🏆 LP/sezon durumu
+│   ├── room.service.ts      #   🎮 oda sunucusu istemcisi (polling)
+│   ├── language.service.ts  #   🌍 anlık dil değişimi
+│   ├── hint.service.ts      #   💡 ipucu sistemi
+│   ├── gold.service.ts  quest.service.ts  inventory.service.ts
+│   ├── profile.service.ts  audio.service.ts
 │   ├── theme.service.ts     #   koyu/açık tema
 │   └── contrast.service.ts  #   renk körü modu
-├── models/                  # TypeScript tipleri
-├── data/
-│   ├── words.json           # CEVAPLAR — elle seçilmiş 230 kelime
-│   └── valid-words.json     # GEÇERLİ TAHMİNLER — 14.251 kelime
+├── models/game.model.ts     # TypeScript tipleri
+└── data/
+    ├── words.json           # TR CEVAPLAR — 860 (4-7 harf, 5 harfliler elle seçilmiş)
+    ├── valid-words.json     # TR GEÇERLİ TAHMİNLER — 100.410
+    ├── words-en.json        # EN CEVAPLAR — 2.840
+    ├── valid-words-en.json  # EN GEÇERLİ TAHMİNLER — 19.538
+    └── hints-tr.json  hints-en.json   # 💡 ipuçları (her biri 2.514)
+
+rooms-server/                # 🎮 çok oyunculu oda sunucusu (bağımsız Node, repo kökünde)
 ```
 
 ### Mimari notlar
@@ -169,12 +212,49 @@ Bu sıra sayesinde bir harf **asla iki kez sayılmaz**. Örnek — cevap `KALEM`
 
 **Renkler iki katmanlı:** `_variables.scss` (SCSS, derleme zamanı) → `:root` CSS değişkenleri (çalışma zamanı). Tema ve renk körü modu tek satır değişimiyle geçiş yapar — hiçbir bileşen yeniden çizilmez.
 
+**Yapay zekâ rakip gerçek bir çözücüdür** (`core/ai-opponent.ts`) — Angular'dan bağımsız saf `AiSolver` sınıfı, doğrudan test edilir. Aynı gizli kelimeyi çözer: her tahminden gelen 🟩🟨⬜ desenine göre aday havuzunu eler (`evaluateGuess` ile), giderek yaklaşır. Zorluk iki koldan gelir: **hız** (düşünme aralığı — kolay yavaş, zor hızlı) ve **akıl** (`smart` 0..1 — filtrelenmiş adaydan tahmin etme olasılığı; düşükse ara sıra aday-dışı kelime deneyip tur harcar, yani daha zayıf oynar). Kolay ~18-27 sn'de, Zor ~8-11 sn'de çözer. YZ maçı **casual**tır: kazanma serisi/ana istatistik/lig **etkilenmez**, ayrı `vsaiPlayed`/`vsaiWon` sayaçlarında tutulur.
+
+**Lig saf mantıktır** (`core/league.ts`) — LP, kademeler ve ödüller sinyal/DOM olmadan hesaplanır. Maç sonucu LP değiştirir: kazanınca `base + (7-tahmin)×2` (az tahmin → çok LP), kaybedince sabit düşüş; serbest mod puan çiftliğini önlemek için biraz daha az verir. LP eşikleri Bronz(0) → Gümüş(300) → Altın(600) → Platin(900) → Elmas(1200) → Usta(1500+). 14 günlük sezon sonunda ulaşılan lige göre ödül (altın + üst liglerde `theme.champion` / `badge.league`) verilir; yeni sezon **yumuşak sıfırlama** ile başlar (final LP'nin %35'i taşınır — sıfırdan başlamak cezalandırıcı olurdu).
+
+**Dil anlık değişir** (`services/language.service.ts` + `core/messages.ts`) — tüm metinler tek bir sözlükte (tr/en), dil değişince sayfa **yeniden yüklenmez**, sinyaller anında günceller. TR ve EN kendi kelime/geçerli-tahmin/ipucu sözlüklerine sahiptir; oyun aktif dile göre doğru havuzdan seçer.
+
+**Çok oyunculu oda `rooms-server/`'da** — ayrıntı için aşağıdaki bölüme bak. İstemci tarafı (`services/room.service.ts`) ~1.5 sn'de bir `GET /state` ile durumu çeker (polling; WebSocket yok → paylaşılan nginx'te dağıtımı sağlam).
+
+---
+
+## Çok oyunculu oda sunucusu (`rooms-server/`)
+
+"Arkadaşlarla Oyna" modunun arkasındaki küçük backend. **Bağımlılıksız, saf Node HTTP** (`rooms-server/server.js`, ~330 satır) — Express yok, veritabanı yok. Oda durumu **bellekte** tutulur (`Map`); süreç yeniden başlarsa aktif odalar sıfırlanır (arkadaş yarışı için kabul edilebilir).
+
+**Ne yapar:** oda oluşturma (4 haneli kod), katılma, aynı kelimede yarış, sohbet, canlı skor/lider tablosu, süre sınırı. Gerçek zamanlılık **kısa aralıklı sorgulama** ile sağlanır (istemci ~1.5 sn'de bir `GET /state`) — WebSocket yok, çünkü paylaşılan nginx'te upgrade yapılandırması gerektirmez ve dağıtımı çok daha sağlamdır.
+
+**Uç noktalar:** `POST /create · /join · /start · /score · /ready · /settings · /chat · /leave` ve `GET /state`, `GET /health`.
+
+**Çalıştırma (yerel):**
+```bash
+cd rooms-server
+node server.js               # varsayılan PORT=4243, HOST=127.0.0.1
+curl localhost:4243/health   # {"ok":true}
+```
+
+**Yayına alma (systemd + nginx):**
+```bash
+# 1) Servis olarak çalıştır (yeniden başlatmada da ayakta)
+sudo cp rooms-server/berk-rooms.service /etc/systemd/system/
+sudo systemctl enable --now berk-rooms
+
+# 2) nginx'e /berk/rooms/ -> 127.0.0.1:4243 proxy yolunu GÜVENLE ekle
+#    (yedek alır, ekler, `nginx -t` ile doğrular, test başarısızsa geri yükler)
+sudo python3 rooms-server/nginx_add_rooms.py
+```
+Sunucu yalnızca `127.0.0.1`'de dinler — internete doğrudan açık değildir, dışarıya **aynı köken** üzerinden nginx `/berk/rooms/` yolu açar (backend maruz kalmaz). Bellek koruması: en fazla 500 oda, 3 saat hareketsizlikte oda silinir, mesaj/uzunluk sınırları var.
+
 ---
 
 ## Test
 
 ```bash
-npm test                     # 219 birim test
+npm test                     # 367 birim test
 npm run check:scenarios      # 22 uçtan uca senaryo × 3 tarayıcı
 npm run check:profile        # profil sayfası, seviye, fotoğraf, kalıcılık
 npm run check:gold           # altın kazancı, günlük görevler, kalıcılık
@@ -191,7 +271,7 @@ Tüm kontroller hem yerelde hem **canlı sitede** çalıştırılıyor. Ayrınt�
 
 | Katman | Sonuç |
 | --- | --- |
-| Birim testler | ✅ 219/219 |
+| Birim testler (33 dosya) | ✅ 367/367 |
 | Senaryolar (Chromium + Firefox + WebKit) | ✅ 66/66 |
 | Ses · Harf + sözlük · Responsive · Erişilebilirlik · Kontrast · Paylaşım | ✅ |
 
@@ -230,5 +310,12 @@ Böylece düz `ng build` her zaman doğru yolu üretir.
 - [x] Ana menü: cam panel, profil + ayarlar, istatistik kartları
 - [x] Oyun sonu ekranı: kart hâlinde istatistikler, okunur dağılım, büyük butonlar
 - [x] Ses: arka plan müziği + WebAudio efektleri, ayrı ses ayarları
+- [x] Değişken kelime uzunluğu (4-7 harf, seviyeye göre)
+- [x] Sözlüğü büyüt (12.581 → 100.410 geçerli tahmin)
+- [x] Mağaza: tema, çerçeve, rozet, avatar (kayıt defteri) + altın ekonomisi
+- [x] Yapay zekâya karşı mod — 3 zorluk, gerçek çözücü, casual (ana ilerlemeyi bozmaz)
+- [x] Çok oyunculu oda — bağımsız Node sunucusu, kod/sohbet/lider tablosu/süre
+- [x] Lig sistemi — LP, kademeler, 14 günlük sezon, sezon ödülleri
+- [x] İngilizce dil desteği — anlık geçiş, ayrı sözlükler, ipucu sistemi
 - [ ] Müzik dosyasını sıkıştır (şu an 4 MB — `ffmpeg` gerekiyor)
 - [ ] HTTPS (özel alan adı)
