@@ -29,7 +29,7 @@ export const MESSAGES: Record<string, { tr: string; en: string }> = {
   'title.shop': { tr: 'Mağaza', en: 'Shop' },
   'title.settings': { tr: 'Ayarlar', en: 'Settings' },
   'title.eyebrow': { tr: 'Türkçe Kelime Oyunu', en: 'Word Game' },
-  'title.taglineBefore': { tr: '5 harfli gizli kelimeyi', en: 'Guess the hidden 5-letter word in' },
+  'title.taglineBefore': { tr: 'Gizli kelimeyi', en: 'Guess the hidden word in' },
   'title.taglineBold': { tr: '6 tahminde', en: '6 tries' },
   'title.taglineAfter': { tr: 'bul.', en: '.' },
   'title.legendCorrect': { tr: 'doğru yerde', en: 'correct spot' },

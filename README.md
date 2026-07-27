@@ -2,7 +2,7 @@
 
 # 🎯 Kelimebaz
 
-**Türkçe kelime bulmaca oyunu.** 5 harfli gizli kelimeyi 6 tahminde bul.
+**Türkçe kelime bulmaca oyunu.** Gizli kelimeyi 6 tahminde bul (kelime uzunluğu seviyene göre 4-7 harf).
 
 ### ▶️ [**Oyna: 34.158.136.9/berk/kelimebaz**](http://34.158.136.9/berk/kelimebaz/)
 
