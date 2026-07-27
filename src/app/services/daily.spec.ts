@@ -119,11 +119,16 @@ describe('Günün Kelimesi', () => {
     });
 
     it('yarım kalan günlük oyun kaldığı yerden devam eder', () => {
+      // Günün kelimesini sabitle → 5 harflik tahmin HER tarihte geçerli olsun.
+      // (Aksi halde gerçek günün kelimesi 5 harf değilse tahmin reddedilir ve
+      //  test takvim tarihine göre kararsız — flaky — olurdu.)
+      vi.spyOn(words, 'wordOfTheDay').mockReturnValue('KALEM');
       game.start('daily');
       const answer = game.answer();
       play(wrongWords(answer)[0]); // 1 tahmin yapıldı
 
       reload();
+      vi.spyOn(words, 'wordOfTheDay').mockReturnValue('KALEM'); // yenilemeden sonra da aynı kelime
       game.start('daily');
 
       expect(game.status()).toBe('playing');
