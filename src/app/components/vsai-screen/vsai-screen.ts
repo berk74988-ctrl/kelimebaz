@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
-import { AI_CONFIG, AiSolver, Difficulty } from '../../core/ai-opponent';
+import { AI_CONFIG, aiOpener, AiSolver, Difficulty } from '../../core/ai-opponent';
 import { LetterState, MAX_ATTEMPTS } from '../../models/game.model';
 import { AudioService } from '../../services/audio.service';
 import { GameService } from '../../services/game.service';
@@ -93,7 +93,15 @@ export class VsaiScreen {
     this.aiResult.set(null);
     this.aiTimeMs = 0;
     this.matchStart = performance.now();
-    this.solver = new AiSolver(w, this.words.answersOfLength([...w].length), AI_CONFIG[diff], this.MAX);
+    const len = [...w].length;
+    this.solver = new AiSolver(
+      w,
+      this.words.answersOfLength(len),
+      AI_CONFIG[diff],
+      this.MAX,
+      Math.random,
+      aiOpener(this.i18n.lang(), len), // 🤖 derleme zamanı açılışı → ilk tur gecikmesiz
+    );
     this.phase.set('playing');
     this.scheduleAi();
   }
