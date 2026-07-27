@@ -71,11 +71,13 @@ Gizli kelimeyi tahmin et. Her tahminden sonra harfler renklenir:
 
 ## Kurulum
 
-**Gereksinim:** Node.js 20+
+**Gereksinim:** Node.js **22.22.3+** veya **24.15.0+** (Angular 22 CLI şartı; daha eski sürümlerde derleme başlamaz).
+Depo kökünde `.nvmrc` var — [nvm](https://github.com/nvm-sh/nvm) kullanıyorsan `nvm use` ile tek komutta doğru sürüme geçebilirsin.
 
 ```bash
 git clone https://github.com/berk74988-ctrl/kelimebaz.git
 cd kelimebaz
+nvm use            # .nvmrc'deki desteklenen Node sürümüne geç (nvm kuruluysa)
 npm install
 
 npm start          # geliştirme sunucusu → http://localhost:4200
