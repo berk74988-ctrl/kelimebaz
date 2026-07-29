@@ -41,6 +41,7 @@ export class StatsService {
       // YZ sayaçlarına ANA oyun dokunmaz — olduğu gibi korunur
       vsaiPlayed: s.vsaiPlayed,
       vsaiWon: s.vsaiWon,
+      vsaiByPersona: s.vsaiByPersona,
     };
 
     if (won && attempts >= 1 && attempts <= MAX_ATTEMPTS) {
@@ -58,13 +59,19 @@ export class StatsService {
    * ayrı YZ sayaçları güncellenir. YZ modu eğlenceli bir yan moddur; oyuncunun
    * 20 maçlık serisi, bot 2 saniye hızlı diye sıfırlanmamalı.
    */
-  recordVsai(won: boolean): void {
+  recordVsai(won: boolean, personaId?: string): void {
     const s = this._stats();
+    const byPersona = { ...s.vsaiByPersona };
+    if (personaId) {
+      const cur = byPersona[personaId] || { played: 0, won: 0 };
+      byPersona[personaId] = { played: cur.played + 1, won: cur.won + (won ? 1 : 0) };
+    }
     const next: Stats = {
       ...s,
       distribution: [...s.distribution],
       vsaiPlayed: s.vsaiPlayed + 1,
       vsaiWon: s.vsaiWon + (won ? 1 : 0),
+      vsaiByPersona: byPersona,
     };
     this._stats.set(next);
     this.persist(next);
@@ -74,6 +81,11 @@ export class StatsService {
   vsaiWinRate(): number {
     const s = this._stats();
     return s.vsaiPlayed === 0 ? 0 : Math.round((s.vsaiWon / s.vsaiPlayed) * 100);
+  }
+
+  /** Bir karaktere karşı karşılaşma kaydı (oynanan/kazanılan). */
+  vsaiRecord(personaId: string): { played: number; won: number } {
+    return this._stats().vsaiByPersona[personaId] || { played: 0, won: 0 };
   }
 
   /** Puandan hesaplanan seviye ve ilerleme (core/level.ts). */
@@ -139,6 +151,11 @@ export class StatsService {
         guesses: num(parsed.guesses),
         vsaiPlayed: num(parsed.vsaiPlayed),
         vsaiWon: num(parsed.vsaiWon),
+        // Karakter kaydı: bozuk/eksikse boş nesne (eski kayıtlarda yoktu)
+        vsaiByPersona:
+          parsed.vsaiByPersona && typeof parsed.vsaiByPersona === 'object'
+            ? parsed.vsaiByPersona
+            : {},
         // Eski/bozuk kayıtlarda dağılım dizisi hatalı olabilir
         distribution:
           Array.isArray(dist) && dist.length === MAX_ATTEMPTS ? [...dist] : emptyDistribution(),

@@ -107,6 +107,40 @@
   color: var(--accent, #4caf82);
   align-self: flex-end;
 }
+/* Karakter kartı: tier etiketi (başlıkta), meta satırı, karşılaşma kaydı */
+.vs-card-tx .vs-tier {
+  display: inline-block;
+  margin-left: 7px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: #0a1a12;
+  vertical-align: middle;
+  &[data-d='easy'] {
+    background: #58c37a;
+  }
+  &[data-d='medium'] {
+    background: #e0a63a;
+  }
+  &[data-d='hard'] {
+    background: #e0645c;
+  }
+}
+.vs-card-tx .vs-card-meta {
+  color: var(--muted, #93a6b3);
+  font-size: 12px;
+  margin-top: 5px;
+}
+.vs-card-tx .vs-card-meta .vs-rec {
+  display: inline;
+  font-weight: 800;
+  color: var(--accent, #4caf82);
+}
+.vs-card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* ============ CANLI RAKİP HUD (oyun sırasında) ============ */
 .vs-hud {
@@ -305,6 +339,27 @@
   font-size: 15px;
 }
 
+/* Laf atma balonu — HUD'un altında, kısa süre görünür */
+.vs-taunt {
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top, 0px) + 174px);
+  transform: translateX(-50%);
+  z-index: 8;
+  max-width: min(88vw, 360px);
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: rgba(23, 48, 61, 0.95);
+  border: 1px solid #ffffff22;
+  color: #eaf2f8;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  animation: vsPop 0.25s ease;
+}
+
 /* ============ SONUÇ ============ */
 .vs-result {
   min-height: 100dvh;
@@ -403,6 +458,12 @@
   align-self: center;
   font-size: 12px;
   font-weight: 900;
+  color: var(--muted, #93a6b3);
+}
+.vs-rec-line {
+  margin: 4px 0 14px;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--muted, #93a6b3);
 }
 .vs-bonus {

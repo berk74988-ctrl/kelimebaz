@@ -25,7 +25,8 @@
     "check:dictionary": "node scripts/dictionary-check.mjs",
     "build:dictionary": "node scripts/build-dictionary.mjs",
     "build:ai-openers": "node scripts/build-ai-openers.mjs",
-    "check:vsai": "node scripts/vsai-solver-test.mjs"
+    "check:vsai": "node scripts/vsai-solver-test.mjs",
+    "check:persona": "node scripts/vsai-persona-test.mjs"
   },
   "private": true,
   "packageManager": "npm@11.16.0",

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { levelBonus } from '../../core/gold';
+import { PERSONAS } from '../../core/ai-personas';
 import { PROFILE_STATS } from '../../core/profile-stats';
 import { itemsByCategory } from '../../core/shop-catalog';
 import { GoldService } from '../../services/gold.service';
@@ -40,6 +41,15 @@ export class ProfileScreen {
   readonly openShop = output<void>();
 
   protected readonly statCards = PROFILE_STATS;
+
+  /** 🤖 Oynanmış YZ karakterlerine karşı karşılaşma kayıtları (kazanılan-kaybedilen). */
+  protected vsaiRecords(): { persona: (typeof PERSONAS)[number]; rec: { played: number; won: number } }[] {
+    const by = this.statsService.stats().vsaiByPersona;
+    return PERSONAS.map((persona) => ({ persona, rec: by[persona.id] })).filter(
+      (x): x is { persona: (typeof PERSONAS)[number]; rec: { played: number; won: number } } =>
+        !!x.rec && x.rec.played > 0,
+    );
+  }
 
   /** Aktif sekme. İçerik tek ekrana sığsın diye profil üç bölüme ayrıldı:
       istatistik · günlük görevler · avatar. Kimlik başlığı hep görünür. */

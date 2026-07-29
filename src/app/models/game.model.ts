@@ -79,6 +79,8 @@ export interface Stats {
   vsaiPlayed: number;
   /** YZ'ye karşı KAZANILAN maç sayısı. */
   vsaiWon: number;
+  /** Karakter bazlı karşılaşma kaydı: id → { oynanan, kazanılan } (örn. "Kumarbaz'a karşı 3-1"). */
+  vsaiByPersona: Record<string, { played: number; won: number }>;
 }
 
 export const EMPTY_STATS: Stats = {
@@ -92,6 +94,7 @@ export const EMPTY_STATS: Stats = {
   guesses: 0,
   vsaiPlayed: 0,
   vsaiWon: 0,
+  vsaiByPersona: {},
 };
 
 /** Varsayılan/yedek uzunluk. Oyun artık 4-7 harf kullanır (bkz. core/word-length.ts);

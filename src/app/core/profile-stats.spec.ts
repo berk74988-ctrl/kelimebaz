@@ -17,6 +17,7 @@ describe('Profil istatistik kayıt defteri', () => {
     guesses: 98,
     vsaiPlayed: 16,
     vsaiWon: 9,
+    vsaiByPersona: { temkinli: { played: 5, won: 2 } },
   };
 
   it('kullanıcının istediği istatistiklerin hepsi var', () => {

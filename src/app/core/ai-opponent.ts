@@ -33,7 +33,23 @@ export interface AiConfig {
   maxMs: number; // üst sınır (ms)
   /** Entropi sıralamasında İLK KAÇ aday arasından seçim yapılır (1 = hep en iyi). */
   topK: number;
+  /**
+   * KARAKTER STRATEJİSİ (opsiyonel — botlara kişilik verir):
+   *   bias        — tahminleri hangi harf tipine kayırsın: 'vowel' (ünlü yoğun) veya
+   *                 'frequent' (havuzda sık harf). Yok → saf entropi.
+   *   biasWeight  — kayırmanın gücü (entropiye eklenir; 0 = sonraki turlarda etkisiz).
+   *   openerBias  — açılış kelimesi de bias'a göre seçilsin mi (Ünlü Avcısı: true).
+   *   gamble      — erken turda (çok aday varken) doğrudan bir cevabı deneme olasılığı
+   *                 (0..1). Tutarsa hızlı kazanır, tutmazsa tur harcar (Kumarbaz).
+   */
+  bias?: 'vowel' | 'frequent';
+  biasWeight?: number;
+  openerBias?: boolean;
+  gamble?: number;
 }
+
+/** Ünlü harfler (TR üst kümesi EN'i de kapsar: A E I İ O Ö U Ü). */
+const VOWELS = new Set([...'AEIİOÖUÜ']);
 
 // topK, ULAŞILABİLİR hedef ortalamaya göre kalibre edildi (scripts/vsai-solver-test.mjs,
 // 5 harfli TR havuz, 500 maç): Kolay ≈ 3.15 · Orta ≈ 2.9 · Zor ≈ 2.75.
@@ -146,13 +162,55 @@ export class AiSolver {
     // Son düzlük: 1-2 aday kaldıysa doğrudan dene (biri cevaptır).
     if (c.length <= 2) return c.length ? c[0] : this.pool[Math.floor(this.rnd() * this.pool.length)];
     // İlk tur: açılış derleme zamanında SIRALI hesaplandı → hesap yok, gecikme yok.
-    // Zor listenin başını (en iyi açılış), Kolay ilk topK'dan birini alır → güç farkı.
-    if (this.attempts === 0 && this.openers.length) {
-      const k = Math.min(this.cfg.topK, this.openers.length);
-      return this.openers[Math.floor(this.rnd() * k)];
+    if (this.attempts === 0 && this.openers.length) return this.pickOpener();
+    // 🎲 Kumarbaz: erken/orta turda (çok aday) doğrudan bir cevabı dene.
+    if (this.cfg.gamble && c.length > 8 && this.rnd() < this.cfg.gamble) {
+      return c[Math.floor(this.rnd() * c.length)]; // rastgele aday = "cevabı deneme"
     }
-    // Sonraki turlar: entropi sıralamasında ilk topK aday arasından seç.
+    // Sonraki turlar: entropi (+ karakter kayırması) sıralamasında ilk topK'dan seç.
     return this.rankedGuess();
+  }
+
+  /** Açılış kelimesi — karaktere göre (Ünlü Avcısı ünlü yoğun açar). */
+  private pickOpener(): string {
+    let list: readonly string[] = this.openers;
+    if (this.cfg.openerBias && this.cfg.bias) {
+      // Açılış listesi (hepsi zaten yüksek entropi) harf tipine göre yeniden sıralanır.
+      list = [...this.openers].sort((a, b) => this.letterScore(b) - this.letterScore(a));
+    }
+    const k = Math.min(this.cfg.topK, list.length);
+    return list[Math.floor(this.rnd() * k)];
+  }
+
+  /** Bir kelimenin karakter kayırma skoru (0..1) — 'vowel' ünlü oranı, 'frequent' sık-harf. */
+  private letterScore(word: string): number {
+    const chars = [...word];
+    if (!chars.length) return 0;
+    if (this.cfg.bias === 'vowel') {
+      let v = 0;
+      for (const ch of chars) if (VOWELS.has(ch)) v++;
+      return v / chars.length;
+    }
+    if (this.cfg.bias === 'frequent') {
+      const freq = this.letterFreq();
+      let s = 0;
+      for (const ch of chars) s += freq.get(ch) || 0;
+      return s / chars.length;
+    }
+    return 0;
+  }
+
+  private _freq: Map<string, number> | null = null;
+  /** Havuzdaki harf sıklığı, 0..1'e normalize (en sık harf = 1). Bir kez hesaplanır. */
+  private letterFreq(): Map<string, number> {
+    if (this._freq) return this._freq;
+    const count = new Map<string, number>();
+    for (const w of this.pool) for (const ch of w) count.set(ch, (count.get(ch) || 0) + 1);
+    let max = 1;
+    for (const v of count.values()) if (v > max) max = v;
+    const norm = new Map<string, number>();
+    for (const [k, v] of count) norm.set(k, v / max);
+    return (this._freq = norm);
   }
 
   /**
@@ -173,9 +231,15 @@ export class AiSolver {
     const scoreSet = c.length > SAMPLE_THRESHOLD ? this.sample(c, SAMPLE_THRESHOLD) : c;
     const answerPool = this.poolSet();
 
-    const scored = guesses.map((g) => ({ g, h: guessEntropy(g, scoreSet), inPool: answerPool.has(g) }));
-    // Entropi azalan; eşitlikte cevap havuzundaki (kazanma şansı) üstte.
-    scored.sort((a, b) => b.h - a.h || Number(b.inPool) - Number(a.inPool));
+    const bw = this.cfg.biasWeight || 0;
+    const scored = guesses.map((g) => ({
+      // Skor = entropi (+ karakter kayırması). Kayırma yoksa saf entropi.
+      s: guessEntropy(g, scoreSet) + (bw ? bw * this.letterScore(g) : 0),
+      g,
+      inPool: answerPool.has(g),
+    }));
+    // Skor azalan; eşitlikte cevap havuzundaki (kazanma şansı) üstte.
+    scored.sort((a, b) => b.s - a.s || Number(b.inPool) - Number(a.inPool));
 
     const k = Math.min(this.cfg.topK, scored.length);
     return scored[Math.floor(this.rnd() * k)].g;

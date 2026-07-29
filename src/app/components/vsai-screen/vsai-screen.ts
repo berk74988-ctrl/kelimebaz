@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
-import { AI_CONFIG, aiOpeners, AiSolver, Difficulty } from '../../core/ai-opponent';
+import { AiSolver, aiOpeners } from '../../core/ai-opponent';
+import { Persona, PERSONAS, PERSONA_BONUS, persona as personaById, PersonaId } from '../../core/ai-personas';
 import { raceOutcome } from '../../core/vsai-race';
 import { LetterState, MAX_ATTEMPTS } from '../../models/game.model';
 import { AudioService } from '../../services/audio.service';
@@ -20,20 +21,14 @@ interface Result {
   timeMs: number;
 }
 
-/** YZ'yi yenme bonusu (zorluğa göre) — istatistik/altın endGame'de zaten işlenir. */
-const BEAT_BONUS: Record<Difficulty, number> = { easy: 10, medium: 20, hard: 35 };
-
 /**
- * 🤖 YAPAY ZEKÂYA KARŞI — SIRA TABANLI yarış.
+ * 🤖 YAPAY ZEKÂYA KARŞI — karakter galerisi, SIRA TABANLI yarış.
  *
- * Oyuncu ve YZ AYNI gizli kelimeyi çözer. Yarış duvar saatine göre DEĞİL, SIRAYLA
- * işler: oyuncu bir tahmin yapar → YZ kısa bir "düşünme" sonrası bir tahmin yapar
- * → sıra tekrar oyuncuya. İkisi de aynı sayıda hak kullanır. Kazanan, kelimeyi
- * DAHA AZ tahminde bulandır; aynı turda bulunduysa berabere (bkz. core/vsai-race).
- *
- * Böylece yavaş düşünen ya da mobilde yavaş yazan oyuncu cezalanmaz — yarış bir
- * refleks değil, kelime bulma becerisi ölçer. İnsanın istatistik/altını app-game
- * akışında (endGame) işlenir; YZ'yi yenmenin ekstra altın bonusu burada verilir.
+ * Oyuncu bir RAKİP KARAKTER seçer (her biri farklı strateji: Temkinli, Ünlü
+ * Avcısı, Harf Sayarı, Kumarbaz — bkz. core/ai-personas.ts). Yarış sırayla işler:
+ * oyuncu tahmin → karakter kısa "düşünme" sonrası tahmin → sıra oyuncuya. Kelimeyi
+ * DAHA AZ tahminde bulan kazanır; aynı turda berabere (core/vsai-race.ts). Maç
+ * içi laf atmalar karaktere kişilik katar. Karşılaşma kayıtları tutulur.
  */
 @Component({
   selector: 'app-vsai-screen',
@@ -53,21 +48,23 @@ export class VsaiScreen {
   readonly back = output<void>();
 
   protected readonly MAX = MAX_ATTEMPTS;
-  protected readonly diffs: Difficulty[] = ['easy', 'medium', 'hard'];
+  protected readonly personas = PERSONAS;
 
   protected readonly phase = signal<Phase>('pick');
-  protected readonly difficulty = signal<Difficulty>('medium');
+  protected readonly personaId = signal<PersonaId>(PERSONAS[0].id);
+  protected readonly persona = computed<Persona>(() => personaById(this.personaId()));
   protected readonly word = signal('');
 
-  // Sıra: 'you' → oyuncu tahmin yapabilir · 'ai' → YZ düşünüyor (oyuncu girişi kilitli)
+  // Sıra: 'you' → oyuncu tahmin yapabilir · 'ai' → karakter düşünüyor (giriş kilitli)
   protected readonly turn = signal<'you' | 'ai'>('you');
   protected readonly botTurn = computed(() => this.turn() === 'ai');
 
-  // YZ (rakip) durumu — canlı gösterilir
+  // Karakter (rakip) durumu — canlı gösterilir
   protected readonly aiRows = signal<AiRow[]>([]);
   protected readonly aiSolved = signal(false);
   protected readonly aiFailed = signal(false);
   protected readonly aiThinking = signal(false);
+  protected readonly taunt = signal(''); // maç içi laf atma (kısa süre görünür)
   protected readonly aiGhosts = computed(() =>
     Array.from({ length: Math.max(0, this.MAX - this.aiRows().length) }, (_, i) => i),
   );
@@ -80,17 +77,30 @@ export class VsaiScreen {
 
   private solver: AiSolver | null = null;
   private thinkTimer: ReturnType<typeof setTimeout> | null = null;
+  private tauntTimer: ReturnType<typeof setTimeout> | null = null;
   private matchStart = 0;
   private aiTimeMs = 0;
   private humanSolved = false;
   private humanAttempts = 0;
-  private ended = false; // sonuç bir kez gösterilir
+  private ended = false;
+  private tauntedGreen = false;
+  private tauntedLast = false;
+  private tauntedClose = false;
+
+  // --- seçim ekranı yardımcıları ---
+
+  /** Bir karaktere karşı karşılaşma kaydı (oynanan/kazanılan) — kartta gösterilir. */
+  protected record(id: PersonaId): { played: number; won: number } {
+    return this.stats.vsaiRecord(id);
+  }
 
   // --- akış ---
 
-  protected start(diff: Difficulty): void {
+  protected start(p: Persona): void {
+    if (p.locked) return;
     this.clearThink();
-    this.difficulty.set(diff);
+    this.clearTaunt();
+    this.personaId.set(p.id);
     const w = this.words.randomWordForLevel(this.stats.level().level);
     this.word.set(w);
     this.aiRows.set([]);
@@ -100,6 +110,7 @@ export class VsaiScreen {
     this.humanSolved = false;
     this.humanAttempts = 0;
     this.ended = false;
+    this.tauntedGreen = this.tauntedLast = this.tauntedClose = false;
     this.myResult.set(null);
     this.aiResult.set(null);
     this.aiTimeMs = 0;
@@ -108,31 +119,27 @@ export class VsaiScreen {
     this.solver = new AiSolver(
       w,
       this.words.answersOfLength(len),
-      AI_CONFIG[diff],
+      p.config,
       this.MAX,
       Math.random,
-      aiOpeners(this.i18n.lang(), len), // 🤖 derleme zamanı sıralı açılış → ilk tur gecikmesiz
+      aiOpeners(this.i18n.lang(), len),
     );
-    this.turn.set('you'); // 🧑 önce oyuncu — YZ, oyuncunun tahminini BEKLER (saat değil, sıra)
+    this.turn.set('you'); // 🧑 önce oyuncu — karakter, oyuncunun tahminini BEKLER
     this.phase.set('playing');
   }
 
-  /**
-   * 🧑 Oyuncu bir tahmin yaptı (app-game bildirdi) → sıra YZ'ye geçer.
-   * YZ, saat dolduğu için değil, oyuncu OYNADIĞI için tahmin yapar.
-   */
+  /** 🧑 Oyuncu bir tahmin yaptı → sıra karaktere geçer. */
   protected onPlayerGuess(e: { attempts: number; solved: boolean; over: boolean }): void {
     if (this.ended || this.phase() !== 'playing' || this.turn() !== 'you') return;
     this.humanAttempts = e.attempts;
     this.humanSolved = e.solved;
-    // Sıra YZ'de: oyuncu girişi kilitlenir, kısa bir "düşünüyor" animasyonu, sonra YZ tahmini.
     this.turn.set('ai');
     this.aiThinking.set(true);
     this.clearThink();
     this.thinkTimer = setTimeout(() => this.botTurnStep(), this.thinkDelay());
   }
 
-  /** YZ'nin tek turu: bir tahmin yapar, sonra tur değerlendirilir. */
+  /** Karakterin tek turu: bir tahmin, laf atma, sonra tur değerlendirilir. */
   private botTurnStep(): void {
     if (this.ended || this.phase() !== 'playing') return;
     const s = this.solver;
@@ -146,12 +153,39 @@ export class VsaiScreen {
       } else if (s.done) {
         this.aiFailed.set(true);
       }
+      this.maybeTaunt(s);
     }
     this.aiThinking.set(false);
     this.decideRound();
   }
 
-  /** Tur tamamlandı (ikisi de bu turda birer tahmin yaptı) → bitti mi, devam mı? */
+  /** Duruma göre kısa laf atma göster (ilk yeşil · son tur · yakın maç — her biri bir kez). */
+  private maybeTaunt(s: AiSolver): void {
+    if (s.solved) return; // çözünce laf atmaz, sonuç ekranı konuşur
+    const rows = this.aiRows();
+    const lastPat = rows[rows.length - 1]?.pattern ?? [];
+    const hasGreen = lastPat.some((st) => st === 'correct');
+    let trigger = '';
+    if (!this.tauntedLast && s.attempts >= this.MAX - 1) {
+      trigger = 'lastTurn';
+      this.tauntedLast = true;
+    } else if (hasGreen && !this.tauntedGreen) {
+      trigger = 'firstGreen';
+      this.tauntedGreen = true;
+    } else if (!this.tauntedClose && s.attempts === 2) {
+      trigger = 'close';
+      this.tauntedClose = true;
+    }
+    if (trigger) this.showTaunt(`persona.${this.persona().id}.${trigger}`);
+  }
+
+  private showTaunt(key: string): void {
+    this.taunt.set(this.i18n.t(key));
+    if (this.tauntTimer) clearTimeout(this.tauntTimer);
+    this.tauntTimer = setTimeout(() => this.taunt.set(''), 3500);
+  }
+
+  /** Tur tamamlandı → bitti mi, devam mı? */
   private decideRound(): void {
     const s = this.solver;
     if (!s) return;
@@ -161,19 +195,18 @@ export class VsaiScreen {
       this.endMatch();
       return;
     }
-    this.turn.set('you'); // kimse çözemedi → sıra tekrar oyuncuya
+    this.turn.set('you');
   }
 
-  /** Sonucu belirle ve göster — kazanan DAHA AZ tahminde bulan (core/vsai-race). */
+  /** Sonucu belirle, göster, karakter bazlı istatistiği (gerçek yarış sonucu) işle. */
   private endMatch(): void {
     if (this.ended || !this.solver) return;
     this.ended = true;
     this.clearThink();
-    this.aiThinking.set(false);
+    this.clearTaunt();
     const s = this.solver;
 
-    // Oyuncunun oyunu hâlâ açıksa (YZ kazandı, oyuncu çözemeden) kapat → istatistik/
-    // altın işlensin. endVsaiMatch: 'lost' DEĞİL 'ended' → ana seri cezalanmaz.
+    // Oyuncunun oyunu açıksa kapat (altın/altyapı) — endVsaiMatch: 'lost' değil 'ended'.
     if (!this.game.isOver()) {
       try {
         this.game.endVsaiMatch();
@@ -194,7 +227,11 @@ export class VsaiScreen {
     };
     const res = raceOutcome(me, ai);
     this.outcome.set(res);
-    const b = res === 'win' ? BEAT_BONUS[this.difficulty()] : 0;
+
+    // 📊 Maç sonucu (GERÇEK yarış sonucu) + karakter kaydı işlenir.
+    this.stats.recordVsai(res === 'win', this.persona().id);
+
+    const b = res === 'win' ? PERSONA_BONUS[this.persona().tier] : 0;
     if (b) this.gold.earn(b);
     this.bonus.set(b);
     this.myResult.set(me);
@@ -205,21 +242,23 @@ export class VsaiScreen {
   }
 
   protected again(): void {
-    this.start(this.difficulty());
+    this.start(this.persona());
   }
   protected toPick(): void {
     this.clearThink();
+    this.clearTaunt();
     this.phase.set('pick');
   }
   protected exit(): void {
     this.clearThink();
+    this.clearTaunt();
     this.back.emit();
   }
 
-  /** YZ "düşünme" süresi (ms) — kısa, tempo hissi verir; zorlukla hafif değişir (600-1250). */
+  /** Karakterin "düşünme" süresi (ms) — kısa, tempo hissi verir (config'ten). */
   private thinkDelay(): number {
-    const base = this.difficulty() === 'easy' ? 1000 : this.difficulty() === 'medium' ? 800 : 650;
-    return base + Math.floor(Math.random() * 250);
+    const c = this.persona().config;
+    return Math.round(c.minMs + Math.random() * (c.maxMs - c.minMs));
   }
 
   private clearThink(): void {
@@ -229,9 +268,17 @@ export class VsaiScreen {
     }
     this.aiThinking.set(false);
   }
+  private clearTaunt(): void {
+    if (this.tauntTimer) {
+      clearTimeout(this.tauntTimer);
+      this.tauntTimer = null;
+    }
+    this.taunt.set('');
+  }
 
   ngOnDestroy(): void {
     this.clearThink();
+    this.clearTaunt();
   }
 
   // --- sonuç ekranı yardımcıları ---

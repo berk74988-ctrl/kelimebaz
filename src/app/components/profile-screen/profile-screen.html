@@ -106,6 +106,22 @@
             }
           </div>
 
+          <!-- 🤖 YZ karakterlerine karşı karşılaşma kayıtları -->
+          @if (vsaiRecords().length) {
+            <div class="vsai-rec">
+              <h2 class="sec">{{ i18n.t('profile.vsaiRecords') }}</h2>
+              <div class="vsai-rec-list">
+                @for (r of vsaiRecords(); track r.persona.id) {
+                  <div class="vsai-rec-row">
+                    <span class="vr-av">{{ r.persona.avatar }}</span>
+                    <span class="vr-nm">{{ i18n.t(r.persona.nameKey) }}</span>
+                    <b class="vr-score">{{ r.rec.won }}-{{ r.rec.played - r.rec.won }}</b>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
           <div class="dist">
             <h2 class="sec">{{ i18n.t('profile.distribution') }}</h2>
             @if (statsService.isEmpty()) {

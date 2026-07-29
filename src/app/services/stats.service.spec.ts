@@ -285,6 +285,26 @@ describe('StatsService', () => {
       expect(reloaded.vsaiPlayed).toBe(2);
       expect(reloaded.vsaiWon).toBe(1);
     });
+
+    it('KARAKTER bazlı karşılaşma kaydı tutulur ("Kumarbaz\'a karşı 2-1")', () => {
+      stats.recordVsai(true, 'kumarbaz');
+      stats.recordVsai(true, 'kumarbaz');
+      stats.recordVsai(false, 'kumarbaz');
+      stats.recordVsai(true, 'temkinli');
+
+      expect(stats.vsaiRecord('kumarbaz')).toEqual({ played: 3, won: 2 });
+      expect(stats.vsaiRecord('temkinli')).toEqual({ played: 1, won: 1 });
+      expect(stats.vsaiRecord('yok')).toEqual({ played: 0, won: 0 }); // hiç oynanmadı
+      // Toplam sayaçlar da artar
+      expect(stats.stats().vsaiPlayed).toBe(4);
+      expect(stats.stats().vsaiWon).toBe(3);
+    });
+
+    it('karakter kaydı sayfa yenilenince korunur', () => {
+      stats.recordVsai(true, 'unlu');
+      stats.recordVsai(false, 'unlu');
+      expect(freshService().vsaiRecord('unlu')).toEqual({ played: 2, won: 1 });
+    });
   });
 
   describe('sıfırlama', () => {

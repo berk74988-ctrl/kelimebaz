@@ -161,7 +161,7 @@ server.close();
 console.log(JSON.stringify(out, null, 2));
 
 const ok =
-  out.pickCards === 3 &&
+  out.pickCards >= 4 && // en az 4 karakter kartı
   out.hudVisible && out.boardVisible && out.turnVisible && out.turnIsYours &&
   out.botWaitedForHuman && out.noResultWhileWaiting && // ← sıra tabanlı çekirdek
   out.aiGuessedAfterHuman &&

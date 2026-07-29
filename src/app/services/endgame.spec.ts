@@ -115,44 +115,43 @@ describe('Oyun bitişi', () => {
     });
   });
 
-  describe('YZ (vsai) modu — ana ilerlemeyi cezalandırmaz', () => {
+  describe('YZ (vsai) modu — ANA ilerlemeyi cezalandırmaz', () => {
+    // NOT: YZ maçının SONUCU (vsaiPlayed/vsaiWon + karakter kaydı) VsaiScreen'de
+    // GERÇEK yarış sonucuna göre işlenir (sıra tabanlı: daha az tahminde bulan kazanır).
+    // GameService yalnız ana istatistiğe DOKUNMADIĞINI garanti eder — burada o test edilir.
     beforeEach(() => {
       guess(game.answer()); // önce SERBEST modda bir galibiyet → ana seri 1
       expect(stats.stats().currentStreak).toBe(1);
       game.startRoom('KALEM', 'vsai'); // sonra bir YZ maçı başlat
     });
 
-    it('YZ maçı KAZANMAK ana seriyi/oynananı artırmaz, YZ sayacı işler', () => {
+    it('YZ maçında kelimeyi bulmak ana oynanan/seriyi ARTIRMAZ', () => {
       const anaOynanan = stats.stats().played;
 
-      guess('KALEM'); // YZ maçını kazan
+      guess('KALEM'); // YZ maçında çöz
 
       expect(game.status()).toBe('won');
       expect(stats.stats().played).toBe(anaOynanan); // ana oynanan DEĞİŞMEDİ
+      expect(stats.stats().won).toBe(anaOynanan); // ana kazanılan DEĞİŞMEDİ
       expect(stats.stats().currentStreak).toBe(1); // ANA SERİ artmadı
-      expect(stats.stats().vsaiPlayed).toBe(1);
-      expect(stats.stats().vsaiWon).toBe(1);
     });
 
-    it('YZ maçı KAYBETMEK (6 hak biter) kazanma serisini SIFIRLAMAZ', () => {
-      for (const w of wrongWords('KALEM')) guess(w); // 6 yanlış → maçı kaybet
+    it('YZ maçında 6 hakkı bitirmek kazanma serisini SIFIRLAMAZ', () => {
+      for (const w of wrongWords('KALEM')) guess(w); // 6 yanlış
 
       expect(game.status()).toBe('lost');
       expect(stats.stats().currentStreak).toBe(1); // ANA SERİ korundu
-      expect(stats.stats().vsaiPlayed).toBe(1);
-      expect(stats.stats().vsaiWon).toBe(0);
+      expect(stats.stats().played).toBe(1); // ana oynanan artmadı
     });
 
-    it('rakip ÖNCE çözünce oyun "lost" değil "ended" olur, seri korunur', () => {
+    it('rakip ÖNCE çözünce oyun "lost" değil "ended" olur, ana seri korunur', () => {
       guess(wrongWords('KALEM')[0]); // oyuncunun daha tahmin hakkı var
 
-      game.endVsaiMatch(); // 🤖 bot önce çözdü → maç biter
+      game.endVsaiMatch(); // 🤖 bot önce çözdü → oyuncunun oyunu kapanır
 
       expect(game.status()).toBe('ended'); // 'lost' DEĞİL → kalan haklar cezaya dönüşmez
       expect(game.isOver()).toBe(true);
       expect(stats.stats().currentStreak).toBe(1); // ANA SERİ korundu
-      expect(stats.stats().vsaiPlayed).toBe(1);
-      expect(stats.stats().vsaiWon).toBe(0);
     });
   });
 

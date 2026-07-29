@@ -276,9 +276,9 @@ export class GameService {
     const level = this.stats.level().level;
 
     // 🤖 YZ modu CASUAL: ana istatistiklere (seri/oynanan/kazanılan/dağılım/puan)
-    // DOKUNMA — yalnız ayrı YZ sayaçları güncellenir. Ana ilerleme cezalanmaz.
-    if (isVsai) this.stats.recordVsai(won);
-    else this.stats.record(won, attempts);
+    // DOKUNMA. YZ maçının SONUCU (kazandı mı?) VsaiScreen'de GERÇEK yarış sonucuna
+    // göre işlenir (sıra tabanlı: kelimeyi çözmek değil, DAHA AZ tahminde bulmak kazandırır).
+    if (!isVsai) this.stats.record(won, attempts);
 
     // Altın KORUNUR — oynamanın karşılığı YZ modunda da verilir.
     const fromGame = goldForGame(won, attempts, isDaily, level);
