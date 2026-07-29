@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { AI_CONFIG, aiOpeners, AiSolver, Difficulty } from '../../core/ai-opponent';
+import { raceOutcome } from '../../core/vsai-race';
 import { LetterState, MAX_ATTEMPTS } from '../../models/game.model';
 import { AudioService } from '../../services/audio.service';
 import { GameService } from '../../services/game.service';
@@ -23,13 +24,16 @@ interface Result {
 const BEAT_BONUS: Record<Difficulty, number> = { easy: 10, medium: 20, hard: 35 };
 
 /**
- * 🤖 YAPAY ZEKÂYA KARŞI — tek kişilik yarış.
+ * 🤖 YAPAY ZEKÂYA KARŞI — SIRA TABANLI yarış.
  *
- * Oyuncu ve YZ AYNI gizli kelimeyi çözmeye çalışır. YZ, zorluğa göre zamanlı
- * tahminler yapar (kolay yavaş, zor hızlı). İkisi de bitince kazanan belirlenir:
- * çözen kazanır; ikisi de çözdüyse ÖNCE çözen (daha hızlı) kazanır. İnsanın
- * istatistik/altın/görevleri app-game akışında (endGame) normal işlenir; YZ'yi
- * yenmenin ekstra altın bonusu burada verilir.
+ * Oyuncu ve YZ AYNI gizli kelimeyi çözer. Yarış duvar saatine göre DEĞİL, SIRAYLA
+ * işler: oyuncu bir tahmin yapar → YZ kısa bir "düşünme" sonrası bir tahmin yapar
+ * → sıra tekrar oyuncuya. İkisi de aynı sayıda hak kullanır. Kazanan, kelimeyi
+ * DAHA AZ tahminde bulandır; aynı turda bulunduysa berabere (bkz. core/vsai-race).
+ *
+ * Böylece yavaş düşünen ya da mobilde yavaş yazan oyuncu cezalanmaz — yarış bir
+ * refleks değil, kelime bulma becerisi ölçer. İnsanın istatistik/altını app-game
+ * akışında (endGame) işlenir; YZ'yi yenmenin ekstra altın bonusu burada verilir.
  */
 @Component({
   selector: 'app-vsai-screen',
@@ -55,6 +59,10 @@ export class VsaiScreen {
   protected readonly difficulty = signal<Difficulty>('medium');
   protected readonly word = signal('');
 
+  // Sıra: 'you' → oyuncu tahmin yapabilir · 'ai' → YZ düşünüyor (oyuncu girişi kilitli)
+  protected readonly turn = signal<'you' | 'ai'>('you');
+  protected readonly botTurn = computed(() => this.turn() === 'ai');
+
   // YZ (rakip) durumu — canlı gösterilir
   protected readonly aiRows = signal<AiRow[]>([]);
   protected readonly aiSolved = signal(false);
@@ -71,23 +79,26 @@ export class VsaiScreen {
   protected readonly aiResult = signal<Result | null>(null);
 
   private solver: AiSolver | null = null;
-  private aiTimer: ReturnType<typeof setTimeout> | null = null;
+  private thinkTimer: ReturnType<typeof setTimeout> | null = null;
   private matchStart = 0;
   private aiTimeMs = 0;
-  private human: Result | null = null;
-  private ended = false; // sonuç bir kez gösterilir (ilk çözen anında bitirir)
+  private humanSolved = false;
+  private humanAttempts = 0;
+  private ended = false; // sonuç bir kez gösterilir
 
   // --- akış ---
 
   protected start(diff: Difficulty): void {
-    this.stopAi();
+    this.clearThink();
     this.difficulty.set(diff);
     const w = this.words.randomWordForLevel(this.stats.level().level);
     this.word.set(w);
     this.aiRows.set([]);
     this.aiSolved.set(false);
     this.aiFailed.set(false);
-    this.human = null;
+    this.aiThinking.set(false);
+    this.humanSolved = false;
+    this.humanAttempts = 0;
     this.ended = false;
     this.myResult.set(null);
     this.aiResult.set(null);
@@ -102,117 +113,125 @@ export class VsaiScreen {
       Math.random,
       aiOpeners(this.i18n.lang(), len), // 🤖 derleme zamanı sıralı açılış → ilk tur gecikmesiz
     );
+    this.turn.set('you'); // 🧑 önce oyuncu — YZ, oyuncunun tahminini BEKLER (saat değil, sıra)
     this.phase.set('playing');
-    this.scheduleAi();
   }
 
-  private scheduleAi(): void {
-    if (!this.solver || this.solver.done) {
-      this.aiThinking.set(false);
-      return;
-    }
+  /**
+   * 🧑 Oyuncu bir tahmin yaptı (app-game bildirdi) → sıra YZ'ye geçer.
+   * YZ, saat dolduğu için değil, oyuncu OYNADIĞI için tahmin yapar.
+   */
+  protected onPlayerGuess(e: { attempts: number; solved: boolean; over: boolean }): void {
+    if (this.ended || this.phase() !== 'playing' || this.turn() !== 'you') return;
+    this.humanAttempts = e.attempts;
+    this.humanSolved = e.solved;
+    // Sıra YZ'de: oyuncu girişi kilitlenir, kısa bir "düşünüyor" animasyonu, sonra YZ tahmini.
+    this.turn.set('ai');
     this.aiThinking.set(true);
-    this.aiTimer = setTimeout(() => {
-      const s = this.solver;
-      if (!s || this.phase() !== 'playing' || this.ended) return;
+    this.clearThink();
+    this.thinkTimer = setTimeout(() => this.botTurnStep(), this.thinkDelay());
+  }
+
+  /** YZ'nin tek turu: bir tahmin yapar, sonra tur değerlendirilir. */
+  private botTurnStep(): void {
+    if (this.ended || this.phase() !== 'playing') return;
+    const s = this.solver;
+    if (s && !s.done) {
       s.step();
       this.aiRows.set(s.guesses.map((g) => ({ pattern: g.pattern })));
       if (s.solved) {
-        // 🤖 YZ doğru kelimeyi buldu → oyun ANINDA biter, sonuç açılır.
         this.aiSolved.set(true);
-        this.aiThinking.set(false);
         this.aiTimeMs = Math.round(performance.now() - this.matchStart);
         this.safeSfx('key');
-        this.onAiSolvedFirst();
       } else if (s.done) {
-        // YZ 6 hakkında çözemedi. İnsan bittiyse sonuç; değilse insanı bekle.
         this.aiFailed.set(true);
-        this.aiThinking.set(false);
-        if (this.human) this.endMatch();
-      } else {
-        this.scheduleAi();
       }
-    }, this.solver.nextDelay());
+    }
+    this.aiThinking.set(false);
+    this.decideRound();
   }
 
-  /** app-game insan sonucunu bildirdi (çözdü veya 6 hakkı bitti). */
-  protected onHumanFinished(r: Result): void {
-    if (this.ended) return;
-    this.human = r;
-    if (r.solved) {
-      this.endMatch(); // 🧑 insan çözdü → oyun HEMEN biter (kazanır)
+  /** Tur tamamlandı (ikisi de bu turda birer tahmin yaptı) → bitti mi, devam mı? */
+  private decideRound(): void {
+    const s = this.solver;
+    if (!s) return;
+    const someoneSolved = this.humanSolved || s.solved;
+    const bothExhausted = this.humanAttempts >= this.MAX && s.attempts >= this.MAX;
+    if (someoneSolved || bothExhausted) {
+      this.endMatch();
       return;
     }
-    if (this.solver?.done) this.endMatch(); // insan çözemedi + YZ de bittiyse → sonuç
-    // aksi halde YZ'yi bekle (YZ çözerse kaybedersin, YZ de çözemezse berabere)
+    this.turn.set('you'); // kimse çözemedi → sıra tekrar oyuncuya
   }
 
-  /** 🤖 YZ önce çözdü → insan bitmemişse oyununu MAÇ BİTTİ olarak kapat (YZ sayacı + altın işlensin), sonra bitir. */
-  private onAiSolvedFirst(): void {
-    if (this.ended) return;
-    if (!this.human) {
-      const attempts = Math.max(1, this.game.rowIndex());
+  /** Sonucu belirle ve göster — kazanan DAHA AZ tahminde bulan (core/vsai-race). */
+  private endMatch(): void {
+    if (this.ended || !this.solver) return;
+    this.ended = true;
+    this.clearThink();
+    this.aiThinking.set(false);
+    const s = this.solver;
+
+    // Oyuncunun oyunu hâlâ açıksa (YZ kazandı, oyuncu çözemeden) kapat → istatistik/
+    // altın işlensin. endVsaiMatch: 'lost' DEĞİL 'ended' → ana seri cezalanmaz.
+    if (!this.game.isOver()) {
       try {
-        // 'lost' DEĞİL: oyuncu kaybetmedi, YZ daha hızlıydı. endVsaiMatch() ana
-        // seriyi/istatistiği korur, yalnız YZ sayaçlarını + altını işler.
-        if (!this.game.isOver()) this.game.endVsaiMatch();
+        this.game.endVsaiMatch();
       } catch {
         /* yok say */
       }
-      this.human = { solved: false, attempts, timeMs: Math.round(performance.now() - this.matchStart) };
     }
-    this.endMatch();
-  }
 
-  /** Sonucu belirle ve göster — ÖNCE çözen kazanır (anında). */
-  private endMatch(): void {
-    if (this.ended || !this.human || !this.solver) return;
-    this.ended = true;
-    this.stopAi();
-    const me = this.human;
-    const aiSolved = this.solver.solved;
-    const ai: Result = {
-      solved: aiSolved,
-      attempts: this.solver.attempts,
-      timeMs: aiSolved ? this.aiTimeMs : Number.MAX_SAFE_INTEGER,
+    const me: Result = {
+      solved: this.humanSolved,
+      attempts: this.humanAttempts,
+      timeMs: Math.round(performance.now() - this.matchStart),
     };
-    let res: 'win' | 'lose' | 'draw';
-    if (me.solved && !aiSolved) res = 'win';
-    else if (aiSolved && !me.solved) res = 'lose';
-    else if (me.solved && aiSolved) res = me.timeMs <= ai.timeMs ? 'win' : 'lose'; // güvenlik ağı (neredeyse olmaz)
-    else res = 'draw'; // ikisi de çözemedi
+    const ai: Result = {
+      solved: s.solved,
+      attempts: s.attempts,
+      timeMs: s.solved ? this.aiTimeMs : Number.MAX_SAFE_INTEGER,
+    };
+    const res = raceOutcome(me, ai);
     this.outcome.set(res);
     const b = res === 'win' ? BEAT_BONUS[this.difficulty()] : 0;
     if (b) this.gold.earn(b);
     this.bonus.set(b);
     this.myResult.set(me);
     this.aiResult.set(ai);
+    this.turn.set('you');
     this.phase.set('result');
-    this.safeSfx(res === 'win' ? 'win' : 'lose');
+    this.safeSfx(res === 'win' ? 'win' : res === 'lose' ? 'lose' : 'key');
   }
 
   protected again(): void {
     this.start(this.difficulty());
   }
   protected toPick(): void {
-    this.stopAi();
+    this.clearThink();
     this.phase.set('pick');
   }
   protected exit(): void {
-    this.stopAi();
+    this.clearThink();
     this.back.emit();
   }
 
-  private stopAi(): void {
-    if (this.aiTimer) {
-      clearTimeout(this.aiTimer);
-      this.aiTimer = null;
+  /** YZ "düşünme" süresi (ms) — kısa, tempo hissi verir; zorlukla hafif değişir (600-1250). */
+  private thinkDelay(): number {
+    const base = this.difficulty() === 'easy' ? 1000 : this.difficulty() === 'medium' ? 800 : 650;
+    return base + Math.floor(Math.random() * 250);
+  }
+
+  private clearThink(): void {
+    if (this.thinkTimer) {
+      clearTimeout(this.thinkTimer);
+      this.thinkTimer = null;
     }
     this.aiThinking.set(false);
   }
 
   ngOnDestroy(): void {
-    this.stopAi();
+    this.clearThink();
   }
 
   // --- sonuç ekranı yardımcıları ---

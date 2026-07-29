@@ -48,7 +48,22 @@
     </div>
   </div>
 
-  <app-game mode="vsai" [roomAnswer]="word()" (finished)="onHumanFinished($event)" (exit)="exit()" />
+  <!-- Sıra göstergesi — kimin sırası olduğu net görünür -->
+  <div class="vs-turn" [class.ai]="botTurn()" aria-live="polite">
+    @if (botTurn()) {
+      <span class="vs-turn-ic">🤖</span> {{ i18n.t('vsai.aiTurn') }}<i></i><i></i><i></i>
+    } @else {
+      <span class="vs-turn-ic">🧑</span> {{ i18n.t('vsai.yourTurn') }}
+    }
+  </div>
+
+  <app-game
+    mode="vsai"
+    [roomAnswer]="word()"
+    [inputLocked]="botTurn()"
+    (guessed)="onPlayerGuess($event)"
+    (exit)="exit()"
+  />
 } @else {
   <main class="vs-result" [attr.data-o]="outcome()">
     <div class="vs-res-card">

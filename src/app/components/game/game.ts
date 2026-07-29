@@ -49,6 +49,10 @@ export class Game {
   readonly roomTimeLimit = input<number>(0);
   /** Oda oyunu bitti — sonuç (RoomScreen sunucuya iletir). */
   readonly finished = output<{ solved: boolean; attempts: number; timeMs: number }>();
+  /** Her KABUL EDİLEN oyuncu tahmininden sonra (sıra tabanlı YZ yarışı bunu dinler). */
+  readonly guessed = output<{ attempts: number; solved: boolean; over: boolean }>();
+  /** Dışarıdan giriş kilidi — YZ yarışında BOTUN sırasında true (oyuncu yazamaz). */
+  readonly inputLocked = input<boolean>(false);
 
   /** Oda modunda mıyız? */
   protected isRoom(): boolean {
@@ -165,7 +169,7 @@ export class Game {
   // --- Giriş (ekran klavyesi ve fiziksel klavye buradan geçer) ---
 
   protected onLetter(letter: string): void {
-    if (this.locked()) return;
+    if (this.locked() || this.inputLocked()) return;
     const before = this.game.currentGuess();
     this.game.type(letter);
     // Satır zaten doluysa harf eklenmez → ses de çıkmasın (yanlış geri bildirim olur)
@@ -173,7 +177,7 @@ export class Game {
   }
 
   protected onBackspace(): void {
-    if (this.locked()) return;
+    if (this.locked() || this.inputLocked()) return;
     const before = this.game.currentGuess();
     this.game.backspace();
     if (this.game.currentGuess() !== before) this.audio.sfx('delete');
@@ -233,7 +237,7 @@ export class Game {
   }
 
   protected onEnter(): void {
-    if (this.locked()) return; // çift onaylamayı engelle
+    if (this.locked() || this.inputLocked()) return; // çift onaylamayı / bot sırasını engelle
 
     const before = this.game.rowIndex();
     this.game.submit();
@@ -248,6 +252,13 @@ export class Game {
 
       // Kutular sırayla açılırken her kutuda bir tık — görsel ritimle aynı gecikme
       this.audio.revealSequence(this.game.wordLength(), 90);
+
+      // 🤖 Sıra tabanlı YZ yarışı: her kabul edilen tahmini üst bileşene bildir.
+      this.guessed.emit({
+        attempts: after,
+        solved: this.game.status() === 'won',
+        over: this.game.isOver(),
+      });
     } else if (this.game.message()) {
       // Reddedildi → uyarıyı duyur (toast zaten aria-live)
       this.announcement.set(this.game.message());
@@ -261,9 +272,10 @@ export class Game {
 
       setTimeout(() => {
         this.announcement.set(resultAnnouncement(won, after, this.game.answer(), this.i18n.lang()));
-        // Oda modunda sonuç ekranı yerine üst bileşene bildir → lider tablosu açılır.
-        if (this.isRoom()) this.reportRoomResult();
-        else this.resultOpen.set(true);
+        // Oda → üst bileşene bildir (lider tablosu). YZ yarışı → sonucu VsaiScreen
+        // 'guessed' akışıyla yönetir (burada sonuç ekranı AÇILMAZ). Diğer modlar → sonuç modalı.
+        if (this.mode() === 'room') this.reportRoomResult();
+        else if (this.mode() !== 'vsai') this.resultOpen.set(true);
       }, 900); // açılma animasyonu bitsin
     }
   }

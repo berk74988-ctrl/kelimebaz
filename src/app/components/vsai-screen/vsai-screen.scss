@@ -259,6 +259,52 @@
   }
 }
 
+/* ============ SIRA GÖSTERGESİ ============ */
+.vs-turn {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 214px);
+  transform: translateX(-50%);
+  z-index: 9;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  background: var(--accent, #4caf82); /* Sıra sende: canlı vurgu */
+  color: #06120c;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  animation: vsPop 0.25s ease;
+  transition:
+    background 0.2s,
+    color 0.2s;
+  &.ai {
+    background: #1f3d4d; /* YZ düşünüyor: sakin renk */
+    color: #cfe3ee;
+  }
+  i {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: vsBlink 1.2s infinite;
+  }
+  i:nth-of-type(2) {
+    animation-delay: 0.2s;
+  }
+  i:nth-of-type(3) {
+    animation-delay: 0.4s;
+  }
+}
+.vs-turn-ic {
+  font-size: 15px;
+}
+
 /* ============ SONUÇ ============ */
 .vs-result {
   min-height: 100dvh;

@@ -66,6 +66,8 @@ export const MESSAGES: Record<string, { tr: string; en: string }> = {
   'vsai.mediumDesc': { tr: 'Dengeli bir rakip. İyi oynaman gerekir.', en: 'A balanced rival. You must play well.' },
   'vsai.hardDesc': { tr: 'Hızlı ve akıllı. Yenmen gerçekten zor!', en: 'Fast and smart. Truly hard to beat!' },
   'vsai.thinking': { tr: 'düşünüyor', en: 'thinking' },
+  'vsai.yourTurn': { tr: 'Sıra sende — bir tahmin yap', en: 'Your turn — make a guess' },
+  'vsai.aiTurn': { tr: 'Yapay zekâ düşünüyor', en: 'AI is thinking' },
   'vsai.solved': { tr: 'çözdü!', en: 'solved!' },
   'vsai.failed': { tr: 'bulamadı', en: "couldn't solve" },
   'vsai.you': { tr: 'Sen', en: 'You' },
