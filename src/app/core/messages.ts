@@ -60,6 +60,10 @@ export const MESSAGES: Record<string, { tr: string; en: string }> = {
   'vsai.avgGuesses': { tr: 'ort. {n} tahmin', en: 'avg {n} guesses' },
   'vsai.record': { tr: 'Karşılaşma: {w}-{l}', en: 'Record: {w}-{l}' },
   'vsai.locked': { tr: '🔒 Yakında', en: '🔒 Coming soon' },
+  'vsai.adaptiveName': { tr: 'Bana Uygun Rakip', en: 'Right For You' },
+  'vsai.adaptiveDesc': { tr: 'Son maçlarına göre ayarlanır — çoğu maç kıl payı biter.', en: 'Tunes to your recent games — most matches end razor-thin.' },
+  'vsai.adaptiveLevel': { tr: 'Şu anki seviye', en: 'Current level' },
+  'vsai.orPickFixed': { tr: 'ya da sabit bir rakip seç', en: 'or pick a fixed rival' },
 
   // ---- Bot karakterleri (isim + açıklama) ----
   'persona.temkinli.name': { tr: 'Temkinli', en: 'The Cautious' },

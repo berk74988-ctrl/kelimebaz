@@ -18,6 +18,8 @@ describe('Profil istatistik kayıt defteri', () => {
     vsaiPlayed: 16,
     vsaiWon: 9,
     vsaiByPersona: { temkinli: { played: 5, won: 2 } },
+    vsaiRecent: [3, 4, 2],
+    vsaiAdaptTopK: 8,
   };
 
   it('kullanıcının istediği istatistiklerin hepsi var', () => {

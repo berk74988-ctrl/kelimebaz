@@ -16,7 +16,9 @@ import { AiConfig } from './ai-opponent';
  *   Bitti — seçim ekranı, istatistik ve profil kendiliğinden uyar.
  * ===========================================================================
  */
-export type PersonaId = 'temkinli' | 'unlu' | 'harfsayar' | 'kumarbaz';
+// 'adaptive' = "Bana uygun rakip" sözde-karakteri (PERSONAS listesinde YOK, çalışma
+// zamanında oyuncu seviyesine göre üretilir — bkz. VsaiScreen.adaptivePersona).
+export type PersonaId = 'temkinli' | 'unlu' | 'harfsayar' | 'kumarbaz' | 'adaptive';
 
 export interface Persona {
   id: PersonaId;

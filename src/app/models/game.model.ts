@@ -81,6 +81,10 @@ export interface Stats {
   vsaiWon: number;
   /** Karakter bazlı karşılaşma kaydı: id → { oynanan, kazanılan } (örn. "Kumarbaz'a karşı 3-1"). */
   vsaiByPersona: Record<string, { played: number; won: number }>;
+  /** 🎯 Uyarlanabilir zorluk: son N YZ maçındaki oyuncu tahmin sayıları (kayan pencere). */
+  vsaiRecent: number[];
+  /** 🎯 Uyarlanabilir modun güncel bot ayarı (topK) — kademeli güncellenir. */
+  vsaiAdaptTopK: number;
 }
 
 export const EMPTY_STATS: Stats = {
@@ -95,6 +99,8 @@ export const EMPTY_STATS: Stats = {
   vsaiPlayed: 0,
   vsaiWon: 0,
   vsaiByPersona: {},
+  vsaiRecent: [],
+  vsaiAdaptTopK: 8,
 };
 
 /** Varsayılan/yedek uzunluk. Oyun artık 4-7 harf kullanır (bkz. core/word-length.ts);

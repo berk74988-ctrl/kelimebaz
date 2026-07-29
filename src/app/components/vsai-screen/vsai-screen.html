@@ -7,6 +7,32 @@
     <p class="vs-sub">{{ i18n.t('vsai.pickSub') }}</p>
 
     <div class="vs-cards">
+      <!-- 🎯 Uyarlanabilir rakip — oyuncunun son performansına göre ayarlanır -->
+      <button
+        class="vs-card adaptive"
+        [attr.data-d]="adaptivePersona().tier"
+        type="button"
+        (click)="start(adaptivePersona())"
+      >
+        <span class="vs-card-ic">🎯</span>
+        <span class="vs-card-tx">
+          <b>
+            {{ i18n.t('vsai.adaptiveName') }}
+            <span class="vs-tier" [attr.data-d]="adaptivePersona().tier">{{ i18n.t('vsai.' + adaptivePersona().tier) }}</span>
+          </b>
+          <span>{{ i18n.t('vsai.adaptiveDesc') }}</span>
+          <span class="vs-card-meta">
+            🎚️ {{ i18n.t('vsai.adaptiveLevel') }}: {{ i18n.t('vsai.' + adaptivePersona().tier) }}
+            @if (record('adaptive').played > 0) {
+              <span class="vs-rec">· {{ i18n.t('vsai.record', { w: record('adaptive').won, l: record('adaptive').played - record('adaptive').won }) }}</span>
+            }
+          </span>
+        </span>
+        <span class="vs-card-go">{{ i18n.t('vsai.play') }} →</span>
+      </button>
+
+      <div class="vs-sep">{{ i18n.t('vsai.orPickFixed') }}</div>
+
       @for (p of personas; track p.id) {
         <button
           class="vs-card"

@@ -141,6 +141,21 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+/* 🎯 Uyarlanabilir rakip kartı — öne çıkar */
+.vs-card.adaptive {
+  box-shadow:
+    0 0 0 1.5px var(--accent, #4caf82),
+    0 6px 20px rgba(76, 175, 130, 0.22);
+}
+.vs-sep {
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--muted, #93a6b3);
+  margin: 6px 0 2px;
+}
 
 /* ============ CANLI RAKİP HUD (oyun sırasında) ============ */
 .vs-hud {

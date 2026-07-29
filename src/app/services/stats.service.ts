@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { ADAPT_START_TOPK, nextAdaptTopK, perfScore, pushPerf } from '../core/ai-adaptive';
 import { LevelInfo, levelInfo } from '../core/level';
 import { scoreFor } from '../core/score';
 import { EMPTY_STATS, MAX_ATTEMPTS, Stats } from '../models/game.model';
@@ -42,6 +43,8 @@ export class StatsService {
       vsaiPlayed: s.vsaiPlayed,
       vsaiWon: s.vsaiWon,
       vsaiByPersona: s.vsaiByPersona,
+      vsaiRecent: s.vsaiRecent,
+      vsaiAdaptTopK: s.vsaiAdaptTopK,
     };
 
     if (won && attempts >= 1 && attempts <= MAX_ATTEMPTS) {
@@ -59,19 +62,31 @@ export class StatsService {
    * ayrı YZ sayaçları güncellenir. YZ modu eğlenceli bir yan moddur; oyuncunun
    * 20 maçlık serisi, bot 2 saniye hızlı diye sıfırlanmamalı.
    */
-  recordVsai(won: boolean, personaId?: string): void {
+  recordVsai(won: boolean, personaId?: string, perf?: { attempts: number; solved: boolean }): void {
     const s = this._stats();
     const byPersona = { ...s.vsaiByPersona };
     if (personaId) {
       const cur = byPersona[personaId] || { played: 0, won: 0 };
       byPersona[personaId] = { played: cur.played + 1, won: cur.won + (won ? 1 : 0) };
     }
+
+    // 🎯 Uyarlanabilir zorluk: oyuncunun bu maçtaki performansını pencereye ekle,
+    // bot ayarını (topK) KADEMELİ güncelle (tek maçta sert sıçrama yok).
+    let vsaiRecent = s.vsaiRecent;
+    let vsaiAdaptTopK = s.vsaiAdaptTopK || ADAPT_START_TOPK;
+    if (perf) {
+      vsaiRecent = pushPerf(s.vsaiRecent, perfScore(perf.attempts, perf.solved, MAX_ATTEMPTS));
+      vsaiAdaptTopK = nextAdaptTopK(vsaiRecent, vsaiAdaptTopK);
+    }
+
     const next: Stats = {
       ...s,
       distribution: [...s.distribution],
       vsaiPlayed: s.vsaiPlayed + 1,
       vsaiWon: s.vsaiWon + (won ? 1 : 0),
       vsaiByPersona: byPersona,
+      vsaiRecent,
+      vsaiAdaptTopK,
     };
     this._stats.set(next);
     this.persist(next);
@@ -86,6 +101,11 @@ export class StatsService {
   /** Bir karaktere karşı karşılaşma kaydı (oynanan/kazanılan). */
   vsaiRecord(personaId: string): { played: number; won: number } {
     return this._stats().vsaiByPersona[personaId] || { played: 0, won: 0 };
+  }
+
+  /** 🎯 Uyarlanabilir modun güncel bot ayarı (topK). */
+  adaptiveTopK(): number {
+    return this._stats().vsaiAdaptTopK || ADAPT_START_TOPK;
   }
 
   /** Puandan hesaplanan seviye ve ilerleme (core/level.ts). */
@@ -156,6 +176,11 @@ export class StatsService {
           parsed.vsaiByPersona && typeof parsed.vsaiByPersona === 'object'
             ? parsed.vsaiByPersona
             : {},
+        // 🎯 Uyarlanabilir zorluk: kayan pencere + güncel bot ayarı (eski kayıtlarda yok)
+        vsaiRecent: Array.isArray(parsed.vsaiRecent)
+          ? parsed.vsaiRecent.filter((n) => typeof n === 'number' && Number.isFinite(n))
+          : [],
+        vsaiAdaptTopK: num(parsed.vsaiAdaptTopK) || ADAPT_START_TOPK,
         // Eski/bozuk kayıtlarda dağılım dizisi hatalı olabilir
         distribution:
           Array.isArray(dist) && dist.length === MAX_ATTEMPTS ? [...dist] : emptyDistribution(),

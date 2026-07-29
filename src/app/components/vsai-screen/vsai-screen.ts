@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { AiSolver, aiOpeners } from '../../core/ai-opponent';
+import { adaptTierLabel } from '../../core/ai-adaptive';
 import { Persona, PERSONAS, PERSONA_BONUS, persona as personaById, PersonaId } from '../../core/ai-personas';
 import { raceOutcome } from '../../core/vsai-race';
 import { LetterState, MAX_ATTEMPTS } from '../../models/game.model';
@@ -52,7 +53,23 @@ export class VsaiScreen {
 
   protected readonly phase = signal<Phase>('pick');
   protected readonly personaId = signal<PersonaId>(PERSONAS[0].id);
-  protected readonly persona = computed<Persona>(() => personaById(this.personaId()));
+  protected readonly adaptive = signal(false); // 🎯 "Bana uygun rakip" modu mu?
+  /** 🎯 Uyarlanabilir rakip — oyuncunun seviyesine göre ayarlanan sözde-karakter. */
+  protected readonly adaptivePersona = computed<Persona>(() => {
+    const topK = this.stats.adaptiveTopK();
+    return {
+      id: 'adaptive' as PersonaId,
+      nameKey: 'vsai.adaptiveName',
+      descKey: 'vsai.adaptiveDesc',
+      avatar: '🎯',
+      tier: adaptTierLabel(topK),
+      config: { minMs: 1400, maxMs: 2400, topK },
+      avgGuesses: 0,
+    };
+  });
+  protected readonly persona = computed<Persona>(() =>
+    this.adaptive() ? this.adaptivePersona() : personaById(this.personaId()),
+  );
   protected readonly word = signal('');
 
   // Sıra: 'you' → oyuncu tahmin yapabilir · 'ai' → karakter düşünüyor (giriş kilitli)
@@ -100,7 +117,8 @@ export class VsaiScreen {
     if (p.locked) return;
     this.clearThink();
     this.clearTaunt();
-    this.personaId.set(p.id);
+    this.adaptive.set(p.id === 'adaptive');
+    if (p.id !== 'adaptive') this.personaId.set(p.id);
     const w = this.words.randomWordForLevel(this.stats.level().level);
     this.word.set(w);
     this.aiRows.set([]);
@@ -228,8 +246,12 @@ export class VsaiScreen {
     const res = raceOutcome(me, ai);
     this.outcome.set(res);
 
-    // 📊 Maç sonucu (GERÇEK yarış sonucu) + karakter kaydı işlenir.
-    this.stats.recordVsai(res === 'win', this.persona().id);
+    // 📊 Maç sonucu (GERÇEK yarış sonucu) + karakter kaydı + 🎯 uyarlanabilir zorluk
+    // için oyuncu performansı (bu maçtaki tahmin sayısı) işlenir.
+    this.stats.recordVsai(res === 'win', this.persona().id, {
+      attempts: me.attempts,
+      solved: me.solved,
+    });
 
     const b = res === 'win' ? PERSONA_BONUS[this.persona().tier] : 0;
     if (b) this.gold.earn(b);
