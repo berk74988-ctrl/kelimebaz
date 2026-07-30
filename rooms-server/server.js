@@ -17,8 +17,63 @@
  */
 
 const http = require('http');
+const hintUtil = require('./hint-util');
 
 const PORT = process.env.PORT || 4243;
+
+// --- YZ İPUCU (çalışma zamanı, maliyetli) yapılandırması ---
+// API anahtarı YALNIZCA sunucuda env'de durur; istemciye asla gönderilmez.
+// Anahtar yoksa özellik KAPALI: /health hint:false döner → istemci butonu gizler.
+const HINT_KEY = process.env.ANTHROPIC_API_KEY || '';
+const HINT_MODEL = process.env.HINT_MODEL || 'claude-opus-5';
+const HINT_RL_PER_MIN = Number(process.env.HINT_RL_PER_MIN || 8); // IP başına dakikada
+const HINT_ENABLED = !!HINT_KEY;
+
+// IP başına kayan-dakika hız sınırı (bellekte; süreç yeniden başlarsa sıfırlanır).
+const hintHits = new Map(); // ip -> number[] (istek zaman damgaları)
+function hintRateOk(ip) {
+  const t = Date.now();
+  const arr = (hintHits.get(ip) || []).filter((x) => t - x < 60_000);
+  if (arr.length >= HINT_RL_PER_MIN) {
+    hintHits.set(ip, arr);
+    return false;
+  }
+  arr.push(t);
+  hintHits.set(ip, arr);
+  return true;
+}
+setInterval(() => {
+  const t = Date.now();
+  for (const [ip, arr] of hintHits) {
+    const keep = arr.filter((x) => t - x < 60_000);
+    if (keep.length) hintHits.set(ip, keep);
+    else hintHits.delete(ip);
+  }
+}, 5 * 60 * 1000).unref?.();
+
+/** Anthropic Messages API'yi çağır (bağımlılıksız fetch — Node 18+). */
+async function callAnthropic(system, user) {
+  const body = { model: HINT_MODEL, max_tokens: 400, system, messages: [{ role: 'user', content: user }] };
+  // opus/sonnet/fable ailesinde düşünmeyi kapat → hızlı ve ucuz (tek cümlelik iş).
+  // haiku bu parametreleri almaz; onda gönderme.
+  if (!/haiku/.test(HINT_MODEL)) {
+    body.thinking = { type: 'disabled' };
+    body.output_config = { effort: 'low' };
+  }
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': HINT_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(12_000),
+  });
+  if (!r.ok) throw new Error('api_' + r.status);
+  const data = await r.json();
+  return (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join(' ');
+}
 // Varsayılan 127.0.0.1: servis YALNIZCA yerelde dinler, internete kapalı.
 // Dışarıya nginx /berk/rooms/ yolu üzerinden (aynı köken) açılır — böylece
 // backend doğrudan internete maruz kalmaz. (İstenirse HOST=0.0.0.0 ile açılır.)
@@ -200,6 +255,12 @@ function readJson(req) {
   });
 }
 
+/** İstemci IP'si (nginx arkasında X-Forwarded-For; yerelde soket adresi). */
+function clientIp(req) {
+  const xff = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return xff || req.socket.remoteAddress || 'unknown';
+}
+
 /** Oda + yetki doğrulama. */
 function auth(body) {
   const code = String(body.code || '').toUpperCase();
@@ -378,6 +439,36 @@ const routes = {
     }
     send(res, 200, { ok: true });
   },
+
+  // --- YZ İPUCU (çalışma zamanı) ---
+  // Girdi: { length, lang, guesses:[{word,pattern}], answer }. Cevap YALNIZCA
+  // sunucuda sızıntı denetimi için kullanılır — modele GÖNDERİLMEZ.
+  'POST /hint': async (req, res) => {
+    if (!HINT_ENABLED) return send(res, 503, { error: 'disabled' });
+    const ip = clientIp(req);
+    if (!hintRateOk(ip)) return send(res, 429, { error: 'rate_limited' });
+
+    const body = await readJson(req);
+    const v = hintUtil.validateInput(body);
+    if (v.error) return send(res, 400, { error: v.error });
+
+    let text;
+    try {
+      const raw = await callAnthropic(
+        hintUtil.systemPrompt(v.lang),
+        hintUtil.userPrompt(v.length, v.guesses, v.lang),
+      );
+      text = hintUtil.sanitizeHint(raw);
+    } catch {
+      return send(res, 502, { error: 'ai_unavailable' });
+    }
+
+    // SIZINTI KORUMASI: dönen metin cevabı içeriyorsa modeli reddet, genel ipucu ver.
+    if (!text || hintUtil.leaksAnswer(v.answer, text)) {
+      text = hintUtil.genericHint(v.lang);
+    }
+    send(res, 200, { hint: text });
+  },
 };
 
 const server = http.createServer(async (req, res) => {
@@ -388,7 +479,8 @@ const server = http.createServer(async (req, res) => {
 
   // Sağlık kontrolü
   if (url.pathname === '/' || url.pathname === '/health') {
-    return send(res, 200, { ok: true, rooms: rooms.size, uptime: process.uptime() });
+    // hint: YZ ipucu özelliği açık mı? (ANTHROPIC_API_KEY sunucuda tanımlı mı)
+    return send(res, 200, { ok: true, rooms: rooms.size, uptime: process.uptime(), hint: HINT_ENABLED });
   }
 
   const handler = routes[key];

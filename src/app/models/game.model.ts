@@ -85,6 +85,12 @@ export interface Stats {
   vsaiRecent: number[];
   /** 🎯 Uyarlanabilir modun güncel bot ayarı (topK) — kademeli güncellenir. */
   vsaiAdaptTopK: number;
+  /**
+   * 🆘 Toplam kullanılan "Takıldım" YZ ipucu sayısı. Galibiyet/seri BOZULMAZ
+   * (yardım alınan oyun da geçerli sayılır) — yalnızca kaç kez yardım istendiğini
+   * gösteren şeffaf bir sayaçtır (profilde görünür).
+   */
+  aiHintsUsed: number;
 }
 
 export const EMPTY_STATS: Stats = {
@@ -101,6 +107,7 @@ export const EMPTY_STATS: Stats = {
   vsaiByPersona: {},
   vsaiRecent: [],
   vsaiAdaptTopK: 8,
+  aiHintsUsed: 0,
 };
 
 /** Varsayılan/yedek uzunluk. Oyun artık 4-7 harf kullanır (bkz. core/word-length.ts);

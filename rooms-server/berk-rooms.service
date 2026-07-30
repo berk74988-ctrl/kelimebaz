@@ -8,6 +8,10 @@ User=berk
 WorkingDirectory=/home/berk/rooms-server
 ExecStart=/usr/bin/node /home/berk/rooms-server/server.js
 Environment=PORT=4243
+# YZ ipucu (Takıldım) için gizli anahtar bu dosyadan okunur. Başındaki "-":
+# dosya YOKSA servis yine de başlar → ipucu özelliği kapalı kalır (oyun bozulmaz).
+# Dosya içeriği:  ANTHROPIC_API_KEY=sk-ant-...   (ve isteğe bağlı HINT_MODEL=claude-haiku-4-5)
+EnvironmentFile=-/home/berk/rooms-server/hint.env
 Restart=always
 RestartSec=3
 

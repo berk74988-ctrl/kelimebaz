@@ -81,6 +81,36 @@
     [status]="game.status()"
   />
 
+  <!-- 🆘 TAKILDIM — 4. tahminden sonra çalışma zamanı YZ ipucu (altınla, sunucu açıksa).
+       Sunucu kapalı/anahtar yoksa stuckAvailable() false → hiç görünmez, oyun bozulmaz. -->
+  @if (stuckAvailable() || aiHintText() || aiHintError()) {
+    <div class="stuck">
+      @if (aiHintText()) {
+        <div class="stuck-hint" role="status" aria-live="polite">🆘 {{ aiHintText() }}</div>
+      }
+      @if (aiHintError()) {
+        <div class="stuck-err" role="status" aria-live="polite">⚠️ {{ aiHintError() }}</div>
+      }
+      @if (stuckAvailable()) {
+        <button
+          class="stuck-btn"
+          type="button"
+          [disabled]="aiHintLoading() || !gold.canAfford(HINT_COST)"
+          (click)="askStuck()"
+        >
+          @if (aiHintLoading()) {
+            <span class="stuck-spin" aria-hidden="true"></span> {{ i18n.t('stuck.loading') }}
+          } @else {
+            🆘 {{ i18n.t('stuck.ask') }} <span class="stuck-cost">🪙 {{ HINT_COST }}</span>
+          }
+        </button>
+        @if (!gold.canAfford(HINT_COST)) {
+          <span class="stuck-note">{{ i18n.t('stuck.noGold') }}</span>
+        }
+      }
+    </div>
+  }
+
   <!-- Ekran klavyesi de fiziksel klavyeyle AYNI yoldan geçer (kilit dahil) -->
   <app-keyboard
     [keyStates]="game.keyStates()"

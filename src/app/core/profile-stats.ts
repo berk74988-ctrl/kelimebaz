@@ -104,4 +104,11 @@ export const PROFILE_STATS: readonly ProfileStat[] = [
     // Türetilmiş: Stats'ta saklanmaz, vsaiWon/vsaiPlayed'den hesaplanır.
     value: (s, lang) => vsaiRate(s, lang),
   },
+  {
+    // 🆘 Şeffaflık sayacı: kaç kez "Takıldım" YZ ipucu alındı (galibiyeti BOZMAZ).
+    key: 'aiHintsUsed',
+    icon: '🆘',
+    label: 'Alınan YZ ipucu',
+    value: (s, lang) => fmt(s.aiHintsUsed, lang),
+  },
 ];

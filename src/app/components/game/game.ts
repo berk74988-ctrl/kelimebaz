@@ -9,11 +9,14 @@ import {
 } from '@angular/core';
 import { guessAnnouncement, resultAnnouncement } from '../../core/a11y';
 import { GameMode } from '../../models/game.model';
+import { AiHintService } from '../../services/ai-hint.service';
 import { AudioService } from '../../services/audio.service';
 import { ContrastService } from '../../services/contrast.service';
 import { GameService } from '../../services/game.service';
+import { GoldService } from '../../services/gold.service';
 import { HintService } from '../../services/hint.service';
 import { LanguageService } from '../../services/language.service';
+import { StatsService } from '../../services/stats.service';
 import { ThemeService } from '../../services/theme.service';
 import { Board } from '../board/board';
 import { EN_LETTERS, Keyboard, TR_KEY_POSITIONS, TR_LETTERS } from '../keyboard/keyboard';
@@ -36,9 +39,74 @@ export class Game {
   protected readonly theme = inject(ThemeService);
   protected readonly contrast = inject(ContrastService);
   private readonly audio = inject(AudioService);
+  protected readonly gold = inject(GoldService);
+  private readonly aiHint = inject(AiHintService);
+  private readonly stats = inject(StatsService);
 
-  /** 💡 İpucu açıldı mı (yalnız İngilizce; her yeni oyunda sıfırlanır). */
+  /** 💡 İpucu açıldı mı (statik ipucu kartı; her yeni oyunda sıfırlanır). */
   protected readonly hintShown = signal(false);
+
+  // 🆘 "Takıldım" — çalışma zamanı YZ ipucu (rooms-server üzerinden, altınla).
+  protected readonly HINT_COST = 20; // ipucu başına altın
+  private readonly HINT_MAX_PER_GAME = 2; // oyun başına en fazla
+  protected readonly aiHintText = signal('');
+  protected readonly aiHintLoading = signal(false);
+  protected readonly aiHintError = signal('');
+  protected readonly aiHintsUsedGame = signal(0);
+
+  /** "Takıldım" butonu görünsün mü? 4. tahminden sonra, tek kişilik modda, sunucu açıksa. */
+  protected stuckAvailable(): boolean {
+    return (
+      this.aiHint.available() &&
+      !this.game.isOver() &&
+      !this.isRoom() &&
+      this.mode() !== 'vsai' &&
+      this.game.rowIndex() >= 4 &&
+      this.aiHintsUsedGame() < this.HINT_MAX_PER_GAME
+    );
+  }
+
+  /** İpucu iste: altınla öde, sunucudan al; hata olursa altını İADE et. */
+  protected async askStuck(): Promise<void> {
+    if (this.aiHintLoading() || !this.stuckAvailable()) return;
+    if (!this.gold.spend(this.HINT_COST)) {
+      this.aiHintError.set(this.i18n.t('stuck.noGold'));
+      return;
+    }
+    this.aiHintLoading.set(true);
+    this.aiHintError.set('');
+    this.aiHintText.set('');
+    try {
+      const guesses = this.game.guesses().map((g) => ({
+        word: g.word,
+        pattern: g.tiles
+          .map((t) => (t.state === 'correct' ? '2' : t.state === 'present' ? '1' : '0'))
+          .join(''),
+      }));
+      const hint = await this.aiHint.requestHint({
+        length: this.game.wordLength(),
+        guesses,
+        answer: this.game.answer(),
+      });
+      this.aiHintText.set(hint);
+      this.aiHintsUsedGame.update((n) => n + 1);
+      this.stats.recordAiHint();
+      this.announcement.set(hint); // ekran okuyucu da duysun
+    } catch {
+      this.gold.earn(this.HINT_COST); // ipucu gelmedi → ödenen altını geri ver
+      this.aiHintError.set(this.i18n.t('stuck.error'));
+    } finally {
+      this.aiHintLoading.set(false);
+    }
+  }
+
+  /** Yeni kelimede "Takıldım" durumunu temizle. */
+  private resetStuck(): void {
+    this.aiHintText.set('');
+    this.aiHintError.set('');
+    this.aiHintsUsedGame.set(0);
+    this.aiHintLoading.set(false);
+  }
 
   readonly mode = input.required<GameMode>();
   readonly exit = output<void>();
@@ -90,6 +158,7 @@ export class Game {
 
   ngOnInit(): void {
     this.hintShown.set(false); // yeni oyun → ipucu kapalı başlar
+    this.resetStuck();
     const answer = this.roomAnswer();
     if (answer) {
       // Oda/YZ yarışı: verilen kelimeyle sıfırdan başla (mod korunur → istatistik/altın/görev doğru işler).
@@ -290,6 +359,7 @@ export class Game {
     this.game.reset('practice');
     this.resultOpen.set(false);
     this.hintShown.set(false); // yeni kelime → ipucu tekrar kapalı
+    this.resetStuck();
     this.announcement.set(this.i18n.t('game.newGameStarted'));
   }
 }

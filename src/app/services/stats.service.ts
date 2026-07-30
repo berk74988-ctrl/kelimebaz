@@ -45,6 +45,7 @@ export class StatsService {
       vsaiByPersona: s.vsaiByPersona,
       vsaiRecent: s.vsaiRecent,
       vsaiAdaptTopK: s.vsaiAdaptTopK,
+      aiHintsUsed: s.aiHintsUsed,
     };
 
     if (won && attempts >= 1 && attempts <= MAX_ATTEMPTS) {
@@ -101,6 +102,18 @@ export class StatsService {
   /** Bir karaktere karşı karşılaşma kaydı (oynanan/kazanılan). */
   vsaiRecord(personaId: string): { played: number; won: number } {
     return this._stats().vsaiByPersona[personaId] || { played: 0, won: 0 };
+  }
+
+  /**
+   * 🆘 "Takıldım" YZ ipucu kullanıldı — yalnızca sayaç artar. Galibiyet/seri/puan
+   * BOZULMAZ (yardım alınan oyun geçerli sayılır); bu, kaç kez yardım istendiğini
+   * gösteren şeffaf bir sayaçtır.
+   */
+  recordAiHint(): void {
+    const s = this._stats();
+    const next: Stats = { ...s, aiHintsUsed: (s.aiHintsUsed || 0) + 1 };
+    this._stats.set(next);
+    this.persist(next);
   }
 
   /** 🎯 Uyarlanabilir modun güncel bot ayarı (topK). */
@@ -181,6 +194,7 @@ export class StatsService {
           ? parsed.vsaiRecent.filter((n) => typeof n === 'number' && Number.isFinite(n))
           : [],
         vsaiAdaptTopK: num(parsed.vsaiAdaptTopK) || ADAPT_START_TOPK,
+        aiHintsUsed: num(parsed.aiHintsUsed),
         // Eski/bozuk kayıtlarda dağılım dizisi hatalı olabilir
         distribution:
           Array.isArray(dist) && dist.length === MAX_ATTEMPTS ? [...dist] : emptyDistribution(),
