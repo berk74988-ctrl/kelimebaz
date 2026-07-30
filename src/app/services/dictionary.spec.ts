@@ -17,7 +17,7 @@ describe('Sözlük — kapsam ve kalite', () => {
 
   it('cevap havuzundaki her kelime tahmin sözlüğünde de vardır', () => {
     // Aksi hâlde oyun kendi gizli kelimesini "Sözlükte yok" diye reddederdi.
-    // Havuz 230 kelime; 400 gün gezerek hepsine uğruyoruz.
+    // 400 gün gezip her günün kelimesinin geçerli sözlükte olduğunu doğrularız.
     for (let day = 0; day < 400; day++) {
       const answer = words.wordOfTheDay(new Date(2026, 0, 1 + day));
       expect(words.isValid(answer)).toBe(true);

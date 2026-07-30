@@ -40,8 +40,14 @@ const MIN_FREQ = 20;
 
 /** Desteklenen kelime uzunlukları. */
 const LENGTHS = [4, 5, 6, 7];
-/** 4/6/7 için üretilecek cevap sayısı (5 elle seçili, korunur). */
-const ANSWER_TARGET = { 4: 150, 6: 240, 7: 240 };
+/**
+ * Her uzunluk için hedef cevap sayısı. Havuz BÜYÜTÜLDÜ (860→~3000) ki serbest
+ * modda tekrar geç başlasın ve YZ havuz küçüklüğünden yapay güçlenmesin.
+ * 5 harf: elle seçilmiş liste KORUNUR, üstüne frekans sıralı lemmalar eklenir.
+ * (4 harfli tanıdık isim/sıfat az olduğundan hedefe ulaşamayabilir — havuz
+ *  mevcut tanıdık kelimelerle sınırlıdır; frekans sırası tanıdıklığı korur.)
+ */
+const ANSWER_TARGET = { 4: 600, 5: 700, 6: 900, 7: 900 };
 
 const TR_ALPHABET = 'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ';
 const TR_SET = new Set(TR_ALPHABET);
@@ -268,20 +274,26 @@ const BLOCKLIST = new Set(
   'SEKS OROSPU KAHPE PUŞT PEZEVENK GAVAT YARAK YARRAK SİKİK SİKİŞ AMCIK GÖT GÖTÜ TAŞAK MEME MEMESİ ORGAZM PORNO ESRAR EROİN KOKAİN İNTİHAR TECAVÜZ FUHUŞ VAJİNA PENİS'.split(' '),
 );
 
-const answersByLen = {};
-for (const L of LENGTHS) {
-  if (L === 5) {
-    answersByLen[5] = [...new Set(curatedFive)];
-    continue;
-  }
-  // Yalnızca isim/sıfat lemmaları; korpus frekansına göre sırala (sık = bilinen)
-  const cands = [...answerLemmas]
+// Bir uzunluktaki isim/sıfat lemma adayları — korpus frekansına göre (sık = bilinen)
+const lemmaCands = (L) =>
+  [...answerLemmas]
     .filter(
       (w) =>
         len(w) === L && words.has(w) && !properNames.has(w) && !STOPLIST.has(w) && !BLOCKLIST.has(w),
     )
     .sort((a, b) => (freq.get(b) ?? 0) - (freq.get(a) ?? 0));
-  answersByLen[L] = cands.slice(0, ANSWER_TARGET[L]);
+
+const answersByLen = {};
+for (const L of LENGTHS) {
+  if (L === 5) {
+    // Elle seçilmiş 5 harfliler KORUNUR (önce), üstüne frekans sıralı lemmalar eklenir.
+    const base = [...new Set(curatedFive)];
+    const seen = new Set(base);
+    const extra = lemmaCands(5).filter((w) => !seen.has(w));
+    answersByLen[5] = [...base, ...extra].slice(0, ANSWER_TARGET[5]);
+    continue;
+  }
+  answersByLen[L] = lemmaCands(L).slice(0, ANSWER_TARGET[L]);
 }
 
 // Her cevap tahmin sözlüğünde OLMAK ZORUNDA

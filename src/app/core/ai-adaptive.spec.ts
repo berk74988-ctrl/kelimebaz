@@ -47,12 +47,13 @@ describe('Uyarlanabilir zorluk (ai-adaptive)', () => {
       expect(veryWeak).toBe(weak); // 3.3'e kırpılır → aptallaşmaz, sabit "en rahat"
     });
     it('orta oyuncu → orta topK', () => {
-      const t = targetTopK(3.1);
+      // Yeni band [3.17, 3.57]: orta oyuncu ~3.5 ortalama (bottan biraz zayıf)
+      const t = targetTopK(3.5);
       expect(t).toBeGreaterThan(3);
       expect(t).toBeLessThan(100);
     });
     it('monoton: daha zayıf oyuncu ≥ topK', () => {
-      expect(targetTopK(3.5)).toBeGreaterThanOrEqual(targetTopK(2.9));
+      expect(targetTopK(3.8)).toBeGreaterThanOrEqual(targetTopK(3.3));
     });
   });
 

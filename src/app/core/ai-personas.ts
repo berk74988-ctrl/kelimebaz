@@ -45,7 +45,7 @@ export const PERSONAS: readonly Persona[] = [
     tier: 'hard',
     // Hep en güvenli (en çok eleyen) tahmin → riske girmez, istikrarlı, güçlü.
     config: { minMs: 1900, maxMs: 2900, topK: 1 },
-    avgGuesses: 2.7, // ölçüldü: scripts/vsai-persona-test.mjs
+    avgGuesses: 3.19, // ölçüldü (3100'lük havuz): scripts/vsai-persona-test.mjs
   },
   {
     id: 'unlu',
@@ -55,7 +55,7 @@ export const PERSONAS: readonly Persona[] = [
     tier: 'medium',
     // Açılışta ünlü yoğun kelime, sonra hızlı daraltır (topK küçük).
     config: { minMs: 1600, maxMs: 2500, topK: 4, bias: 'vowel', openerBias: true },
-    avgGuesses: 2.87,
+    avgGuesses: 3.3,
   },
   {
     id: 'harfsayar',
@@ -65,7 +65,7 @@ export const PERSONAS: readonly Persona[] = [
     tier: 'medium',
     // Sık kullanılan harfleri önceliklendirir (tüm turlarda) → biraz daha zayıf.
     config: { minMs: 2100, maxMs: 3100, topK: 3, bias: 'frequent', openerBias: true, biasWeight: 2.5 },
-    avgGuesses: 2.96,
+    avgGuesses: 3.32,
   },
   {
     id: 'kumarbaz',
@@ -75,7 +75,7 @@ export const PERSONAS: readonly Persona[] = [
     tier: 'easy',
     // Erken turda doğrudan cevabı dener: tutarsa çok hızlı, tutmazsa tur harcar (değişken).
     config: { minMs: 900, maxMs: 1700, topK: 24, gamble: 0.5 },
-    avgGuesses: 3.06,
+    avgGuesses: 3.44,
   },
 ];
 

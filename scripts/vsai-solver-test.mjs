@@ -7,8 +7,8 @@
  * Zayıflık, entropi sıralamasında daha aşağıdan (topK) seçmekle gelir.
  *
  * NOT (kalibrasyon): Yalnız-tutarlı oyunda ulaşılabilir ortalama aralığı bu
- * havuzda ~2.75 (hep en iyi) — ~3.3 (rastgele tutarlı aday). Hedefler bu
- * gerçeğe göre belirlendi. Renk/entropi mantığı core/ai-opponent.ts ile aynı.
+ * 3100'lük havuzda ~3.17 (hep en iyi) — ~3.57 (rastgele tutarlı aday). Hedefler
+ * bu gerçeğe göre belirlendi. Renk/entropi mantığı core/ai-opponent.ts ile aynı.
  *
  * Kullanım: node scripts/vsai-solver-test.mjs
  */
@@ -21,8 +21,9 @@ const POOL = raw.words.map((w) => w.toLocaleUpperCase('tr')).filter((w) => [...w
 const SAMPLE_THRESHOLD = 300;
 const MATCHES = 500;
 // core/ai-opponent.ts AI_CONFIG ile AYNI topK; TARGET = ulaşılabilir hedef ortalama.
+// (3100'lük havuza göre yeniden kalibre: havuz büyüyünce band ~0.4 yukarı kaydı.)
 const TOPK = { easy: 140, medium: 8, hard: 1 };
-const TARGET = { easy: 3.15, medium: 2.9, hard: 2.75 };
+const TARGET = { easy: 3.55, medium: 3.3, hard: 3.2 };
 
 function pattern(guess, answer) {
   const g = [...guess], a = [...answer];

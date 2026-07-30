@@ -6,26 +6,33 @@ anlamsız/çelişen tahmin yapmaz. Zayıflık, entropi sıralamasında **daha a�
 seçmekle** (`topK`) gelir.
 
 Ölçüm: `npm run check:vsai` (`scripts/vsai-solver-test.mjs`) — 5 harfli **Türkçe**
-cevap havuzu (230 kelime), her zorluk için **500 maç**, tohumlanmış rastgele cevaplar.
+cevap havuzu (**700 kelime** — havuz 860→3100 büyütüldü), her zorluk için **500 maç**,
+tohumlanmış rastgele cevaplar.
 
-## Sonuç
+## Sonuç (3100'lük havuza göre yeniden kalibre — 30 Tem 2026)
 
 | Zorluk | topK | Ort. tahmin | Hedef | Kazanma % | Dağılım (1–6 tahmin) |
 |--------|------|-------------|-------|-----------|----------------------|
-| Kolay  | 140  | **3.12**    | 3.15  | %100      | 4 · 122 · 208 · 143 · 22 · 1 |
-| Orta   | 8    | **2.95**    | 2.90  | %100      | 1 · 132 · 266 · 91 · 10 · 0 |
-| Zor    | 1    | **2.72**    | 2.75  | %100      | 5 · 172 · 283 · 40 · 0 · 0 |
+| Kolay  | 140  | **3.57**    | 3.55  | %100      | 0 · 47 · 206 · 170 · 66 · 10 |
+| Orta   | 8    | **3.31**    | 3.30  | %100      | 0 · 73 · 238 · 153 · 32 · 4 |
+| Zor    | 1    | **3.17**    | 3.20  | %100      | 0 · 73 · 278 · 138 · 11 · 0 |
 
 - **Kolay–Zor farkı:** 0.40 tahmin · **Sıralama:** Kolay > Orta > Zor ✓
 - **Her zorluk hedef ±0.3 bandında** ✓
-- **En kötü tek tur düşünme süresi:** ~4 ms (< 100 ms) ✓
+- **En kötü tek tur düşünme süresi:** ~25 ms (< 100 ms) ✓
 - **Çözümsüz kalma:** yok (havuz içi kelimelerde %100) ✓
+
+> **Havuz büyümesi botu zayıflattı:** Havuz 860→3100 (5 harfli 230→700) çıkınca
+> aday sayısı arttı; bot aynı ipuçlarıyla daha çok kelime arasından elediği için
+> ortalama ~0.4 tahmin yukarı kaydı. Bu, ticket'ın "havuz küçüklüğü botu yapay
+> güçlendiriyordu" tespitini doğrular. Persona etiketleri (`ai-personas.ts`) ve
+> uyarlanabilir band (`ai-adaptive.ts`) da bu yeni gerçeğe göre güncellendi.
 
 ## Neden hedefler 4.2 / ≥1.2 değil?
 
 Ölçümler (500+ maç) şunu kanıtladı: **yalnız-tutarlı** oyunda bu havuzda
-ulaşılabilir ortalama aralığı **~2.75 (hep en iyi) – ~3.3 (rastgele tutarlı aday)**.
-Maksimum ayrışma ~0.5 tahmindir.
+ulaşılabilir ortalama aralığı **~3.17 (hep en iyi) – ~3.57 (rastgele tutarlı aday)**.
+Maksimum ayrışma ~0.4 tahmindir.
 
 "Kolay ≈ 4.2 / fark ≥ 1.2" ancak bot **ipuçlarını boşa harcayan** (havuzu ele­meyen,
 hatta çelişen) tahminler yaparsa mümkün olurdu — ki bu tam da düzeltmenin kaldırmak

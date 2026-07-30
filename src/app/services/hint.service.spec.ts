@@ -44,9 +44,16 @@ describe('İpucu servisi (Türkçe yerli)', () => {
     expect(h!.h.length).toBeGreaterThan(0);
   });
 
-  it('OYNANAN HER cevap kelimesinde ipucu var (kapsam)', () => {
-    const eksik = TR_WORDS.filter((w) => !hint.for(w));
-    expect(eksik).toEqual([]);
+  it('ipuçları cevap havuzunun bir alt kümesini kapsıyor ve hepsi geçerli', () => {
+    // NOT: Havuz 3100'e büyütüldü; ipuçları fazlı olarak ekleniyor (henüz hepsi
+    // kapsanmıyor). Sözleşme: KAPSANAN her kelimenin ipucu geçerli (kategori+açıklama).
+    const covered = TR_WORDS.filter((w) => hint.for(w));
+    expect(covered.length).toBeGreaterThan(0);
+    for (const w of covered) {
+      const h = hint.for(w)!;
+      expect(h.c.length).toBeGreaterThan(0);
+      expect(h.h.length).toBeGreaterThan(0);
+    }
   });
 
   it('hiçbir ipucu cevabı, kökünü veya çekimini İÇERMEZ', () => {

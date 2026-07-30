@@ -6,9 +6,11 @@
  * BAŞA BAŞ (hafif zorlayıcı) bir hedef türetir ve hedefi bot parametresine (topK)
  * çevirir. Amaç: maçların çoğunun kıl payı bitmesi.
  *
- * KISIT: Bot yalnız TUTARLI (ipuçlarına uyan) oynar; bu havuzda ulaşılabilir
- * ortalama ~2.7 (topK 1, en güçlü) – ~3.3 (topK büyük, en rahat). Hedef bu banda
+ * KISIT: Bot yalnız TUTARLI (ipuçlarına uyan) oynar; 3100'lük havuzda ulaşılabilir
+ * ortalama ~3.17 (topK 1, en güçlü) – ~3.57 (topK büyük, en rahat). Hedef bu banda
  * kırpılır — çok zayıf oyuncuya karşı bot "en rahat" ayarında kalır (aptallaşmaz).
+ * (Havuz 860→3100 büyüyünce aday çoğaldı, band ~0.4 tahmin yukarı kaydı — yeniden
+ *  kalibre edildi: scripts/vsai-solver-test.mjs · vsai-persona-test.mjs.)
  *
  * Aşırı salınım engellenir: hem 10 maçlık pencere yumuşatır, hem topK tek maçta
  * en fazla kademeli değişir (smoothStep) → tek sonuçla sert sıçrama olmaz.
@@ -19,8 +21,9 @@ export const ADAPT_WINDOW = 10; // kayan pencere boyu
 export const ADAPT_START_TOPK = 8; // yeni oyuncu: ortalama (Dengeli) başlangıç
 const MIN_TOPK = 1;
 const MAX_TOPK = 200;
-const TARGET_LO = 2.7; // botun ulaşabileceği en düşük ortalama (en güçlü)
-const TARGET_HI = 3.3; // en yüksek ortalama (en rahat)
+const TARGET_LO = 3.17; // botun ulaşabileceği en düşük ortalama (topK 1, en güçlü)
+const TARGET_HI = 3.57; // en yüksek ortalama (topK büyük, en rahat)
+const TARGET_K = 13; // üstel eşleme katsayısı (band genişliği 0.40'a göre kalibre)
 const CHALLENGE = 0.2; // "hafif zorlayıcı": bot hedefi oyuncu ortalamasının biraz ALTINDA
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -43,12 +46,12 @@ export function windowAvg(recent: readonly number[]): number | null {
 
 /**
  * Oyuncu ortalamasından HEDEF topK. Bot hedefi = oyuncu ort − CHALLENGE (hafif
- * zorlayıcı), [2.7, 3.3]'e kırpılır, oradan topK'ya (üstel eşleme) çevrilir.
- * Ölçülen eğri: topK 1→2.7 · 4→2.85 · 8→2.95 · 20→3.05 · 50→3.15 · 150→3.3.
+ * zorlayıcı), [3.17, 3.57]'ye kırpılır, oradan topK'ya (üstel eşleme) çevrilir.
+ * Ölçülen eğri (3100 havuz): topK 1→3.17 · 8→3.31 · 140→3.57.
  */
 export function targetTopK(playerAvg: number): number {
   const target = clamp(playerAvg - CHALLENGE, TARGET_LO, TARGET_HI);
-  const topK = Math.round(Math.exp(8.3 * (target - TARGET_LO)));
+  const topK = Math.round(Math.exp(TARGET_K * (target - TARGET_LO)));
   return clamp(topK, MIN_TOPK, MAX_TOPK);
 }
 

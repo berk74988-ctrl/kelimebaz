@@ -57,7 +57,7 @@ describe('YZ çözücü (entropi tabanlı)', () => {
       expect(pool.length).toBeGreaterThan(100);
     });
 
-    it('ZOR her kelimeyi ≤ 6 hakta çözer, ortalama ≤ 2.9', () => {
+    it('ZOR her kelimeyi ≤ 6 hakta çözer, ortalama ≤ 3.4', () => {
       const rnd = seeded();
       let total = 0;
       let maxAtt = 0;
@@ -71,13 +71,13 @@ describe('YZ çözücü (entropi tabanlı)', () => {
       }
       expect(fails).toBe(0); // Zor hiçbir havuz-içi kelimede çözümsüz kalmaz
       expect(maxAtt).toBeLessThanOrEqual(6);
-      expect(total / pool.length).toBeLessThanOrEqual(2.9);
+      expect(total / pool.length).toBeLessThanOrEqual(3.4);
     });
   });
 
   describe('zorluk = oyun gücü (hedef ortalamalar ±0.3)', () => {
-    // ULAŞILABİLİR hedefler (yalnız-tutarlı oyun tavanı ~3.3): scripts/vsai-solver-test.mjs
-    const TARGET: Record<Difficulty, number> = { easy: 3.15, medium: 2.9, hard: 2.75 };
+    // ULAŞILABİLİR hedefler (3100 havuz, yalnız-tutarlı oyun bandı ~3.17–3.57): scripts/vsai-solver-test.mjs
+    const TARGET: Record<Difficulty, number> = { easy: 3.55, medium: 3.3, hard: 3.2 };
 
     /** Havuzun her kelimesini iki tur çöz, ortalama tahmin sayısı (deterministik). */
     function avgFor(diff: Difficulty): number {
