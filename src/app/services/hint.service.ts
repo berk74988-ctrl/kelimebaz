@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import hintsTr from '../data/hints-tr.json';
+import hintsTrNative from '../data/hints-tr-native.json';
 import { LanguageService } from './language.service';
 
 /** Bir kelimenin ipucu: kategori (c) + kısa, cevabı gizleyen açıklama (h). */
@@ -9,26 +10,34 @@ export interface Hint {
 }
 
 /**
- * 💡 İPUCU SERVİSİ — YALNIZCA İngilizce modda aktif.
+ * 💡 İPUCU SERVİSİ — HER İKİ DİLDE de aktif.
  *
- * İngilizce kelimelerle oynanır ama ipucu (kategori + açıklama) TÜRKÇE gösterilir
- * (build-time üretilen data/hints-tr.json — İngilizce tanımların otomatik çevirisi).
- * Sistem yalnızca İngilizce modda aktiftir; Türkçe modda hiçbir ipucu döndürmez.
- * İpuçları cevabı DOĞRUDAN vermez (kelime, çekimleri ve kognatları gizlenmiştir).
+ * TÜRKÇE modda: data/hints-tr-native.json — 860 Türkçe cevap kelimesi için
+ *   derleme zamanında LLM ile üretilmiş YERLİ ipuçları (Türkçe kelimenin Türkçe tanımı).
+ * İNGİLİZCE modda: data/hints-tr.json — İngilizce cevapların Türkçeye çevrilmiş tanımları.
+ *
+ * Her iki kaynakta da açıklama cevabı DOĞRUDAN vermez: kelimenin kendisi, kökü ve
+ * çekimli biçimi gizlenmiştir (TR için scripts/hint-check-tr-native.mjs otomatik denetler).
+ * Çalışma zamanında hiçbir LLM/çeviri çağrısı yapılmaz — sadece bu JSON'lar okunur.
  */
 @Injectable({ providedIn: 'root' })
 export class HintService {
   private readonly lang = inject(LanguageService);
-  private readonly hints = hintsTr as Record<string, Hint>;
+  private readonly en = hintsTr as Record<string, Hint>;
+  private readonly tr = hintsTrNative as Record<string, Hint>;
 
-  /** İpucu sistemi aktif mi? (yalnızca İngilizce dil) */
+  /** İpucu sistemi aktif mi? (artık her dilde açık) */
   get enabled(): boolean {
-    return this.lang.lang() === 'en';
+    return true;
   }
 
-  /** Kelimenin ipucu — EN değilse veya veri yoksa null. */
+  /** Aktif dile göre ipucu kaynağı. */
+  private get source(): Record<string, Hint> {
+    return this.lang.lang() === 'tr' ? this.tr : this.en;
+  }
+
+  /** Kelimenin ipucu — veri yoksa null. */
   for(word: string): Hint | null {
-    if (!this.enabled) return null;
-    return this.hints[(word || '').toUpperCase()] ?? null;
+    return this.source[(word || '').toUpperCase()] ?? null;
   }
 }
