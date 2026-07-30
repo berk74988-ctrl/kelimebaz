@@ -19,11 +19,12 @@ import { LanguageService } from '../../services/language.service';
 import { LeagueService } from '../../services/league.service';
 import { Countdown } from '../countdown/countdown';
 import { StatsPanel } from '../stats-panel/stats-panel';
+import { WordCardComponent } from '../word-card/word-card';
 
 /** Oyun bitince açılan sonuç ekranı: kazandın/kaybettin + istatistik + paylaş. */
 @Component({
   selector: 'app-result-modal',
-  imports: [StatsPanel, Countdown],
+  imports: [StatsPanel, Countdown, WordCardComponent],
   templateUrl: './result-modal.html',
   styleUrl: './result-modal.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

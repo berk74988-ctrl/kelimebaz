@@ -32,6 +32,9 @@
       }
     </div>
 
+    <!-- 📖 Öğretici kelime kartı — kaybedince varsayılan açık, kazanınca kapalı; kartı yoksa hiç görünmez -->
+    <app-word-card [word]="answer()" [openByDefault]="status() === 'lost'" />
+
     <!-- 🪙 Bu oyunda kazanılan altın (oyun + tamamlanan günlük görevler) -->
     @if (goldEarned() > 0) {
       <div class="gold">
