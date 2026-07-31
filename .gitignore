@@ -48,3 +48,6 @@ rooms-server/rooms-state.json
 rooms-server/.test-state.json
 rooms-server/.test-flow-state.json
 /coverage
+
+# Sozluk denetimi gecici ciktilari
+src/app/data/.audit-*.json

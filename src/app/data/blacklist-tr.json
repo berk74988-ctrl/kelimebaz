@@ -1,0 +1,30 @@
+{
+  "note": "Sözlükten ÇIKARILAN otomatik-üretim sahte kelimeleri (kara liste katmanı). YALNIZCA sıfır-şüphe, yapısal olarak kelime OLMAYAN biçimler: çekimli akronimler (DVDLER), kopula/cümle-parçası çöpü (isim+imiş 'DOSTMUŞ', isim+sın 'PUŞTSUN'), fonotaktiğe aykırı çöp diziler (ÇNRA). Şüpheli-ama-olası kelimeler BİLİNÇLİ olarak dışarıda (yanlış silme, sahte tutmaktan kötüdür). Geniş denetim: scripts/audit-dictionary.mjs (LLM) → 'remove' listesi buraya eklenir.",
+  "words": [
+    "DVDLER",
+    "DVDLERE",
+    "DVDLERİ",
+    "VTRLERE",
+    "VTRLERİ",
+    "AŞKMIŞ",
+    "DOSTMUŞ",
+    "RENKMİŞ",
+    "FİLMMİŞ",
+    "ÇİFTMİŞ",
+    "PUŞTSUN",
+    "NÖRDSÜN",
+    "FAKRSIN",
+    "BOSSSUN",
+    "KİLSSİN",
+    "SIDKSIN",
+    "ÇNRA",
+    "AHZÜİTA",
+    "DIGIDIK",
+    "AYNCA",
+    "İRAELER",
+    "KEDDYİ",
+    "ÇIKINYI",
+    "DAŞDLAR",
+    "HAHNYUM"
+  ]
+}

@@ -26,6 +26,8 @@
     "check:audio": "node scripts/audio-check.mjs",
     "screenshots:profile": "node scripts/profile-shots.mjs",
     "check:dictionary": "node scripts/dictionary-check.mjs",
+    "audit:dictionary": "node scripts/audit-dictionary.mjs",
+    "apply:blacklist": "node scripts/apply-blacklist.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
     "build:dictionary": "node scripts/build-dictionary.mjs",
     "build:icons": "node scripts/build-pwa-icons.mjs",

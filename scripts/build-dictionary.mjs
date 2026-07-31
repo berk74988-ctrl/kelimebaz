@@ -381,13 +381,31 @@ for (const L of LENGTHS) {
 }
 
 // ---------------------------------------------------------------------------
+// KARA LİSTE KATMANI — denetlenmiş sahte (otomatik-üretim) biçimleri çıkar.
+// Şüpheliler scripts/audit-dictionary.mjs ile belirlenir; kesin-sahteler
+// blacklist-tr.json'a yazılır. CEVAP HAVUZUNA (words.json) ASLA DOKUNMAZ.
+// ---------------------------------------------------------------------------
+let blacklist = new Set();
+try {
+  const bl = JSON.parse(await readFile('src/app/data/blacklist-tr.json', 'utf8'));
+  blacklist = new Set((bl.words || []).map(trUpper));
+} catch {
+  /* kara liste yoksa katman atlanır */
+}
+const answerSet = new Set(existingList); // cevap havuzu — güvenlik: asla silinmez
+const finalClean = final.filter((w) => !(blacklist.has(w) && !answerSet.has(w)));
+if (finalClean.length !== final.length) {
+  console.log(`  ⛔ kara liste: ${n(final.length - finalClean.length)} sahte biçim çıkarıldı`);
+}
+
+// ---------------------------------------------------------------------------
 // YAZ
 // ---------------------------------------------------------------------------
 const validOut = {
   lengths: LENGTHS,
-  count: final.length,
+  count: finalClean.length,
   note: 'Geçerli TAHMİN sözlüğü (4-7 harf). Gizli kelimeler words.json içindedir.',
-  words: final.join(' '),
+  words: finalClean.join(' '),
 };
 await writeFile('src/app/data/valid-words.json', JSON.stringify(validOut) + '\n', 'utf8');
 

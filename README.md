@@ -180,6 +180,8 @@ rooms-server/                # 🎮 çok oyunculu oda sunucusu (bağımsız Node
 
 `scripts/turkish-morph.mjs` her adayı çözümlemeye çalışır — kelime, bilinen bir kökten geçerli bir ekle, **ünlü uyumuna, sözcük türüne ve ek sırasına uyarak** türetilebiliyor mu?
 
+**Kara liste katmanı** (`src/app/data/blacklist-tr.json`) — biçimbilim süzgeci "türetilebilir mi?" der, ama dilbilgisel her şey gerçek kelime değildir (ör. `DOSTMUŞ`, `DVDLER`, `ÇNRA`). `scripts/audit-dictionary.mjs` şüpheli alt kümeyi ölçütlerle (nadir trigram, ünsüz kümesi, uzunluk) çıkarır; anahtar varsa LLM ile "gerçek kelime mi?" denetler (kesin-sil/şüpheli/tut). **Sıfır-şüphe sahteler** kara listeye yazılır ve hattan çıkarılır (`apply:blacklist` ya da tam yeniden üretimde `build-dictionary.mjs`). **Cevap havuzu asla silinmez**; **yanlış silme, sahte tutmaktan kötü** olduğu için liste bilinçle korunaklıdır. Ayrıntı + öncesi/sonrası: [docs/sozluk-denetimi.md](docs/sozluk-denetimi.md).
+
 | Aday | Karar | Neden |
 | --- | --- | --- |
 | `GELDİ` | ✅ | `GEL`(fiil) + `-di` — uyum doğru |
