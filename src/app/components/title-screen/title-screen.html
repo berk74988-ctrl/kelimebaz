@@ -200,6 +200,15 @@
         <span class="m-arw" aria-hidden="true">→</span>
       </button>
 
+      <button class="mode ghost" type="button" (click)="openTheme.emit()">
+        <span class="m-ico">🎨</span>
+        <span class="m-tx">
+          <b>{{ i18n.t('title.theme') }}</b>
+          <span>{{ i18n.t('title.themeSub') }}</span>
+        </span>
+        <span class="m-arw" aria-hidden="true">→</span>
+      </button>
+
       <button class="mode ghost" type="button" (click)="openLeague.emit()">
         <span class="m-ico">{{ league.tier().icon }}</span>
         <span class="m-tx">

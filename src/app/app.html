@@ -10,6 +10,7 @@
     (openRoom)="show('room')"
     (openLeague)="show('league')"
     (openVsAi)="show('vsai')"
+    (openTheme)="show('theme')"
   />
 } @else if (view() === 'profile') {
   <app-profile-screen (back)="show('title')" (openShop)="show('shop')" />
@@ -21,8 +22,10 @@
   <app-league-screen (back)="show('title')" />
 } @else if (view() === 'vsai') {
   <app-vsai-screen (back)="show('title')" />
+} @else if (view() === 'theme') {
+  <app-theme-screen (back)="show('title')" (playTheme)="playTheme($event)" />
 } @else {
-  <app-game [mode]="mode()" (exit)="show('title')" />
+  <app-game [mode]="mode()" [themeId]="themeId()" (exit)="exitGame()" />
 }
 
 <!-- PWA bildirimleri (güncelleme + ana ekrana ekle) — tüm ekranların üstünde -->

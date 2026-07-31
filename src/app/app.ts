@@ -7,6 +7,7 @@ import { ProfileScreen } from './components/profile-screen/profile-screen';
 import { PwaPrompt } from './components/pwa-prompt/pwa-prompt';
 import { RoomScreen } from './components/room-screen/room-screen';
 import { ShopScreen } from './components/shop-screen/shop-screen';
+import { ThemeScreen } from './components/theme-screen/theme-screen';
 import { TitleScreen } from './components/title-screen/title-screen';
 import { VsaiScreen } from './components/vsai-screen/vsai-screen';
 import { GameMode } from './models/game.model';
@@ -17,7 +18,7 @@ import { SeoService } from './services/seo.service';
 import { ThemeService } from './services/theme.service';
 import { WordService } from './services/word.service';
 
-type View = 'title' | 'game' | 'profile' | 'shop' | 'room' | 'league' | 'vsai';
+type View = 'title' | 'game' | 'profile' | 'shop' | 'room' | 'league' | 'vsai' | 'theme';
 
 @Component({
   selector: 'app-root',
@@ -29,6 +30,7 @@ type View = 'title' | 'game' | 'profile' | 'shop' | 'room' | 'league' | 'vsai';
     RoomScreen,
     LeagueScreen,
     VsaiScreen,
+    ThemeScreen,
     ErrorScreen,
     LoadingScreen,
     PwaPrompt,
@@ -65,10 +67,24 @@ export class App {
 
   protected readonly view = signal<View>('title');
   protected readonly mode = signal<GameMode>('daily');
+  /** Tema modunda seçilen tema kimliği (Game bileşenine geçer). */
+  protected readonly themeId = signal('');
 
   protected play(mode: GameMode): void {
     this.mode.set(mode);
     this.view.set('game');
+  }
+
+  /** Tema seçildi → o temayı oyna (casual mod). */
+  protected playTheme(id: string): void {
+    this.themeId.set(id);
+    this.mode.set('theme');
+    this.view.set('game');
+  }
+
+  /** Oyundan çıkış — tema modundaysa tema ekranına, değilse ana menüye. */
+  protected exitGame(): void {
+    this.view.set(this.mode() === 'theme' ? 'theme' : 'title');
   }
 
   protected show(view: View): void {

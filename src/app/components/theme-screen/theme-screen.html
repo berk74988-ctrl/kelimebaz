@@ -1,0 +1,43 @@
+<main class="screen">
+  <header class="bar">
+    <button
+      class="back"
+      type="button"
+      [attr.aria-label]="i18n.t('common.backTitle')"
+      (click)="back.emit()"
+    >
+      ←
+    </button>
+    <h1 class="title">{{ i18n.t('theme.title') }}</h1>
+    <div class="coin" [attr.aria-label]="i18n.t('league.goldAria', { n: gold.balance() })">
+      <span aria-hidden="true">🪙</span>
+      <b>{{ i18n.num(gold.balance()) }}</b>
+    </div>
+  </header>
+
+  <p class="intro">{{ i18n.t('theme.intro') }}</p>
+
+  <div class="grid">
+    @for (t of themes; track t.id) {
+      <button
+        class="card"
+        type="button"
+        [style.--tc]="t.color"
+        [class.done]="themeMode.isComplete(t.id)"
+        (click)="playTheme.emit(t.id)"
+      >
+        <span class="ico" aria-hidden="true">{{ t.icon }}</span>
+        <span class="nm">{{ i18n.t('theme.' + t.id) }}</span>
+        <span class="prog">
+          {{ themeMode.foundCount(t.id) }}/{{ themeMode.total(t.id) || '…' }}
+          @if (themeMode.isComplete(t.id)) {
+            <span class="check" aria-hidden="true">✓</span>
+          }
+        </span>
+        <span class="track" aria-hidden="true">
+          <span class="fill" [style.width.%]="themeMode.progress(t.id) * 100"></span>
+        </span>
+      </button>
+    }
+  </div>
+</main>

@@ -30,6 +30,7 @@
     "build:dictionary": "node scripts/build-dictionary.mjs",
     "build:icons": "node scripts/build-pwa-icons.mjs",
     "build:word-difficulty": "node scripts/build-word-difficulty.mjs",
+    "build:themes": "node scripts/build-themes.mjs",
     "build:music": "node scripts/build-music.mjs",
     "build:ai-openers": "node scripts/build-ai-openers.mjs",
     "check:vsai": "node scripts/vsai-solver-test.mjs",

@@ -14,6 +14,7 @@ import { InventoryService } from '../../services/inventory.service';
 import { LanguageService } from '../../services/language.service';
 import { PlayStyleService } from '../../services/play-style.service';
 import { ImportError, PlayerDataService } from '../../services/player-data.service';
+import { ThemeModeService } from '../../services/theme-mode.service';
 import { StatsService } from '../../services/stats.service';
 import { ThemeService } from '../../services/theme.service';
 import { WordService } from '../../services/word.service';
@@ -36,6 +37,7 @@ export class SettingsModal implements AfterViewInit {
   private readonly words = inject(WordService);
   protected readonly i18n = inject(LanguageService);
   protected readonly playStyle = inject(PlayStyleService);
+  private readonly themeMode = inject(ThemeModeService);
   private readonly playerData = inject(PlayerDataService);
 
   readonly close = output<void>();
@@ -82,6 +84,7 @@ export class SettingsModal implements AfterViewInit {
     this.gold.reset();
     this.inventory.reset();
     this.playStyle.reset();
+    this.themeMode.reset();
   }
 
   /** Antrenman modunu aç/kapa (serbest modda zayıf harflere hafif kaydırma). */

@@ -149,6 +149,15 @@ export const SHOP_ITEMS: readonly ShopItem[] = [
     preview: '🎖️',
     seasonOnly: true,
   },
+  // 🎨 Tema Ustası — mağazada satılmaz, TÜM temalar tamamlanınca kazanılır
+  {
+    id: 'badge.themeMaster',
+    category: 'badge',
+    name: 'Tema Ustası',
+    price: 9999,
+    preview: '🎨',
+    seasonOnly: true,
+  },
 
   // ---- AVATARLAR ----
   // Ücretsiz on iki emoji (eskiden ProfileService'teydi) + satın alınabilir özel avatarlar.

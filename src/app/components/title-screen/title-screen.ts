@@ -73,6 +73,7 @@ export class TitleScreen {
   readonly openRoom = output<void>();
   readonly openLeague = output<void>();
   readonly openVsAi = output<void>();
+  readonly openTheme = output<void>();
 
   protected readonly floaters = FLOATERS;
   protected readonly title = signal('KELİMEBAZ');

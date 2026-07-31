@@ -19,6 +19,7 @@ import { LeagueService } from './league.service';
 import { QuestService } from './quest.service';
 import { PlayStyleService } from './play-style.service';
 import { StatsService } from './stats.service';
+import { ThemeModeService } from './theme-mode.service';
 import { WordService } from './word.service';
 
 const SAVE_KEY = 'kelimebaz:game';
@@ -32,6 +33,7 @@ export class GameService {
   private readonly wordService = inject(WordService);
   private readonly stats = inject(StatsService);
   private readonly playStyle = inject(PlayStyleService);
+  private readonly themeMode = inject(ThemeModeService);
   private readonly gold = inject(GoldService);
   private readonly quests = inject(QuestService);
   private readonly league = inject(LeagueService);
@@ -43,6 +45,8 @@ export class GameService {
   private readonly _current = signal('');
   private readonly _status = signal<GameStatus>('playing');
   private readonly _mode = signal<GameMode>('daily');
+  /** Tema modunda oynanan temanın kimliği (kazanınca ilerleme işaretlenir). */
+  private _currentTheme = '';
   private readonly _invalidShake = signal(0); // her geçersiz denemede artar → animasyon tetikler
   private readonly _message = signal('');
 
@@ -152,6 +156,25 @@ export class GameService {
     this._levelGold.set(0);
     this._lpDelta.set(0);
     this._answer.set(this.lang.upper(answer));
+    this._guesses.set([]);
+    this._current.set('');
+    this._status.set('playing');
+    this.clearMessage();
+  }
+
+  /**
+   * TEMA MODU oyununu başlat — kelime seçilen temanın (henüz bulunmamış)
+   * havuzundan gelir. CASUAL: lig/istatistik etkilenmez; kazanınca temanın
+   * ilerlemesi işaretlenir. Kaydedilmez (oda/YZ gibi geçici).
+   */
+  startTheme(themeId: string): void {
+    this._mode.set('theme');
+    this._currentTheme = themeId;
+    this._goldEarned.set(0);
+    this._questGold.set(0);
+    this._levelGold.set(0);
+    this._lpDelta.set(0);
+    this._answer.set(this.themeMode.nextWord(themeId));
     this._guesses.set([]);
     this._current.set('');
     this._status.set('playing');
@@ -277,9 +300,15 @@ export class GameService {
     const mode = this._mode();
     const isDaily = mode === 'daily';
     const isVsai = mode === 'vsai';
+    const isTheme = mode === 'theme';
+    // CASUAL modlar (YZ + Tema): ana istatistik/seri ve ligi ETKİLEMEZ.
+    const casual = isVsai || isTheme;
 
     // 🎯 Oyun tarzı analizi için tahmin geçmişini yakala (cihazda kalır).
     this.playStyle.record(this._answer(), [...this._guesses()]);
+
+    // 🎨 Tema modu: kazanılan kelimeyi temanın ilerlemesine işaretle (ödül orada).
+    if (isTheme && won) this.themeMode.markFound(this._currentTheme, this._answer());
 
     // Seviye ödülü, bu oyunun puanı EKLENMEDEN önceki seviyeyle hesaplanır:
     // oyuncu bu oyuna hangi seviyeyle girdiyse onun ödülünü hak eder.
@@ -288,7 +317,7 @@ export class GameService {
     // 🤖 YZ modu CASUAL: ana istatistiklere (seri/oynanan/kazanılan/dağılım/puan)
     // DOKUNMA. YZ maçının SONUCU (kazandı mı?) VsaiScreen'de GERÇEK yarış sonucuna
     // göre işlenir (sıra tabanlı: kelimeyi çözmek değil, DAHA AZ tahminde bulmak kazandırır).
-    if (!isVsai) this.stats.record(won, attempts);
+    if (!casual) this.stats.record(won, attempts);
 
     // Altın KORUNUR — oynamanın karşılığı YZ modunda da verilir.
     const fromGame = goldForGame(won, attempts, isDaily, level);
@@ -302,7 +331,7 @@ export class GameService {
 
     // 🏆 Lig puanı (LP): kazan → +LP, kaybet → -LP. Değişimi sonuç ekranı gösterir.
     // YZ modu CASUAL — ligi (rekabetçi merdiven) etkilemez.
-    this._lpDelta.set(isVsai ? 0 : this.league.recordResult(won, attempts, mode));
+    this._lpDelta.set(casual ? 0 : this.league.recordResult(won, attempts, mode));
   }
 
   /** Sonucu emoji ızgarası olarak paylaş metnine çevirir (harf içermez). */

@@ -111,6 +111,8 @@ export class Game {
   readonly mode = input.required<GameMode>();
   readonly exit = output<void>();
 
+  /** Tema modu: seçilen temanın kimliği (verilmişse o temadan kelime oynanır). */
+  readonly themeId = input<string | undefined>(undefined);
   /** Oda modu: kelime sunucudan gelir (verilmişse günlük/serbest yerine bu oynanır). */
   readonly roomAnswer = input<string | undefined>(undefined);
   /** Oda süre sınırı (saniye); 0 = serbest. */
@@ -166,6 +168,12 @@ export class Game {
       this.roomStart = performance.now();
       this.resultOpen.set(false);
       if (this.roomTimeLimit() > 0) this.startTimer();
+      return;
+    }
+    if (this.mode() === 'theme' && this.themeId()) {
+      // Tema modu: seçilen temadan kelime, sıfırdan başla (kaydedilmez).
+      this.game.startTheme(this.themeId()!);
+      this.resultOpen.set(false);
       return;
     }
     this.game.start(this.mode());

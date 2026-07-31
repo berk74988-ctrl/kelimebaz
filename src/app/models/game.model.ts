@@ -26,8 +26,8 @@ export interface Guess {
  */
 export type GameStatus = 'playing' | 'won' | 'lost' | 'ended';
 
-/** Oyun modu. 'room' = çok oyunculu oda yarışı; 'vsai' = yapay zekâ rakibe karşı tek kişilik yarış. */
-export type GameMode = 'daily' | 'practice' | 'room' | 'vsai';
+/** Oyun modu. 'room' = çok oyunculu oda; 'vsai' = YZ rakip; 'theme' = tema modu. */
+export type GameMode = 'daily' | 'practice' | 'room' | 'vsai' | 'theme';
 
 /** localStorage'a yazılan oyun durumu. */
 export interface SavedGame {
