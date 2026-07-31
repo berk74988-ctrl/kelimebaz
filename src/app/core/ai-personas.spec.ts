@@ -1,7 +1,11 @@
 import { AiSolver, aiOpeners } from './ai-opponent';
 import { PERSONAS, persona } from './ai-personas';
-import { MESSAGES } from './messages';
+import enI18n from '../../i18n/en.json';
+import trI18n from '../../i18n/tr.json';
 import wordsTr from '../data/words.json';
+
+const TR = trI18n as Record<string, string>;
+const EN = enI18n as Record<string, string>;
 
 /**
  * Bot karakterleri — kayıt defteri sözleşmesi + gerçekten farklı oynamaları.
@@ -63,15 +67,13 @@ describe('Bot karakterleri (personas)', () => {
     for (const p of PERSONAS) {
       for (const trigger of ['firstGreen', 'lastTurn', 'close']) {
         const key = `persona.${p.id}.${trigger}`;
-        const m = MESSAGES[key];
-        expect(m, key).toBeDefined();
-        expect(m.tr.length, key + '.tr').toBeGreaterThan(0);
-        expect(m.en.length, key + '.en').toBeGreaterThan(0);
+        expect(TR[key], key + '.tr').toBeTruthy();
+        expect(EN[key], key + '.en').toBeTruthy();
       }
       // isim + açıklama da iki dilde
       for (const k of [p.nameKey, p.descKey]) {
-        expect(MESSAGES[k]?.tr.length).toBeGreaterThan(0);
-        expect(MESSAGES[k]?.en.length).toBeGreaterThan(0);
+        expect(TR[k]?.length).toBeGreaterThan(0);
+        expect(EN[k]?.length).toBeGreaterThan(0);
       }
     }
   });

@@ -23,6 +23,7 @@
     "check:audio": "node scripts/audio-check.mjs",
     "screenshots:profile": "node scripts/profile-shots.mjs",
     "check:dictionary": "node scripts/dictionary-check.mjs",
+    "check:i18n": "node scripts/check-i18n.mjs",
     "build:dictionary": "node scripts/build-dictionary.mjs",
     "build:ai-openers": "node scripts/build-ai-openers.mjs",
     "check:vsai": "node scripts/vsai-solver-test.mjs",

@@ -1,17 +1,22 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { computed, effect, Injectable, signal } from '@angular/core';
 import { Lang, upperFor } from '../core/lang';
-import { MESSAGES } from '../core/messages';
+import trMessages from '../../i18n/tr.json';
 
 const KEY = 'kelimebaz:lang';
+type Dict = Record<string, string>;
 
 /**
  * ===========================================================================
  * DİL SERVİSİ — Türkçe / İngilizce, çalışma zamanında ANINDA geçiş.
  *
- * Metinler core/messages.ts kayıt defterinde {tr,en} olarak tutulur. `t()`
- * aktif dil SİNYALİNİ okur → şablonlardaki `i18n.t('...')` ifadeleri dil
- * değişince kendiliğinden güncellenir (yeniden yükleme yok). Depolama:
- * 'kelimebaz:lang'. <html lang> de güncellenir.
+ * TEMBEL YÜKLEME: Çeviriler dil başına ayrı JSON'dadır (src/i18n/<lang>.json).
+ * VARSAYILAN dil (tr) ana pakete gömülüdür — hem anında görünür hem de EKSİK
+ * anahtarlarda GÜVENLİ YEDEK'tir. Diğer diller (en, ileride başkaları) yalnızca
+ * seçildiğinde dinamik import ile AYRI CHUNK olarak iner ve önbelleğe alınır.
+ *
+ * `t(key)` aktif dil + yükleme sinyalini okur → şablonlar dil değişince ya da
+ * çeviri inince kendiliğinden güncellenir. Anahtar aktif dilde yoksa VARSAYILAN
+ * dile (tr), o da yoksa anahtarın kendisine düşer → arayüz asla boş/bozuk kalmaz.
  * ===========================================================================
  */
 @Injectable({ providedIn: 'root' })
@@ -20,8 +25,41 @@ export class LanguageService {
   readonly lang = this._lang.asReadonly();
   readonly isEn = computed(() => this._lang() === 'en');
 
+  /** Yüklenmiş çeviri sözlükleri — 'tr' gömülü (varsayılan + yedek). */
+  private readonly dicts = new Map<Lang, Dict>([['tr', trMessages as Dict]]);
+  private readonly inflight = new Map<Lang, Promise<void>>();
+  /** Yeni bir dil sözlüğü inince artar → t() kullanan şablonları tetikler. */
+  private readonly rev = signal(0);
+
   constructor() {
     this.apply();
+    void this.ensure(this._lang()); // aktif dili hemen (tembel) yüklemeye başla
+    effect(() => void this.ensure(this._lang())); // dil değişince yeni dili yükle
+  }
+
+  /** Dilin çeviri dosyasını (yoksa) dinamik import ile yükler, önbellekler. */
+  private ensure(lang: Lang): Promise<void> {
+    if (this.dicts.has(lang)) return Promise.resolve();
+    const existing = this.inflight.get(lang);
+    if (existing) return existing;
+    // Not: yeni dil eklerken buraya bir kol ekle (tr gömülü, gerisi tembel).
+    const load = lang === 'en' ? import('../../i18n/en.json') : Promise.resolve(null);
+    const p = load
+      .then((m) => {
+        if (m) this.dicts.set(lang, ((m as { default?: Dict }).default ?? (m as unknown as Dict)));
+        this.rev.update((n) => n + 1);
+      })
+      .catch(() => {
+        /* çeviri inmezse yedek (tr) devrede — arayüz bozulmaz */
+      })
+      .finally(() => this.inflight.delete(lang));
+    this.inflight.set(lang, p);
+    return p;
+  }
+
+  /** Aktif dilin sözlüğü inene kadar bekler (testler için). */
+  async whenReady(): Promise<void> {
+    await this.ensure(this._lang());
   }
 
   set(lang: Lang): void {
@@ -36,10 +74,14 @@ export class LanguageService {
     this.syncUrl(lang); // paylaşılan link doğru dilde açılsın (?lang=...)
   }
 
-  /** Anahtara göre aktif dildeki metin. `{param}` yer tutucuları doldurulur. */
+  /**
+   * Anahtara göre aktif dildeki metin. `{param}` yer tutucuları doldurulur.
+   * Yükleme durumuna reaktiftir (rev). Yedek zinciri: aktif dil → tr → anahtar.
+   */
   t(key: string, params?: Record<string, string | number>): string {
-    const e = MESSAGES[key];
-    let s = e ? (this._lang() === 'en' ? e.en : e.tr) : key;
+    this.rev(); // reaktif: dil sözlüğü inince yeniden değerlendir
+    const active = this.dicts.get(this._lang());
+    let s = active?.[key] ?? (this.dicts.get('tr') as Dict)[key] ?? key;
     if (params) for (const k in params) s = s.split('{' + k + '}').join(String(params[k]));
     return s;
   }

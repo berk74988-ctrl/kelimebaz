@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Bağımlılıkları kur
+        run: npm ci
+
+      # Eksik/fazla/boş çeviri anahtarı varsa burada KIRILIR → birleştirme engellenir.
+      - name: Çeviri tutarlılığı (i18n)
+        run: npm run check:i18n
+
+      - name: Birim testleri
+        run: npm test -- --watch=false
+
+      - name: Üretim derlemesi
+        run: npm run build

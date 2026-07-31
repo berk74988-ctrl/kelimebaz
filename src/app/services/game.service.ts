@@ -297,14 +297,19 @@ export class GameService {
 
   /** Sonucu emoji ızgarası olarak paylaş metnine çevirir (harf içermez). */
   shareText(): string {
+    const mode = this._mode();
+    // Başlık dile göre BURADA hazırlanır (share.ts saf/i18n'siz kalsın):
+    //   günlük → "Kelimebaz #193" (marka + gün); diğerleri → çevrili kip metni.
+    const title =
+      mode === 'daily'
+        ? `Kelimebaz #${this.wordService.dayIndex()}`
+        : this.lang.t(mode === 'room' ? 'share.room' : mode === 'vsai' ? 'share.vsai' : 'share.practice');
     return buildShareText({
-      mode: this._mode(),
-      dayIndex: this.wordService.dayIndex(),
+      title,
       status: this._status(),
       attempts: this._guesses().length,
       maxAttempts: MAX_ATTEMPTS,
       guesses: this.guesses(),
-      lang: this.lang.lang(),
     });
   }
 

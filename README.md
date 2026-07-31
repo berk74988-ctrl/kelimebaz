@@ -218,18 +218,22 @@ Büyük-harfe çevirme **dile göredir** (`upperFor(s, lang)`); `evaluateGuess(g
 
 **Lig saf mantıktır** (`core/league.ts`) — LP, kademeler ve ödüller sinyal/DOM olmadan hesaplanır. Maç sonucu LP değiştirir: kazanınca `base + (7-tahmin)×2` (az tahmin → çok LP), kaybedince sabit düşüş; serbest mod puan çiftliğini önlemek için biraz daha az verir. LP eşikleri Bronz(0) → Gümüş(300) → Altın(600) → Platin(900) → Elmas(1200) → Usta(1500+). 14 günlük sezon sonunda ulaşılan lige göre ödül (altın + üst liglerde `theme.champion` / `badge.league`) verilir; yeni sezon **yumuşak sıfırlama** ile başlar (final LP'nin %35'i taşınır — sıfırdan başlamak cezalandırıcı olurdu).
 
-**Dil anlık değişir** (`services/language.service.ts` + `core/messages.ts`) — tüm metinler tek bir sözlükte (tr/en), dil değişince sayfa **yeniden yüklenmez**, sinyaller anında günceller. TR ve EN kendi kelime/geçerli-tahmin/ipucu sözlüklerine sahiptir; oyun aktif dile göre doğru havuzdan (tembel indirilen chunk) seçer.
+**Dil anlık değişir** (`services/language.service.ts` + `src/i18n/{tr,en}.json`) — her dilin metinleri **ayrı bir JSON dosyasında** (düz `{ anahtar: metin }`, 435 anahtar). Varsayılan dil (`tr`) pakete **statik gömülüdür** (açılışta senkron gerekir, yükleme ekranı da metin ister); diğer diller **tembel indirilir** (dinamik `import('../../i18n/en.json')` → içerik-hash'li chunk). Dil değişince sayfa **yeniden yüklenmez** — `rev` sinyali artar, şablonlardaki `t()` yeniden hesaplanır. TR ve EN kendi kelime/geçerli-tahmin/ipucu sözlüklerine de sahiptir; oyun aktif dile göre doğru havuzdan (tembel indirilen chunk) seçer.
+
+**Eksik anahtarda çökmez** — `t(key)` sırayla **aktif dil → varsayılan (tr) → anahtarın kendisi** diye düşer; bir dilde çeviri eksikse arayüz boş kalmaz, varsayılan dile döner. Tutarlılığı `npm run check:i18n` denetler (bir dilde olup diğerinde olmayan / boş anahtarları raporlar) ve bu kontrol **CI'da zorunludur** (`.github/workflows/ci.yml`) — eksik çeviriyle birleştirme engellenir.
 
 **Yeni dil eklemek** (ör. Almanca `de`) — mimari buna hazır; adımlar:
 
 1. **`core/lang.ts`** — `Lang` birliğine kodu ekle (`'tr' | 'en' | 'de'`) ve `upperFor()`'a o dilin büyük-harf kuralını yaz.
-2. **`core/messages.ts`** — `MESSAGES` girdilerini yeni dille genişlet (kayıt `{ tr, en, de }` olur).
-3. **Veri dosyaları** (`src/app/data/`): `words-de.json` (cevap havuzu) + `valid-words-de.json` (geçerli tahminler). Üretim hattı: `scripts/build-dictionary.mjs` (o dilin sözlük/korpus kaynaklarıyla).
-4. **Tembel yükleme** — `WordService.loadPool()`'a dil kolunu ekle (dinamik `import()`). İpucu/kart isteniyorsa `hints-de*.json` / `word-cards-de.json` + `HintService`/`WordCardService` kolları.
-5. **YZ açılışları** — `scripts/build-ai-openers.mjs`'i çalıştır (o dilin havuzuyla `ai-openers.ts` üretilir).
-6. **Renk mantığı** — **hiçbir değişiklik gerekmez.** `evaluateGuess` zaten `lang` alır ve `upperFor` kullanır; çağıranlar (GameService, AiSolver) aktif dili geçirir. Bu ticket'ın amacı buydu.
+2. **`src/i18n/de.json`** — `tr.json`'u kopyala, değerleri Almanca'ya çevir (anahtarlar **aynı** kalmalı). `npm run check:i18n` ile eksik/fazla anahtar kalmadığını doğrula.
+3. **`services/language.service.ts`** — `ensure()` içindeki tembel-yükleme koluna dili ekle (`lang === 'de' ? import('../../i18n/de.json') : …`). Varsayılan `tr` statik kalır; yeni diller tembel eklenir.
+4. **Klavye düzeni** — o dilin alfabesi TR/EN'den farklıysa (ör. Almanca `Ä Ö Ü ß`) klavye bileşenindeki harf dizilimini o dile göre koşullandır (`components/keyboard`), `upperFor` kuralıyla tutarlı olsun.
+5. **Veri dosyaları** (`src/app/data/`): `words-de.json` (cevap havuzu) + `valid-words-de.json` (geçerli tahminler). Üretim hattı: `scripts/build-dictionary.mjs` (o dilin sözlük/korpus kaynaklarıyla).
+6. **Tembel yükleme** — `WordService.loadPool()`'a dil kolunu ekle (dinamik `import()`). İpucu/kart isteniyorsa `hints-de*.json` / `word-cards-de.json` + `HintService`/`WordCardService` kolları.
+7. **YZ açılışları** — `scripts/build-ai-openers.mjs`'i çalıştır (o dilin havuzuyla `ai-openers.ts` üretilir).
+8. **Renk mantığı** — **hiçbir değişiklik gerekmez.** `evaluateGuess` zaten `lang` alır ve `upperFor` kullanır; çağıranlar (GameService, AiSolver) aktif dili geçirir.
 
-Kısaca: renk mantığı ve çözücü artık dilden bağımsız — yeni dil eklemek yalnızca **veri + metin + büyük-harf kuralı** işidir.
+Kısaca: renk mantığı ve çözücü dilden bağımsız, çeviriler dil başına ayrı JSON'da — yeni dil eklemek yalnızca **veri + çeviri JSON'u + klavye düzeni + büyük-harf kuralı** işidir.
 
 **Çok oyunculu oda `rooms-server/`'da** — ayrıntı için aşağıdaki bölüme bak. İstemci tarafı (`services/room.service.ts`) ~1.5 sn'de bir `GET /state` ile durumu çeker (polling; WebSocket yok → paylaşılan nginx'te dağıtımı sağlam).
 

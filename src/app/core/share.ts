@@ -1,12 +1,13 @@
-import { GameMode, GameStatus, Guess, LetterState } from '../models/game.model';
-import { Lang } from './lang';
-import { MESSAGES } from './messages';
+import { GameStatus, Guess, LetterState } from '../models/game.model';
 
 /**
- * Paylaşım metni — saf fonksiyonlar, Angular'dan bağımsız.
+ * Paylaşım metni — saf fonksiyonlar, Angular'dan VE çeviri sözlüğünden bağımsız.
  *
  * ÖNEMLİ: Çıktı ASLA harf içermez. Sadece emoji ızgarası + skor.
  * Böylece sonucunu paylaşınca kimseye spoiler vermezsin.
+ *
+ * Başlık (dile göre çevrili) DIŞARIDAN gelir (GameService hazırlar) — böylece bu
+ * saf dosya i18n'e bağımlı kalmaz ve çeviriler tembel yüklenebilir.
  */
 
 /** Bir harf durumunu emojiye çevirir. */
@@ -27,43 +28,26 @@ export function buildShareGrid(guesses: readonly Guess[]): string {
 }
 
 export interface ShareInfo {
-  mode: GameMode;
-  dayIndex: number;
+  /** Dile göre HAZIR başlık (GameService üretir), ör. "Kelimebaz #193" ya da
+   *  "Kelimebaz (free play)". Skor bu başlığın sonuna eklenir. */
+  title: string;
   status: GameStatus;
   attempts: number;
   maxAttempts: number;
   guesses: readonly Guess[];
-  /** Aktif dil — başlık buna göre çevrilir. share.ts saf çekirdek olduğu için
-   *  LanguageService enjekte edilemez; dil parametre olarak gelir. */
-  lang: Lang;
-}
-
-/** Mod → başlık i18n anahtarı (günlük hariç; günlük gün numarası içerir). */
-const MODE_KEY: Record<Exclude<GameMode, 'daily'>, string> = {
-  practice: 'share.practice',
-  room: 'share.room',
-  vsai: 'share.vsai',
-};
-
-/** Moda ve dile göre paylaşım başlığı. Marka adı ("Kelimebaz") iki dilde de aynı. */
-function shareTitle(info: ShareInfo): string {
-  if (info.mode === 'daily') return `Kelimebaz #${info.dayIndex}`;
-  return MESSAGES[MODE_KEY[info.mode]][info.lang];
 }
 
 /**
- * Paylaşılacak tam metni üretir (aktif dile göre).
+ * Paylaşılacak tam metni üretir.
  *
- * Günlük:   "Kelimebaz #193 3/6"
- * Serbest:  TR "Kelimebaz (serbest) 3/6" · EN "Kelimebaz (free play) 3/6"
- * Arkadaş:  TR "Kelimebaz (arkadaş yarışı)" · EN "Kelimebaz (friend match)"
- * YZ:       TR "Kelimebaz (YZ'ye karşı)" · EN "Kelimebaz (vs AI)"
- * Kayıp:    "... X/6"
+ *   "<başlık> 3/6\n\n<emoji ızgarası>"   (kayıpta skor "X/6")
+ *
+ * Başlık dile göre GameService'te hazırlanır (günlük: "Kelimebaz #193";
+ * serbest/oda/YZ: çevrili kip metni). Bu dosya çeviriyi hiç bilmez.
  */
 export function buildShareText(info: ShareInfo): string {
-  const title = shareTitle(info);
   const score = info.status === 'won' ? `${info.attempts}/${info.maxAttempts}` : `X/${info.maxAttempts}`;
   const grid = buildShareGrid(info.guesses);
 
-  return `${title} ${score}\n\n${grid}`;
+  return `${info.title} ${score}\n\n${grid}`;
 }
