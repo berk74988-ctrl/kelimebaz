@@ -12,14 +12,24 @@ import hintsTr from './data/hints-tr.json';
 import hintsTrNative from './data/hints-tr-native.json';
 import validWordsEn from './data/valid-words-en.json';
 import validWords from './data/valid-words.json';
+import diffEn from './data/word-difficulty-en.json';
+import diffTr from './data/word-difficulty-tr.json';
 import wordsEn from './data/words-en.json';
 import words from './data/words.json';
 import { Hint, HintService } from './services/hint.service';
 import { WordService } from './services/word.service';
 
 WordService.seedForTest({
-  tr: { answers: words.words as string[], validText: validWords.words as string },
-  en: { answers: wordsEn.words as string[], validText: validWordsEn.words as string },
+  tr: {
+    answers: words.words as string[],
+    validText: validWords.words as string,
+    difficulty: diffTr.scores as Record<string, number>,
+  },
+  en: {
+    answers: wordsEn.words as string[],
+    validText: validWordsEn.words as string,
+    difficulty: diffEn.scores as Record<string, number>,
+  },
 });
 
 HintService.seedForTest({

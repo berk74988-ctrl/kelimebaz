@@ -1,4 +1,5 @@
 import { effect, inject, Injectable, signal } from '@angular/core';
+import { levelBand, pickDaily } from '../core/daily-rotation';
 import { Lang, upperFor } from '../core/lang';
 import { pickLength, WORD_LENGTHS } from '../core/word-length';
 import { LanguageService } from './language.service';
@@ -8,6 +9,8 @@ interface Pool {
   answersByLen: Record<number, string[]>;
   answers: readonly string[];
   valid: ReadonlySet<string>;
+  /** Zorluk bandına göre gruplu cevaplar: [uzunluk][band 1-5] → kelimeler. */
+  byLenByBand: Record<number, Record<number, string[]>>;
 }
 
 /** Yükleme durumu — açılış gate'i (app) buna bakar. */
@@ -22,13 +25,32 @@ function bucketByLength(words: string[]): Record<number, string[]> {
   return buckets;
 }
 
-function buildPool(answerWords: string[], validText: string, lang: Lang): Pool {
+function buildPool(
+  answerWords: string[],
+  validText: string,
+  lang: Lang,
+  difficulty: Record<string, number> = {},
+): Pool {
   const up = (s: string) => upperFor(s, lang);
   const answersByLen = bucketByLength(answerWords.map(up));
+
+  // Zorluk haritası → [uzunluk][band] gruplaması (havuz sırası korunur =
+  // belirleyici seçim). Puanı olmayan kelime orta banda (3) düşer.
+  const byLenByBand: Record<number, Record<number, string[]>> = {};
+  for (const L of WORD_LENGTHS) {
+    const bands: Record<number, string[]> = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+    for (const w of answersByLen[L] ?? []) {
+      const band = difficulty[w] ?? 3;
+      (bands[band] ?? bands[3]).push(w);
+    }
+    byLenByBand[L] = bands;
+  }
+
   return {
     answersByLen,
     answers: Object.values(answersByLen).flat(),
     valid: new Set(validText.split(' ').filter(Boolean).map(up)),
+    byLenByBand,
   };
 }
 
@@ -59,10 +81,14 @@ export class WordService {
    * birim testler async beklemeden çalışır. Üretimde çağrılmaz → seed boş kalır.
    */
   private static seed: Partial<Record<Lang, Pool>> = {};
-  static seedForTest(data: Partial<Record<Lang, { answers: string[]; validText: string }>>): void {
+  static seedForTest(
+    data: Partial<
+      Record<Lang, { answers: string[]; validText: string; difficulty?: Record<string, number> }>
+    >,
+  ): void {
     for (const lang of Object.keys(data) as Lang[]) {
       const d = data[lang];
-      if (d) WordService.seed[lang] = buildPool(d.answers, d.validText, lang);
+      if (d) WordService.seed[lang] = buildPool(d.answers, d.validText, lang, d.difficulty);
     }
   }
 
@@ -83,16 +109,24 @@ export class WordService {
 
   /** Dilin veri dosyalarını dinamik import eder (ayrı chunk → tembel indirilir). */
   private async loadPool(lang: Lang): Promise<Pool> {
-    const [answersMod, validMod] =
+    const [answersMod, validMod, diffMod] =
       lang === 'tr'
-        ? await Promise.all([import('../data/words.json'), import('../data/valid-words.json')])
+        ? await Promise.all([
+            import('../data/words.json'),
+            import('../data/valid-words.json'),
+            import('../data/word-difficulty-tr.json'),
+          ])
         : await Promise.all([
             import('../data/words-en.json'),
             import('../data/valid-words-en.json'),
+            import('../data/word-difficulty-en.json'),
           ]);
     const a = ((answersMod as { default?: unknown }).default ?? answersMod) as { words: string[] };
     const v = ((validMod as { default?: unknown }).default ?? validMod) as { words: string };
-    return buildPool(a.words, v.words, lang);
+    const d = ((diffMod as { default?: unknown }).default ?? diffMod) as {
+      scores?: Record<string, number>;
+    };
+    return buildPool(a.words, v.words, lang, d.scores ?? {});
   }
 
   /** Aktif dilin havuzu yüklü değilse yükler; status'u günceller (idempotent). */
@@ -172,19 +206,36 @@ export class WordService {
     return this.poolOf(length);
   }
 
-  /** SEVİYEYE göre rastgele cevap (serbest mod). */
+  /**
+   * SEVİYEYE göre rastgele cevap (serbest mod) — uzunluk VE zorluk seviyeye
+   * uyumlu: düşük seviyede tanıdık, yüksek seviyede zorlu kelimeler.
+   */
   randomWordForLevel(level: number): string {
     if (!this.isReady) return '';
-    const pool = this.poolOf(pickLength(level));
-    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : '';
+    const p = this.pool();
+    if (!p) return '';
+    const L = pickLength(level);
+    const band = levelBand(level, Math.random());
+    // Hedef banddaki kelimeler; boşsa o uzunluğun tüm havuzuna düş.
+    const candidates = p.byLenByBand[L]?.[band]?.length ? p.byLenByBand[L][band] : this.poolOf(L);
+    return candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : '';
   }
 
-  /** Günün kelimesi — tarihe göre, herkes (aynı dilde) aynı kelimeyi görür. */
+  /**
+   * Günün kelimesi — tarihe göre BELİRLEYİCİ (aynı gün + aynı dil → aynı kelime),
+   * ama ZORLUK-DENGELİ: hafta içi kolay-orta, hafta sonu zorlu; art arda iki gün
+   * en zor banttan gelmez; uzunluk tahmin edilemez ama belirleyici (bkz.
+   * core/daily-rotation.ts).
+   */
   wordOfTheDay(date = new Date()): string {
     if (!this.isReady) return '';
+    const p = this.pool();
+    if (!p) return '';
+    const picked = pickDaily(this.dayIndex(date), (L, band) => p.byLenByBand[L]?.[band] ?? []);
+    if (picked) return picked.word;
+    // Güvenlik yedeği (band verisi hiç yoksa): eski sıralı seçim.
     const day = this.dayIndex(date);
-    const L = WORD_LENGTHS[day % WORD_LENGTHS.length];
-    const pool = this.poolOf(L);
+    const pool = this.poolOf(WORD_LENGTHS[day % WORD_LENGTHS.length]);
     return pool.length ? pool[day % pool.length] : '';
   }
 

@@ -92,4 +92,37 @@ describe('WordService — sözlük', () => {
       expect(words.isValid(w)).toBe(true);
     });
   });
+
+  describe('günün kelimesi — belirleyici zorluk-dengeli rotasyon', () => {
+    const dateFor = (dayIndex: number) => new Date(2026, 0, 1 + dayIndex);
+
+    it('aynı tarih HER ZAMAN aynı kelimeyi verir (belirleyicilik = adillik korunur)', () => {
+      for (const d of [0, 1, 30, 200, 365]) {
+        const w1 = words.wordOfTheDay(dateFor(d));
+        const w2 = words.wordOfTheDay(dateFor(d));
+        expect(w1).toBe(w2);
+        expect(words.isValid(w1)).toBe(true);
+      }
+    });
+
+    it('farklı günler rotasyonla farklı kelimeler verir (sabit değil)', () => {
+      const set = new Set(Array.from({ length: 20 }, (_, d) => words.wordOfTheDay(dateFor(d))));
+      expect(set.size).toBeGreaterThan(8);
+    });
+
+    it('uzunluk katı 4→5→6→7 döngüsü DEĞİL (rotasyon akıllandı)', () => {
+      const rigid = [0, 1, 2, 3, 4, 5, 6, 7].every(
+        (d) => [...words.wordOfTheDay(dateFor(d))].length === [4, 5, 6, 7][d % 4],
+      );
+      expect(rigid).toBe(false);
+    });
+
+    it('seri MEKANİZMASI kelimeden bağımsız: gün kimliği (dayIndex) sabit kalır', () => {
+      // Günlük seri "oynanan gün sayısına" bağlıdır; hangi kelime geldiği seriyi
+      // etkilemez. dayIndex yalnız tarihe bağlıdır (kelime seçimi ona dokunmaz)
+      // → yeni rotasyon mevcut oyuncuların serisini ETKİLEMEZ.
+      expect(words.dayIndex(dateFor(100))).toBe(100);
+      expect(words.dayIndex(dateFor(100))).toBe(words.dayIndex(dateFor(100)));
+    });
+  });
 });
