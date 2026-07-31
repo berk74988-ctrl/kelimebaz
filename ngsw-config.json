@@ -26,7 +26,8 @@
       "resources": {
         "files": [
           "/chunk-*.js",
-          "/*.mp3"
+          "/*.mp3",
+          "/*.ogg"
         ]
       }
     }

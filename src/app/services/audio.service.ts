@@ -5,8 +5,6 @@ const K_SFX_VOL = 'kelimebaz:audio:sfxVol';
 const K_MUSIC_ON = 'kelimebaz:audio:musicOn';
 const K_SFX_ON = 'kelimebaz:audio:sfxOn';
 
-/** Arka plan müziği dosyası (public/ altından servis edilir). */
-const MUSIC_SRC = 'music.mp3';
 
 /** Çalınabilecek efektler. */
 export type Sfx = 'key' | 'delete' | 'invalid' | 'reveal' | 'win' | 'lose';
@@ -89,42 +87,58 @@ export class AudioService {
     if (this._sfxOn()) this.sfx('key'); // açınca duyulsun — geri bildirim
   }
 
-  /** Ses seviyesini/çalma durumunu <audio> öğesine yansıtır. */
+  /** Ses seviyesini/çalma durumunu müziğe yansıtır. */
   private applyMusic(): void {
-    const el = this.el;
-    if (!el) return;
-
-    el.volume = this._musicOn() ? this._musicVol() : 0;
-    if (this._musicOn()) this.play();
-    else el.pause();
+    if (this._musicOn()) {
+      // Açık: öğeyi (gerekiyorsa) oluştur — bu, dosyanın İLK O ZAMAN inmesini
+      // başlatır — sonra çal.
+      const el = this.ensureEl();
+      if (!el) return;
+      el.volume = this._musicVol();
+      this.play();
+    } else if (this.el) {
+      // Kapalı: öğe zaten varsa duraklat. YOKSA oluşturma → indirme yapma.
+      this.el.pause();
+    }
   }
 
   // --- Müzik ---
 
   /**
-   * Uygulama açılışında çağrılır: müzik öğesini kurar, çalmayı dener ve
-   * engellenirse ilk kullanıcı hareketini bekler.
+   * Uygulama açılışında çağrılır. Müziği İLK AÇILIŞTA İNDİRMEZ: <audio> öğesini
+   * burada oluşturmayız (oluşturmak indirmeyi başlatır). Yalnızca müzik AÇIKSA
+   * ilk kullanıcı etkileşimini bekleriz; o an öğe oluşturulur ve müzik ilk kez
+   * O ZAMAN iner. Müzik kapalıysa dosya hiç indirilmez.
    */
   init(): void {
-    if (this.el || typeof Audio === 'undefined') return;
+    if (typeof Audio === 'undefined') return;
+    if (this._musicOn()) this.bindUnlock();
+  }
 
+  /**
+   * <audio> öğesini GEREKTİĞİNDE oluşturur (kaynağı atamak = indirmeyi başlatmak).
+   * Modern tarayıcıda Opus (music.ogg), yoksa mp3 yedeği seçilir.
+   */
+  private ensureEl(): HTMLAudioElement | null {
+    if (this.el || typeof Audio === 'undefined') return this.el;
     try {
-      const el = new Audio(MUSIC_SRC);
+      const el = new Audio();
+      el.src = el.canPlayType('audio/ogg; codecs="opus"') ? 'music.ogg' : 'music.mp3';
       el.loop = true;
       el.preload = 'auto';
       el.volume = this._musicOn() ? this._musicVol() : 0;
       this.el = el;
     } catch {
-      return; // ses desteklenmiyorsa oyun sessiz çalışır, kırılmaz
+      this.el = null; // ses desteklenmiyorsa oyun sessiz çalışır, kırılmaz
     }
-
-    this.play();
-    this.bindUnlock();
+    return this.el;
   }
 
   private play(): void {
-    const el = this.el;
-    if (!el || !this._musicOn()) return;
+    if (!this._musicOn()) return;
+    const el = this.ensureEl();
+    if (!el) return;
+    el.volume = this._musicVol();
 
     // play() ESKİ tarayıcılarda ve test ortamlarında Promise döndürmez.
     // Doğrudan .then() çağırmak orada çökertiyordu — önce kontrol et.

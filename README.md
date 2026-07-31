@@ -245,7 +245,9 @@ Kısaca: renk mantığı ve çözücü dilden bağımsız, çeviriler dil başı
 - **Çevrimdışı**: Günün Kelimesi · Serbest Oyna · YZ'ye Karşı çalışır; **oda modu kapatılır** ve nedeni gösterilir (`PwaService.online` → `navigator.onLine`; `title-screen`'de buton devre dışı).
 - **Güncelleme akışı**: yeni sürüm yayınlanınca ngsw indirir, `PwaService` (SwUpdate) "Yeni sürüm hazır → Yenile" çubuğunu gösterir (`components/pwa-prompt`).
 - **Kurulum istemi**: `beforeinstallprompt` yakalanır, "ana ekrana ekle" **ancak 2. oyundan sonra** ve tek "Şimdi değil"le kalıcı kapanır (ısrarcı değil).
-- **Deploy**: `kb-deploy.sh` artık `manifest.webmanifest` + `ngsw-worker.js` + `ngsw.json` + `icons/` + `music.mp3`'ü de kopyalar. **ngsw.json listelediği HER dosyayı prod'da bulmalı** — yeni bir statik dosya eklenince deploy'a da eklenmeli.
+- **Deploy**: `kb-deploy.sh` artık `manifest.webmanifest` + `ngsw-worker.js` + `ngsw.json` + `icons/` + `music.ogg`/`music.mp3`'ü de kopyalar. **ngsw.json listelediği HER dosyayı prod'da bulmalı** — yeni bir statik dosya eklenince deploy'a da eklenmeli.
+
+**Müzik hafif + tembel** (`services/audio.service.ts`) — kaynak parça `audio-src/music-source.mp3` (repo'da, **yayına gitmez**); `npm run build:music` (ffmpeg-static) onu ikiye kodlar: `public/music.ogg` (Opus 96k, 1.44 MB, birincil) + `public/music.mp3` (MP3 96k, 1.47 MB, Safari/iOS yedeği) — **4.04 MB → ~1.45 MB, %64 küçük**. Outro fade + sondaki sessizlik kırpıldı (döngü için; fade tek seferlik bitiş demektir). **İlk açılışta İNDİRİLMEZ**: `<audio>` öğesi ancak müzik gerçekten çalacağı an (ilk kullanıcı etkileşimi ya da müziği açma) oluşturulur → dosya o zaman iner. Müzik kapalıysa hiç inmez. Tarayıcı Opus oynatabiliyorsa `.ogg`, yoksa `.mp3` seçilir (`canPlayType`).
 - ⚠️ **HTTPS şart**: servis worker ve "ana ekrana ekle" yalnızca **güvenli bağlamda** (HTTPS veya `localhost`) çalışır. Düz HTTP'de (`http://34.158.136.9/...`) SW kaydolmaz — kod zarar vermez, sessizce devre dışı kalır; site normal çalışır. Kurulum/çevrimdışı için sunucuya HTTPS (alan adı + Let's Encrypt ya da Cloudflare Tunnel) gerekir. Doğrulama `localhost`'ta yapıldı (SW aktif, manifest geçerli, uçak modunda kabuk + oyun açıldı).
 
 ---
@@ -345,5 +347,5 @@ Böylece düz `ng build` her zaman doğru yolu üretir.
 - [x] Çok oyunculu oda — bağımsız Node sunucusu, kod/sohbet/lider tablosu/süre
 - [x] Lig sistemi — LP, kademeler, 14 günlük sezon, sezon ödülleri
 - [x] İngilizce dil desteği — anlık geçiş, ayrı sözlükler, ipucu sistemi
-- [ ] Müzik dosyasını sıkıştır (şu an 4 MB — `ffmpeg` gerekiyor)
-- [ ] HTTPS (özel alan adı)
+- [x] Müzik dosyasını sıkıştır — 4.04 MB → Opus 1.44 MB (birincil) + MP3 1.47 MB (yedek), %64 küçük; outro fade kırpıldı (döngü için); `npm run build:music`
+- [ ] HTTPS (özel alan adı) — bkz. PWA notu; Cloudflare Tunnel ile geçici doğrulandı
