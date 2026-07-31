@@ -1,6 +1,6 @@
 # 🧪 Kelimebaz — Test Notları
 
-Son çalıştırma: **13 Temmuz 2026** · Sürüm: `main`
+Son çalıştırma: **31 Temmuz 2026** · Sürüm: `main`
 
 ---
 
@@ -8,7 +8,9 @@ Son çalıştırma: **13 Temmuz 2026** · Sürüm: `main`
 
 | Katman | Kapsam | Sonuç |
 | --- | --- | --- |
-| **Birim testler** | 159 test / 18 dosya | ✅ Tamamı geçiyor |
+| **Birim testler** | 460 test / 44 dosya | ✅ Tamamı geçiyor |
+| **Kod kapsamı (v8)** | Satır %49.6 · Dal %58.6 · Fonksiyon %52.6 | `npm run test:coverage` |
+| **Oda sunucusu** | Güvenlik + akış senaryoları (tarayıcısız) | ✅ `check:rooms`, `check:rooms-flow` |
 | **Senaryo testleri** | 22 senaryo × 3 tarayıcı = 66 | ✅ Tamamı geçiyor |
 | **Responsive** | 8 ekran boyutu | ✅ |
 | **Erişilebilirlik** | Klavye + ekran okuyucu + odak | ✅ |
@@ -17,21 +19,55 @@ Son çalıştırma: **13 Temmuz 2026** · Sürüm: `main`
 
 **Bilinen kritik hata: yok.**
 
+> **Kod kapsamı notu:** Ölçülen %49.6 satır çoğunlukla çekirdek mantık + servisleri
+> kapsar. Kapsanmayanın büyük kısmı ekran/bileşen şablonlarıdır — bunlar Playwright
+> uçtan uca kontrolleriyle (gerçek tarayıcı) korunur, birim kapsamına girmez.
+>
+> **Güvenilirlik:** Testler `isolate: true` ile koşar (her spec dosyası taze ortam)
+> → dosyalar arası paylaşılan durum (test-seed / localStorage) yarışı giderildi,
+> CI kararlı yeşil.
+
 ---
 
 ## Çalıştırma
 
 ```bash
 npm test                     # birim testler
+npm run test:coverage        # birim testler + kod kapsamı raporu (coverage/)
 npm run check:scenarios      # uçtan uca senaryolar (3 tarayıcı)
 npm run check:responsive     # 8 ekran boyutu
 npm run check:a11y           # erişilebilirlik
 npm run check:contrast       # WCAG kontrast
 npm run check:share          # panoya kopyalama
 
+# tarayıcısız (kendi sunucusunu/mantığını açar):
+npm run check:vsai           # YZ çözücü zorluk kalibrasyonu
+npm run check:persona        # bot karakterleri gerçekten farklı oynuyor
+npm run check:rooms          # oda sunucusu güvenliği (rate-limit/CORS/küfür/kalıcılık)
+npm run check:rooms-flow     # oda akışı (katıl/ayrıl/sahiplik devri/yeniden bağlan)
+
 # canlı siteye karşı:
 npm run check:scenarios -- http://34.158.136.9/berk/kelimebaz/
 ```
+
+---
+
+## 🔒 Faz 2 sistemleri — birim + senaryo kapsamı
+
+Son eklenen büyük sistemlerin her biri en az bir otomatik testle korunur:
+
+| Sistem | Kapsam | Test |
+| --- | --- | --- |
+| **YZ rakip** (`ai-opponent.ts`) | entropi seçimi, **eleme doğruluğu**, zorluk kalibrasyonu (±0.3, Kolay>Orta>Zor), 6 hakta çözme garantisi, yalnız-tutarlı tahmin | `ai-opponent.spec.ts` |
+| **Oda akışı** (`rooms-server`) | iki oyuncu katılır, biri ayrılır, **sahiplik devri**, **yeniden bağlanma** (kayıtlı kimlikle), yanlış token reddi, boşalan oda silinir | `check:rooms-flow` |
+| **Oda güvenliği** | hız sınırı → 429, CORS beyaz listesi, küfür filtresi, ad numaralandırma, SIGTERM kalıcılığı | `check:rooms` |
+| **Dil değişimi** | metinlerin güncellenmesi (`t` reaktif + yedek zinciri), **kaydedilmiş oyun başka dilde sürdürülmez**, paylaşım başlığı aktif dile göre | `language.service.spec.ts`, `language-switch.spec.ts` |
+| **Lig / LP** (Ustalık Yolu) | LP artışı/kaybı, lig değişimi, **Bronz koruması**, sezon dönüşü + yumuşak sıfırlama, **ödül talebi yalnız bir kez öder (idempotent)** | `league.service.spec.ts`, `league.spec.ts` |
+| **PWA** | çevrimiçi/çevrimdışı sinyali, kurulum istemi + "Şimdi değil" kalıcı reddi | `pwa.service.spec.ts` |
+| **Veri dışa/içe aktarma** | topla/doğrula/uygula, bozuk/eski dosya, birebir round-trip | `player-data.service.spec.ts` |
+| **Çeviri altyapısı** | tr/en anahtar paritesi (eksik/fazla/boş) | `check:i18n` (CI'da zorunlu) |
+
+Tümü **CI'da** (`.github/workflows/ci.yml`, build işi) her push/PR'de koşar.
 
 ---
 

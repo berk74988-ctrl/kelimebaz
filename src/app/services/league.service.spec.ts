@@ -115,5 +115,19 @@ describe('LeagueService — lig sistemi', () => {
       l.claimPending();
       expect(inv.owns('badge.league')).toBe(false);
     });
+
+    it('ödül talebi YALNIZ BİR KEZ ödeme yapar (idempotent)', () => {
+      const l = withPastSeason(1300); // Elmas: 480 altın
+      const gold = TestBed.inject(GoldService);
+      const before = gold.balance();
+
+      l.claimPending();
+      const afterFirst = gold.balance();
+      expect(afterFirst).toBe(before + 480); // bir kez ödendi
+      expect(l.pending()).toBeNull();
+
+      l.claimPending(); // ikinci talep — bekleyen yok, tekrar ödeme OLMAMALI
+      expect(gold.balance()).toBe(afterFirst); // bakiye değişmedi
+    });
   });
 });

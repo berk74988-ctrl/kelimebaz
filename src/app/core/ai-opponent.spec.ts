@@ -39,6 +39,29 @@ describe('YZ çözücü (entropi tabanlı)', () => {
     });
   });
 
+  describe('eleme doğruluğu (candidate elimination)', () => {
+    it('bir tahminden sonra elenmiş havuzdan seçer → sonraki tahmin ipucuyla TUTARLI', () => {
+      const answer = 'KALEM';
+      const s = new AiSolver(answer, pool, AI_CONFIG.hard, 6, seeded(1), openers);
+      s.step(); // ilk tahmin + adayları ele
+      const first = s.guesses[0];
+      if (!first.solved) {
+        s.step();
+        const second = s.guesses[1];
+        // İkinci tahmin, ilk tahmine BAKILDIĞINDA aynı ipucunu üretmeli
+        // (üretmiyorsa tutarsız aday elenmemiş demektir).
+        expect(evaluateGuess(first.word, second.word)).toEqual(first.pattern);
+      }
+    });
+
+    it('doğru kelime aday havuzunda kalır (yanlışlıkla elenmez) → çözer', () => {
+      const answer = pool[7];
+      const s = new AiSolver(answer, pool, AI_CONFIG.hard, 6, seeded(3), openers);
+      while (!s.done) s.step();
+      expect(s.solved).toBe(true); // cevap hiçbir turda elenmediği için bulunur
+    });
+  });
+
   describe('sıralı açılış listesi', () => {
     it('her uzunluk için sıralı açılış listesi vardır (TR + EN)', () => {
       for (const L of [4, 5, 6, 7]) {

@@ -46,3 +46,5 @@ Thumbs.db
 # Oda sunucusu çalışma-zamanı durum dosyaları (kalıcılık + test)
 rooms-server/rooms-state.json
 rooms-server/.test-state.json
+rooms-server/.test-flow-state.json
+/coverage
