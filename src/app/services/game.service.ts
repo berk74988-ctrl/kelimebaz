@@ -304,6 +304,7 @@ export class GameService {
       attempts: this._guesses().length,
       maxAttempts: MAX_ATTEMPTS,
       guesses: this.guesses(),
+      lang: this.lang.lang(),
     });
   }
 
