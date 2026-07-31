@@ -135,12 +135,23 @@
         <span class="m-arw" aria-hidden="true">→</span>
       </button>
 
-      <button class="mode ghost" type="button" (click)="openRoom.emit()">
+      <!-- Oda modu internet ister — çevrimdışıyken kapalı, nedeni açıklanır. -->
+      <button
+        class="mode ghost"
+        type="button"
+        [class.disabled]="!pwa.online()"
+        [disabled]="!pwa.online()"
+        [attr.aria-disabled]="!pwa.online()"
+        (click)="openRoom.emit()"
+      >
         <span class="m-ico">🎮</span>
         <span class="m-tx">
           <b>{{ i18n.t('title.friends') }}</b>
-          <span>{{ i18n.t('title.friendsSub') }}</span>
+          <span>{{ pwa.online() ? i18n.t('title.friendsSub') : i18n.t('title.friendsOffline') }}</span>
         </span>
+        @if (!pwa.online()) {
+          <span class="m-tag offline">{{ i18n.t('pwa.offlineTag') }}</span>
+        }
         <span class="m-arw" aria-hidden="true">→</span>
       </button>
 

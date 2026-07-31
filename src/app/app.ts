@@ -4,6 +4,7 @@ import { Game } from './components/game/game';
 import { LeagueScreen } from './components/league-screen/league-screen';
 import { LoadingScreen } from './components/loading-screen/loading-screen';
 import { ProfileScreen } from './components/profile-screen/profile-screen';
+import { PwaPrompt } from './components/pwa-prompt/pwa-prompt';
 import { RoomScreen } from './components/room-screen/room-screen';
 import { ShopScreen } from './components/shop-screen/shop-screen';
 import { TitleScreen } from './components/title-screen/title-screen';
@@ -20,7 +21,7 @@ type View = 'title' | 'game' | 'profile' | 'shop' | 'room' | 'league' | 'vsai';
 
 @Component({
   selector: 'app-root',
-  imports: [TitleScreen, Game, ProfileScreen, ShopScreen, RoomScreen, LeagueScreen, VsaiScreen, ErrorScreen, LoadingScreen],
+  imports: [TitleScreen, Game, ProfileScreen, ShopScreen, RoomScreen, LeagueScreen, VsaiScreen, ErrorScreen, LoadingScreen, PwaPrompt],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

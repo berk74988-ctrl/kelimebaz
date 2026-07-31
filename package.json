@@ -25,6 +25,7 @@
     "check:dictionary": "node scripts/dictionary-check.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
     "build:dictionary": "node scripts/build-dictionary.mjs",
+    "build:icons": "node scripts/build-pwa-icons.mjs",
     "build:ai-openers": "node scripts/build-ai-openers.mjs",
     "check:vsai": "node scripts/vsai-solver-test.mjs",
     "check:persona": "node scripts/vsai-persona-test.mjs"
@@ -41,6 +42,7 @@
     "@angular/forms": "^22.0.0",
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
+    "@angular/service-worker": "^22.0.6",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

@@ -5,6 +5,7 @@ import { GoldService } from '../../services/gold.service';
 import { LeagueService } from '../../services/league.service';
 import { ProfileService } from '../../services/profile.service';
 import { LanguageService } from '../../services/language.service';
+import { PwaService } from '../../services/pwa.service';
 import { StatsService } from '../../services/stats.service';
 import { WordService } from '../../services/word.service';
 import { Countdown } from '../countdown/countdown';
@@ -55,6 +56,7 @@ export class TitleScreen {
   protected readonly gold = inject(GoldService);
   protected readonly league = inject(LeagueService);
   protected readonly i18n = inject(LanguageService);
+  protected readonly pwa = inject(PwaService); // çevrimdışıyken oda modunu kapatmak için
 
   readonly play = output<GameMode>();
 

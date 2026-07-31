@@ -496,6 +496,22 @@
     background: var(--surface-2);
   }
 
+  // Çevrimdışı — oda modu internet ister, tıklanamaz ama neden görünür kalır.
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+
+    &:hover {
+      transform: none;
+      border-color: var(--border);
+      box-shadow: none;
+
+      &::before { transform: translateX(-120%); }
+    }
+    &:active { transform: none; }
+  }
+
   // Bugün oynandı kartının içine gömülü "Sonucu Gör"
   &.inset {
     margin-top: 11px;
@@ -550,6 +566,12 @@
     color: #fff;
     background: var(--danger);
     animation: reward-pulse 1.4s ease-in-out infinite;
+  }
+
+  /* 📴 Çevrimdışı — oda modu kapalı */
+  &.offline {
+    color: var(--on-surface-muted, inherit);
+    background: var(--surface-2);
   }
 }
 

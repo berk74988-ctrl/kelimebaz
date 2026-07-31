@@ -81,6 +81,7 @@ Ayrıca 🏆 **Lig**: günlük/serbest/oda maçları LP kazandırır, Bronz'dan 
 - 👁 **Renk körü modu** — mavi/turuncu palet
 - ♿ **Erişilebilir** — sadece klavyeyle oynanabilir, ekran okuyucu her hamleyi okur
 - 📱 **Responsive** — 320px'den 4K'ya
+- 📲 **Kurulabilir + çevrimdışı (PWA)** — ana ekrana uygulama gibi eklenir, internetsiz de oynanır (günün kelimesi, serbest oyun, YZ). Yeni sürümde "Yenile" bildirimi. *(Kurulum/çevrimdışı için sunucu HTTPS gerektirir.)*
 - 💾 **Kalıcı** — yarım oyun, istatistik ve tercihler `localStorage`'da
 - 🧩 **Tek kişilik modlar backend'siz** — kelime listeleri JSON, tamamen istemci tarafı. Yalnızca çok oyunculu oda için hafif bir Node sunucusu var (`rooms-server/`)
 
@@ -236,6 +237,16 @@ Büyük-harfe çevirme **dile göredir** (`upperFor(s, lang)`); `evaluateGuess(g
 Kısaca: renk mantığı ve çözücü dilden bağımsız, çeviriler dil başına ayrı JSON'da — yeni dil eklemek yalnızca **veri + çeviri JSON'u + klavye düzeni + büyük-harf kuralı** işidir.
 
 **Çok oyunculu oda `rooms-server/`'da** — ayrıntı için aşağıdaki bölüme bak. İstemci tarafı (`services/room.service.ts`) ~1.5 sn'de bir `GET /state` ile durumu çeker (polling; WebSocket yok → paylaşılan nginx'te dağıtımı sağlam).
+
+**Kurulabilir + çevrimdışı (PWA)** — oyun ana ekrana **uygulama gibi kurulabilir** ve internetsiz oynanabilir (`@angular/service-worker` / ngsw).
+
+- **Manifest** `public/manifest.webmanifest` (ad, kısa ad `Kelimebaz`, tema/arka plan `#10131a`, `display: standalone`, 192/512 px "any" + maskable ikonlar). İkonlar `public/favicon.svg`'den üretilir: `npm run build:icons` (playwright ile; logo değişirse yeniden çalıştır).
+- **Önbellek stratejisi** `ngsw-config.json`: **uygulama kabuğu** (index, main, css, manifest, ikonlar) `prefetch` — kurulumda iner. **Sözlük/veri chunk'ları** ve müzik `lazy` — ilk kullanımda önbelleğe girer (ilk çevrimiçi oyundan sonra o mod çevrimdışı çalışır). **Oda API'si (`/berk/rooms/`) servis worker kapsamı DIŞINDA** (`/berk/kelimebaz/`) → hiç önb: doğrudan ağ.
+- **Çevrimdışı**: Günün Kelimesi · Serbest Oyna · YZ'ye Karşı çalışır; **oda modu kapatılır** ve nedeni gösterilir (`PwaService.online` → `navigator.onLine`; `title-screen`'de buton devre dışı).
+- **Güncelleme akışı**: yeni sürüm yayınlanınca ngsw indirir, `PwaService` (SwUpdate) "Yeni sürüm hazır → Yenile" çubuğunu gösterir (`components/pwa-prompt`).
+- **Kurulum istemi**: `beforeinstallprompt` yakalanır, "ana ekrana ekle" **ancak 2. oyundan sonra** ve tek "Şimdi değil"le kalıcı kapanır (ısrarcı değil).
+- **Deploy**: `kb-deploy.sh` artık `manifest.webmanifest` + `ngsw-worker.js` + `ngsw.json` + `icons/` + `music.mp3`'ü de kopyalar. **ngsw.json listelediği HER dosyayı prod'da bulmalı** — yeni bir statik dosya eklenince deploy'a da eklenmeli.
+- ⚠️ **HTTPS şart**: servis worker ve "ana ekrana ekle" yalnızca **güvenli bağlamda** (HTTPS veya `localhost`) çalışır. Düz HTTP'de (`http://34.158.136.9/...`) SW kaydolmaz — kod zarar vermez, sessizce devre dışı kalır; site normal çalışır. Kurulum/çevrimdışı için sunucuya HTTPS (alan adı + Let's Encrypt ya da Cloudflare Tunnel) gerekir. Doğrulama `localhost`'ta yapıldı (SW aktif, manifest geçerli, uçak modunda kabuk + oyun açıldı).
 
 ---
 

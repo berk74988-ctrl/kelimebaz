@@ -48,7 +48,8 @@
                 }
               ],
               "outputHashing": "all",
-              "baseHref": "/berk/kelimebaz/"
+              "baseHref": "/berk/kelimebaz/",
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {
               "optimization": false,
