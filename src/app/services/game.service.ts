@@ -73,7 +73,7 @@ export class GameService {
   readonly guesses = computed<Guess[]>(() =>
     this._guesses().map((word) => ({
       word,
-      tiles: this.toTiles(word, evaluateGuess(word, this._answer())),
+      tiles: this.toTiles(word, evaluateGuess(word, this._answer(), this.lang.lang())),
     })),
   );
 

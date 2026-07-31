@@ -1,5 +1,5 @@
+import { Lang, upperFor } from './lang';
 import { Guess, LetterState } from '../models/game.model';
-import { trUpper } from './turkish';
 
 /**
  * ============================================================
@@ -26,10 +26,14 @@ import { trUpper } from './turkish';
  *   KALEM'de yalnızca 1 tane E ve 1 tane L var.
  *   ELELE'de 3 E ve 2 L var → sadece BİRER tanesi sarı olur, kalanlar gri.
  *   Sonuç: 🟨🟨⬜⬜⬜
+ *
+ * DİL: Büyük harfe çevirme DİLE göre yapılır (upperFor). Sabit Türkçe kural
+ * KULLANILMAZ — yeni dil eklendiğinde (ör. İ/I dışı bir alfabe) renk mantığı
+ * yanlış sonuç vermesin. `lang` verilmezse geriye dönük uyum için 'tr' kullanılır.
  */
-export function evaluateGuess(guess: string, answer: string): LetterState[] {
-  const g = [...trUpper(guess)];
-  const a = [...trUpper(answer)];
+export function evaluateGuess(guess: string, answer: string, lang: Lang = 'tr'): LetterState[] {
+  const g = [...upperFor(guess, lang)];
+  const a = [...upperFor(answer, lang)];
 
   const result: LetterState[] = Array(g.length).fill('absent');
   const pool = new Map<string, number>(); // cevapta HENÜZ eşleşmemiş harfler

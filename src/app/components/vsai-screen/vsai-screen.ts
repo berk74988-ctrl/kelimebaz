@@ -141,6 +141,7 @@ export class VsaiScreen {
       this.MAX,
       Math.random,
       aiOpeners(this.i18n.lang(), len),
+      this.i18n.lang(), // renk mantığı da aktif dilin büyük-harf kuralını kullansın
     );
     this.turn.set('you'); // 🧑 önce oyuncu — karakter, oyuncunun tahminini BEKLER
     this.phase.set('playing');

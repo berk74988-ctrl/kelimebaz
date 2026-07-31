@@ -95,6 +95,31 @@ describe('evaluateGuess — renk mantığı (saf fonksiyon)', () => {
       expect(evaluateGuess('İİİİİ', 'ALTIN')).toEqual([B, B, B, B, B]);
     });
   });
+
+  describe('İngilizce (dil parametresi)', () => {
+    it("İngilizcede 'i' → 'I' olur (İ değil) → doğru eşleşir", () => {
+      expect(evaluateGuess('title', 'TITLE', 'en')).toEqual([G, G, G, G, G]);
+      expect(evaluateGuess('mix', 'MIX', 'en')).toEqual([G, G, G]);
+    });
+
+    it('DİL parametresi renk sonucunu değiştirir (aynı girdi, tr vs en)', () => {
+      // Cevap 'I' (noktasız), tahmin küçük 'i':
+      //   en: 'i' → 'I'  → YEŞİL (eşleşir)
+      //   tr: 'i' → 'İ'  → GRİ   (İ ≠ I)
+      // Sabit-Türkçe büyütme olsaydı İngilizce oyunda bu harf YANLIŞ renklenirdi.
+      expect(evaluateGuess('i', 'I', 'en')).toEqual([G]);
+      expect(evaluateGuess('i', 'I', 'tr')).toEqual([B]);
+    });
+
+    it("İngilizcede noktasız 'I' küçük 'i' ile eşleşir (Türkçenin aksine)", () => {
+      // 'FIRE' cevabı; 'i' harfi İngilizcede I'ya çevrilip ilk konumu tutturur.
+      expect(evaluateGuess('index', 'IDEAL', 'en')[0]).toBe(G); // i→I, I→I
+    });
+
+    it('lang verilmezse varsayılan tr (geriye dönük uyum)', () => {
+      expect(evaluateGuess('kitap', 'KİTAP')).toEqual([G, G, G, G, G]);
+    });
+  });
 });
 
 describe('klavye renkleri — en güçlü sonuç kazanır', () => {

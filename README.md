@@ -210,13 +210,26 @@ Bitti — profil sayfası, boş durum ve testler kendiliğinden uyar. Eski kayı
 
 Bu sıra sayesinde bir harf **asla iki kez sayılmaz**. Örnek — cevap `KALEM`, tahmin `ARABA`: tahminde 3 A var ama cevapta 1 A → **sadece biri** sarı olur.
 
+Büyük-harfe çevirme **dile göredir** (`upperFor(s, lang)`); `evaluateGuess(guess, answer, lang)` bir `lang` parametresi alır (verilmezse `tr` — geriye dönük uyum). Böylece oyunun en kritik kuralı hiçbir yerde **sabit Türkçe** büyütme kullanmaz — yeni bir alfabe eklendiğinde (Almanca ß, aksanlı harfler) `i/İ/I` gibi kurallar renk sonucunu bozmaz.
+
 **Renkler iki katmanlı:** `_variables.scss` (SCSS, derleme zamanı) → `:root` CSS değişkenleri (çalışma zamanı). Tema ve renk körü modu tek satır değişimiyle geçiş yapar — hiçbir bileşen yeniden çizilmez.
 
 **Yapay zekâ rakip gerçek bir çözücüdür** (`core/ai-opponent.ts`) — Angular'dan bağımsız saf `AiSolver` sınıfı, doğrudan test edilir. Aynı gizli kelimeyi çözer: her tahminden gelen 🟩🟨⬜ desenine göre aday havuzunu eler (`evaluateGuess` ile), giderek yaklaşır. Zorluk iki koldan gelir: **hız** (düşünme aralığı — kolay yavaş, zor hızlı) ve **akıl** (`smart` 0..1 — filtrelenmiş adaydan tahmin etme olasılığı; düşükse ara sıra aday-dışı kelime deneyip tur harcar, yani daha zayıf oynar). Kolay ~18-27 sn'de, Zor ~8-11 sn'de çözer. YZ maçı **casual**tır: kazanma serisi/ana istatistik/lig **etkilenmez**, ayrı `vsaiPlayed`/`vsaiWon` sayaçlarında tutulur.
 
 **Lig saf mantıktır** (`core/league.ts`) — LP, kademeler ve ödüller sinyal/DOM olmadan hesaplanır. Maç sonucu LP değiştirir: kazanınca `base + (7-tahmin)×2` (az tahmin → çok LP), kaybedince sabit düşüş; serbest mod puan çiftliğini önlemek için biraz daha az verir. LP eşikleri Bronz(0) → Gümüş(300) → Altın(600) → Platin(900) → Elmas(1200) → Usta(1500+). 14 günlük sezon sonunda ulaşılan lige göre ödül (altın + üst liglerde `theme.champion` / `badge.league`) verilir; yeni sezon **yumuşak sıfırlama** ile başlar (final LP'nin %35'i taşınır — sıfırdan başlamak cezalandırıcı olurdu).
 
-**Dil anlık değişir** (`services/language.service.ts` + `core/messages.ts`) — tüm metinler tek bir sözlükte (tr/en), dil değişince sayfa **yeniden yüklenmez**, sinyaller anında günceller. TR ve EN kendi kelime/geçerli-tahmin/ipucu sözlüklerine sahiptir; oyun aktif dile göre doğru havuzdan seçer.
+**Dil anlık değişir** (`services/language.service.ts` + `core/messages.ts`) — tüm metinler tek bir sözlükte (tr/en), dil değişince sayfa **yeniden yüklenmez**, sinyaller anında günceller. TR ve EN kendi kelime/geçerli-tahmin/ipucu sözlüklerine sahiptir; oyun aktif dile göre doğru havuzdan (tembel indirilen chunk) seçer.
+
+**Yeni dil eklemek** (ör. Almanca `de`) — mimari buna hazır; adımlar:
+
+1. **`core/lang.ts`** — `Lang` birliğine kodu ekle (`'tr' | 'en' | 'de'`) ve `upperFor()`'a o dilin büyük-harf kuralını yaz.
+2. **`core/messages.ts`** — `MESSAGES` girdilerini yeni dille genişlet (kayıt `{ tr, en, de }` olur).
+3. **Veri dosyaları** (`src/app/data/`): `words-de.json` (cevap havuzu) + `valid-words-de.json` (geçerli tahminler). Üretim hattı: `scripts/build-dictionary.mjs` (o dilin sözlük/korpus kaynaklarıyla).
+4. **Tembel yükleme** — `WordService.loadPool()`'a dil kolunu ekle (dinamik `import()`). İpucu/kart isteniyorsa `hints-de*.json` / `word-cards-de.json` + `HintService`/`WordCardService` kolları.
+5. **YZ açılışları** — `scripts/build-ai-openers.mjs`'i çalıştır (o dilin havuzuyla `ai-openers.ts` üretilir).
+6. **Renk mantığı** — **hiçbir değişiklik gerekmez.** `evaluateGuess` zaten `lang` alır ve `upperFor` kullanır; çağıranlar (GameService, AiSolver) aktif dili geçirir. Bu ticket'ın amacı buydu.
+
+Kısaca: renk mantığı ve çözücü artık dilden bağımsız — yeni dil eklemek yalnızca **veri + metin + büyük-harf kuralı** işidir.
 
 **Çok oyunculu oda `rooms-server/`'da** — ayrıntı için aşağıdaki bölüme bak. İstemci tarafı (`services/room.service.ts`) ~1.5 sn'de bir `GET /state` ile durumu çeker (polling; WebSocket yok → paylaşılan nginx'te dağıtımı sağlam).
 

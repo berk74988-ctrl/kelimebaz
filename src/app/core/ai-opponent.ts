@@ -70,8 +70,8 @@ function samePattern(a: readonly LetterState[], b: readonly LetterState[]): bool
 }
 
 /** evaluateGuess sonucunu kompakt bir desen anahtarına çevirir (0=gri, 1=sarı, 2=yeşil). */
-function patternKey(guess: string, answer: string): string {
-  const p = evaluateGuess(guess, answer);
+function patternKey(guess: string, answer: string, lang: Lang = 'tr'): string {
+  const p = evaluateGuess(guess, answer, lang);
   let k = '';
   for (const s of p) k += s === 'correct' ? '2' : s === 'present' ? '1' : '0';
   return k;
@@ -84,12 +84,12 @@ function patternKey(guess: string, answer: string): string {
  * Yüksek entropi = tahmin adayları daha eşit/çok parçaya ayırıyor = ortalamada
  * daha çok eliyor. Çözücü her tur en yüksek entropili tahmini seçer. Saf fonksiyon.
  */
-export function guessEntropy(guess: string, candidates: readonly string[]): number {
+export function guessEntropy(guess: string, candidates: readonly string[], lang: Lang = 'tr'): number {
   const n = candidates.length;
   if (n <= 1) return 0;
   const buckets = new Map<string, number>();
   for (const c of candidates) {
-    const k = patternKey(guess, c);
+    const k = patternKey(guess, c, lang);
     buckets.set(k, (buckets.get(k) ?? 0) + 1);
   }
   let h = 0;
@@ -125,6 +125,8 @@ export class AiSolver {
     private readonly rnd: () => number = Math.random,
     /** Derleme zamanı SIRALI açılış listesi — ilk tur gecikmesiz (topK ile seçilir). */
     private readonly openers: readonly string[] = [],
+    /** Renk mantığında büyük-harf kuralı için dil (varsayılan 'tr', geriye dönük). */
+    private readonly lang: Lang = 'tr',
   ) {
     this.candidates = pool.length ? [...pool] : [answer];
   }
@@ -145,7 +147,7 @@ export class AiSolver {
   step(): void {
     if (this.done) return;
     const pick = this.pickGuess();
-    const pattern = evaluateGuess(pick, this.answer);
+    const pattern = evaluateGuess(pick, this.answer, this.lang);
     const solved = pick === this.answer;
     this.guesses.push({ word: pick, pattern, solved });
     if (solved) {
@@ -153,7 +155,7 @@ export class AiSolver {
       return;
     }
     // İpucuna göre adayları ele — aday-dışı (kötü) tahmin bile bilgi verir.
-    this.candidates = this.candidates.filter((c) => samePattern(evaluateGuess(pick, c), pattern));
+    this.candidates = this.candidates.filter((c) => samePattern(evaluateGuess(pick, c, this.lang), pattern));
     if (!this.candidates.length) this.candidates = [...this.pool]; // güvenlik: hiç kalmazsa sıfırla
   }
 
@@ -234,7 +236,7 @@ export class AiSolver {
     const bw = this.cfg.biasWeight || 0;
     const scored = guesses.map((g) => ({
       // Skor = entropi (+ karakter kayırması). Kayırma yoksa saf entropi.
-      s: guessEntropy(g, scoreSet) + (bw ? bw * this.letterScore(g) : 0),
+      s: guessEntropy(g, scoreSet, this.lang) + (bw ? bw * this.letterScore(g) : 0),
       g,
       inPool: answerPool.has(g),
     }));
