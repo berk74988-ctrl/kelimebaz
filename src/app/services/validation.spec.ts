@@ -1,3 +1,4 @@
+import '../test-seed';
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { GameService } from './game.service';

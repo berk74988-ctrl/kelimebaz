@@ -155,8 +155,9 @@ export const MESSAGES: Record<string, { tr: string; en: string }> = {
   'keyboard.delete': { tr: 'Sil', en: 'Delete' },
   'countdown.newWord': { tr: 'Yeni kelime', en: 'New word' },
   'error.title': { tr: 'Oyun başlatılamadı', en: "Couldn't start the game" },
-  'error.message': { tr: 'Kelime listesi yüklenemedi. Bu genelde geçici bir sorundur — sayfayı yenilemek çoğu zaman çözer.', en: "The word list couldn't load. This is usually temporary — refreshing the page often fixes it." },
-  'error.reload': { tr: 'Sayfayı yenile', en: 'Refresh the page' },
+  'error.message': { tr: 'Kelime listesi yüklenemedi. Bu genelde geçici bir sorundur — tekrar denemek çoğu zaman çözer.', en: "The word list couldn't load. This is usually temporary — trying again often fixes it." },
+  'error.reload': { tr: 'Tekrar dene', en: 'Try again' },
+  'loading.message': { tr: 'Kelimeler yükleniyor…', en: 'Loading words…' },
 
   // ---- Sonuç ekranı ----
   'result.ariaWon': { tr: 'Kazandın', en: 'You won' },

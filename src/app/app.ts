@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ErrorScreen } from './components/error-screen/error-screen';
 import { Game } from './components/game/game';
 import { LeagueScreen } from './components/league-screen/league-screen';
+import { LoadingScreen } from './components/loading-screen/loading-screen';
 import { ProfileScreen } from './components/profile-screen/profile-screen';
 import { RoomScreen } from './components/room-screen/room-screen';
 import { ShopScreen } from './components/shop-screen/shop-screen';
@@ -18,7 +19,7 @@ type View = 'title' | 'game' | 'profile' | 'shop' | 'room' | 'league' | 'vsai';
 
 @Component({
   selector: 'app-root',
-  imports: [TitleScreen, Game, ProfileScreen, ShopScreen, RoomScreen, LeagueScreen, VsaiScreen, ErrorScreen],
+  imports: [TitleScreen, Game, ProfileScreen, ShopScreen, RoomScreen, LeagueScreen, VsaiScreen, ErrorScreen, LoadingScreen],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,8 +38,16 @@ export class App {
     this.audio.init();
   }
 
-  /** Kelime havuzu boş/bozuksa oyun başlatılamaz → hata ekranı. */
-  protected readonly ready = computed(() => this.words.isReady);
+  /**
+   * Açılış gate'i: veri (tembel) inerken 'loading', hazırsa 'ready', ağ
+   * hatasında 'error'. app.html buna göre yükleme/hata/oyun gösterir.
+   */
+  protected readonly status = this.words.status;
+
+  /** Hata ekranındaki "tekrar dene" — aktif dilin verisini yeniden indirir. */
+  protected retry(): void {
+    this.words.retry();
+  }
 
   protected readonly view = signal<View>('title');
   protected readonly mode = signal<GameMode>('daily');

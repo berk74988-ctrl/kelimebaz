@@ -1,3 +1,4 @@
+import '../test-seed';
 import { TestBed } from '@angular/core/testing';
 import wordsData from '../data/words.json';
 import { HintService } from './hint.service';

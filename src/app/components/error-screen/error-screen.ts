@@ -1,9 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { LanguageService } from '../../services/language.service';
 
 /**
- * Oyun başlatılamadığında gösterilir (kelime havuzu boş/bozuk).
- * Beyaz ekranla baş başa bırakmak yerine ne olduğunu açıkça söyler.
+ * Kelime verisi yüklenemediğinde (ağ hatası / bozuk havuz) gösterilir.
+ * Beyaz ekranla baş başa bırakmak yerine ne olduğunu söyler ve "tekrar dene" sunar.
+ *
+ * retry: bağlanmışsa veriyi YENİDEN indirmeyi dener (tam sayfa yenilemeden).
+ * Bağlı değilse buton sayfayı yeniler (yedek davranış).
  */
 @Component({
   selector: 'app-error-screen',
@@ -14,7 +17,7 @@ import { LanguageService } from '../../services/language.service';
         <p class="ico" aria-hidden="true">😕</p>
         <h1>{{ i18n.t('error.title') }}</h1>
         <p class="msg">{{ i18n.t('error.message') }}</p>
-        <button class="btn" type="button" (click)="reload()">{{ i18n.t('error.reload') }}</button>
+        <button class="btn" type="button" (click)="onRetry()">{{ i18n.t('error.reload') }}</button>
       </section>
     </main>
   `,
@@ -24,7 +27,11 @@ import { LanguageService } from '../../services/language.service';
 export class ErrorScreen {
   protected readonly i18n = inject(LanguageService);
 
-  protected reload(): void {
-    location.reload();
+  /** Bağlıysa veriyi yeniden indirmeyi dener; bağlı değilse sayfa yenilenir. */
+  readonly retry = output<void>();
+
+  protected onRetry(): void {
+    // Dinleyen var mı bilemeyiz; her iki durumda da anlamlı davran:
+    this.retry.emit();
   }
 }

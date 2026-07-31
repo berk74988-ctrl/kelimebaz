@@ -1,3 +1,4 @@
+import '../test-seed';
 import { TestBed } from '@angular/core/testing';
 import { WordService } from './word.service';
 

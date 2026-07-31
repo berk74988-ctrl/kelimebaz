@@ -1,5 +1,7 @@
-@if (!ready()) {
-  <app-error-screen />
+@if (status() === 'loading') {
+  <app-loading-screen />
+} @else if (status() === 'error') {
+  <app-error-screen (retry)="retry()" />
 } @else if (view() === 'title') {
   <app-title-screen
     (play)="play($event)"

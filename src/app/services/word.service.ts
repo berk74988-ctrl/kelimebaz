@@ -1,10 +1,6 @@
-import { inject, Injectable } from '@angular/core';
+import { effect, inject, Injectable, signal } from '@angular/core';
 import { Lang, upperFor } from '../core/lang';
 import { pickLength, WORD_LENGTHS } from '../core/word-length';
-import answerDataTr from '../data/words.json';
-import validDataTr from '../data/valid-words.json';
-import answerDataEn from '../data/words-en.json';
-import validDataEn from '../data/valid-words-en.json';
 import { LanguageService } from './language.service';
 
 /** Bir dilin kelime havuzları — cevaplar (uzunluğa göre) + geçerli tahminler. */
@@ -13,6 +9,9 @@ interface Pool {
   answers: readonly string[];
   valid: ReadonlySet<string>;
 }
+
+/** Yükleme durumu — açılış gate'i (app) buna bakar. */
+export type WordStatus = 'loading' | 'ready' | 'error';
 
 function bucketByLength(words: string[]): Record<number, string[]> {
   const buckets: Record<number, string[]> = { 4: [], 5: [], 6: [], 7: [] };
@@ -36,22 +35,99 @@ function buildPool(answerWords: string[], validText: string, lang: Lang): Pool {
 /**
  * Kelime havuzlarına erişim — TÜRKÇE ve İNGİLİZCE.
  *
- * İki dilin de havuzu derleme zamanında paketlenir; aktif dil LanguageService'ten
- * gelir. Her dilde İKİ liste var: CEVAPLAR (gizli kelime) ve GEÇERLİ TAHMİNLER
- * (oyuncunun deneyebileceği tüm kelimeler). Büyük harf kuralları da dile göre
- * (TR: İ/I; EN: düz).
+ * TEMBEL YÜKLEME: Veri (cevaplar + ~1 MB geçerli tahmin sözlüğü) artık ana pakete
+ * GÖMÜLMEZ. Yalnızca AKTİF dilin havuzu, ilk gerektiğinde dinamik import ile ayrı
+ * bir chunk olarak indirilir ve önbelleğe alınır. Türkçe oynayan İngilizce veriyi
+ * (ve tersi) hiç indirmez → ilk açılış çok daha hızlı, paket ~1.2 MB küçük.
+ *
+ * Durum sinyali (status) üç değerlidir: veri inerken 'loading', hazırsa 'ready',
+ * ağ hatasında 'error' (app hata ekranı + tekrar dene sunar). Dil değişince yeni
+ * dilin havuzu (yoksa) indirilir; varsa bellekten kullanılır (iki kez indirilmez).
  */
 @Injectable({ providedIn: 'root' })
 export class WordService {
   private readonly langSvc = inject(LanguageService);
 
-  private readonly pools: Record<Lang, Pool> = {
-    tr: buildPool(answerDataTr.words as string[], validDataTr.words as string, 'tr'),
-    en: buildPool(answerDataEn.words as string[], validDataEn.words as string, 'en'),
-  };
+  private readonly loaded = new Map<Lang, Pool>(); // yüklenmiş havuzlar (önbellek)
+  private readonly inflight = new Map<Lang, Promise<void>>(); // süren yüklemeler
 
-  private pool(): Pool {
-    return this.pools[this.langSvc.lang()];
+  private readonly _status = signal<WordStatus>('loading');
+  readonly status = this._status.asReadonly();
+
+  /**
+   * YALNIZCA TEST İÇİN: havuzları SENKRON tohumlar (tembel indirme yerine), böylece
+   * birim testler async beklemeden çalışır. Üretimde çağrılmaz → seed boş kalır.
+   */
+  private static seed: Partial<Record<Lang, Pool>> = {};
+  static seedForTest(data: Partial<Record<Lang, { answers: string[]; validText: string }>>): void {
+    for (const lang of Object.keys(data) as Lang[]) {
+      const d = data[lang];
+      if (d) WordService.seed[lang] = buildPool(d.answers, d.validText, lang);
+    }
+  }
+
+  constructor() {
+    // Test tohumu varsa senkron yükle (async beklemeden hazır ol).
+    for (const lang of Object.keys(WordService.seed) as Lang[]) {
+      const pool = WordService.seed[lang];
+      if (pool) this.loaded.set(lang, pool);
+    }
+    if (this.loaded.size) this._status.set('ready');
+
+    // Aktif dil değişince o dilin havuzunu (yoksa) yükle.
+    effect(() => {
+      const lang = this.langSvc.lang();
+      void this.ensure(lang);
+    });
+  }
+
+  /** Dilin veri dosyalarını dinamik import eder (ayrı chunk → tembel indirilir). */
+  private async loadPool(lang: Lang): Promise<Pool> {
+    const [answersMod, validMod] =
+      lang === 'tr'
+        ? await Promise.all([import('../data/words.json'), import('../data/valid-words.json')])
+        : await Promise.all([import('../data/words-en.json'), import('../data/valid-words-en.json')]);
+    const a = ((answersMod as { default?: unknown }).default ?? answersMod) as { words: string[] };
+    const v = ((validMod as { default?: unknown }).default ?? validMod) as { words: string };
+    return buildPool(a.words, v.words, lang);
+  }
+
+  /** Aktif dilin havuzu yüklü değilse yükler; status'u günceller (idempotent). */
+  private ensure(lang: Lang): Promise<void> {
+    if (this.loaded.has(lang)) {
+      if (this.langSvc.lang() === lang) this._status.set('ready');
+      return Promise.resolve();
+    }
+    const existing = this.inflight.get(lang);
+    if (existing) return existing;
+
+    if (this.langSvc.lang() === lang) this._status.set('loading');
+    const p = this.loadPool(lang)
+      .then((pool) => {
+        this.loaded.set(lang, pool);
+        if (this.langSvc.lang() === lang) this._status.set('ready');
+      })
+      .catch(() => {
+        if (this.langSvc.lang() === lang) this._status.set('error');
+      })
+      .finally(() => this.inflight.delete(lang));
+    this.inflight.set(lang, p);
+    return p;
+  }
+
+  /** Ağ/yükleme hatasından sonra AKTİF dil için tekrar dener. */
+  retry(): void {
+    void this.ensure(this.langSvc.lang());
+  }
+
+  /** Aktif dilin havuzu hazır olana kadar bekler (testler ve gerekli akışlar için). */
+  async whenReady(): Promise<void> {
+    await this.ensure(this.langSvc.lang());
+  }
+
+  /** Aktif dilin YÜKLENMİŞ havuzu — henüz inmemişse null. */
+  private pool(): Pool | null {
+    return this.loaded.get(this.langSvc.lang()) ?? null;
   }
 
   private up(s: string): string {
@@ -61,29 +137,30 @@ export class WordService {
   /** O uzunlukta cevap havuzu (boşsa 5'e, o da boşsa tümüne düşer). */
   private poolOf(length: number): readonly string[] {
     const p = this.pool();
+    if (!p) return [];
     if (p.answersByLen[length]?.length) return p.answersByLen[length];
     if (p.answersByLen[5]?.length) return p.answersByLen[5];
     return p.answers;
   }
 
-  /** Cevap havuzundaki kelime sayısı (aktif dil). */
+  /** Cevap havuzundaki kelime sayısı (aktif dil; yüklenmediyse 0). */
   get size(): number {
-    return this.pool().answers.length;
+    return this.pool()?.answers.length ?? 0;
   }
 
-  /** Kabul edilen toplam tahmin sayısı (aktif dil). */
+  /** Kabul edilen toplam tahmin sayısı (aktif dil; yüklenmediyse 0). */
   get dictionarySize(): number {
-    return this.pool().valid.size;
+    return this.pool()?.valid.size ?? 0;
   }
 
-  /** Oyun başlatılabilir mi? (aktif dilin havuzu dolu mu) */
+  /** Oyun başlatılabilir mi? (aktif dilin havuzu indi ve dolu mu) */
   get isReady(): boolean {
-    return this.pool().answers.length > 0;
+    return this._status() === 'ready' && (this.pool()?.answers.length ?? 0) > 0;
   }
 
   /** Rastgele bir cevap (uzunluktan bağımsız). */
   randomWord(): string {
-    const a = this.pool().answers;
+    const a = this.pool()?.answers ?? [];
     return a.length ? a[Math.floor(Math.random() * a.length)] : '';
   }
 
@@ -96,7 +173,7 @@ export class WordService {
   randomWordForLevel(level: number): string {
     if (!this.isReady) return '';
     const pool = this.poolOf(pickLength(level));
-    return pool[Math.floor(Math.random() * pool.length)];
+    return pool.length ? pool[Math.floor(Math.random() * pool.length)] : '';
   }
 
   /** Günün kelimesi — tarihe göre, herkes (aynı dilde) aynı kelimeyi görür. */
@@ -105,7 +182,7 @@ export class WordService {
     const day = this.dayIndex(date);
     const L = WORD_LENGTHS[day % WORD_LENGTHS.length];
     const pool = this.poolOf(L);
-    return pool[day % pool.length];
+    return pool.length ? pool[day % pool.length] : '';
   }
 
   /** Tohumdan (seed) kelime — çok oyunculu oda için. */
@@ -114,7 +191,7 @@ export class WordService {
     const s = Math.floor(Math.abs(seed));
     const L = WORD_LENGTHS[s % WORD_LENGTHS.length];
     const pool = this.poolOf(L);
-    return pool[Math.floor(s / WORD_LENGTHS.length) % pool.length];
+    return pool.length ? pool[Math.floor(s / WORD_LENGTHS.length) % pool.length] : '';
   }
 
   /** Sabit bir başlangıç gününden bu yana geçen gün sayısı. */
@@ -130,15 +207,18 @@ export class WordService {
     return midnight.getTime() - now.getTime();
   }
 
-  /** Tahmin aktif dilin geçerli sözlüğünde mi? */
+  /** Tahmin aktif dilin geçerli sözlüğünde mi? (havuz inmemişse false) */
   isValid(guess: string): boolean {
-    return this.pool().valid.has(this.up(guess));
+    const p = this.pool();
+    return p ? p.valid.has(this.up(guess)) : false;
   }
 
   /** Bu harfi içeren en az bir geçerli kelime var mı? (aktif dil) */
   hasLetter(letter: string): boolean {
+    const p = this.pool();
+    if (!p) return false;
     const ch = this.up(letter);
-    for (const w of this.pool().valid) if (w.includes(ch)) return true;
+    for (const w of p.valid) if (w.includes(ch)) return true;
     return false;
   }
 }

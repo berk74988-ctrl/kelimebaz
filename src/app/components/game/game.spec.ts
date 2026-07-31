@@ -1,3 +1,4 @@
+import '../../test-seed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { Game } from './game';
