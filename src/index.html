@@ -4,9 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- NOT: Başlık/açıklama STATİK varsayılan Türkçedir (JS'siz crawler'lar için).
+       Çalışma zamanında SeoService bunları aktif dile göre günceller (tr/en). -->
   <title>Kelimebaz — Türkçe Kelime Oyunu</title>
-  <meta name="description" content="Gizli Türkçe kelimeyi 6 tahminde bul. Her gün yeni bir kelime, sınırsız serbest oyun.">
+  <meta name="description" content="Gizli kelimeyi 6 tahminde bul! Her gün yeni kelime, sınırsız serbest oyun, arkadaş yarışı ve yapay zekâya karşı düello.">
   <base href="/">
+
+  <!-- İki dilli site — arama motorlarına alternatif dilleri bildir -->
+  <link rel="canonical" href="http://34.158.136.9/berk/kelimebaz/">
+  <link rel="alternate" hreflang="tr" href="http://34.158.136.9/berk/kelimebaz/">
+  <link rel="alternate" hreflang="en" href="http://34.158.136.9/berk/kelimebaz/?lang=en">
+  <link rel="alternate" hreflang="x-default" href="http://34.158.136.9/berk/kelimebaz/">
 
   <!-- Simge: SVG (keskin, temaya uyumlu), eski tarayıcılar için .ico yedeği -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -16,12 +24,17 @@
   <!-- Mobil tarayıcı çubuğu (aşağıdaki script temaya göre günceller) -->
   <meta name="theme-color" content="#10131a">
 
-  <!-- Link paylaşıldığında güzel görünsün -->
+  <!-- Link paylaşıldığında güzel görünsün (SeoService dile göre günceller) -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Kelimebaz">
+  <meta property="og:url" content="http://34.158.136.9/berk/kelimebaz/">
   <meta property="og:title" content="Kelimebaz — Türkçe Kelime Oyunu">
-  <meta property="og:description" content="Gizli Türkçe kelimeyi 6 tahminde bul.">
+  <meta property="og:description" content="Gizli kelimeyi 6 tahminde bul! Her gün yeni kelime, sınırsız serbest oyun.">
   <meta property="og:locale" content="tr_TR">
+  <meta property="og:locale:alternate" content="en_US">
   <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Kelimebaz — Türkçe Kelime Oyunu">
+  <meta name="twitter:description" content="Gizli kelimeyi 6 tahminde bul! Her gün yeni kelime, sınırsız serbest oyun.">
 
   <meta name="color-scheme" content="dark light">
 

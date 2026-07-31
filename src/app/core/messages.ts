@@ -141,6 +141,11 @@ export const MESSAGES: Record<string, { tr: string; en: string }> = {
   'share.practice': { tr: 'Kelimebaz (serbest)', en: 'Kelimebaz (free play)' },
   'share.room': { tr: 'Kelimebaz (arkadaş yarışı)', en: 'Kelimebaz (friend match)' },
   'share.vsai': { tr: "Kelimebaz (YZ'ye karşı)", en: 'Kelimebaz (vs AI)' },
+  'meta.title': { tr: 'Kelimebaz — Türkçe Kelime Oyunu', en: 'Kelimebaz — Word Guessing Game' },
+  'meta.description': {
+    tr: 'Gizli kelimeyi 6 tahminde bul! Her gün yeni kelime, sınırsız serbest oyun, arkadaş yarışı ve yapay zekâya karşı düello.',
+    en: 'Guess the hidden word in 6 tries! A new word daily, unlimited free play, friend matches, and duels against the AI.',
+  },
   'game.dailyWord': { tr: 'Günün Kelimesi', en: 'Word of the Day' },
   'game.freePlay': { tr: 'Serbest Oyun', en: 'Free Play' },
   'game.timeLeft': { tr: 'Kalan süre', en: 'Time left' },

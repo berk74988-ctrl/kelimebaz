@@ -33,6 +33,7 @@ export class LanguageService {
       /* depolama kapalı */
     }
     this.apply();
+    this.syncUrl(lang); // paylaşılan link doğru dilde açılsın (?lang=...)
   }
 
   /** Anahtara göre aktif dildeki metin. `{param}` yer tutucuları doldurulur. */
@@ -57,7 +58,30 @@ export class LanguageService {
     if (typeof document !== 'undefined') document.documentElement.lang = this._lang();
   }
 
+  /** Aktif dili URL sorgusuna yazar (history.replaceState) — paylaşım/derin link için. */
+  private syncUrl(lang: Lang): void {
+    if (typeof location === 'undefined' || typeof history === 'undefined') return;
+    try {
+      const url = new URL(location.href);
+      if (url.searchParams.get('lang') === lang) return; // zaten doğru
+      url.searchParams.set('lang', lang);
+      history.replaceState(history.state, '', url.toString());
+    } catch {
+      /* yoksay */
+    }
+  }
+
+  /**
+   * Başlangıç dili: 1) URL ?lang= (paylaşılan link öncelikli) → 2) localStorage →
+   * 3) varsayılan 'tr'. Böylece .../?lang=en linki İngilizce açılır.
+   */
   private load(): Lang {
+    try {
+      const u = new URLSearchParams(location.search).get('lang');
+      if (u === 'en' || u === 'tr') return u;
+    } catch {
+      /* location yok / erişilemez */
+    }
     try {
       const v = localStorage.getItem(KEY);
       if (v === 'en' || v === 'tr') return v;

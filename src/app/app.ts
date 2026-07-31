@@ -12,6 +12,7 @@ import { GameMode } from './models/game.model';
 import { AudioService } from './services/audio.service';
 import { ContrastService } from './services/contrast.service';
 import { LanguageService } from './services/language.service';
+import { SeoService } from './services/seo.service';
 import { ThemeService } from './services/theme.service';
 import { WordService } from './services/word.service';
 
@@ -31,6 +32,7 @@ export class App {
   private readonly lang = inject(LanguageService); // açılışta <html lang> yazar
   private readonly words = inject(WordService);
   private readonly audio = inject(AudioService);
+  private readonly seo = inject(SeoService); // dile göre başlık/meta/OG günceller
 
   constructor() {
     // Müziği açılışta başlatmayı dener. Tarayıcı sesli otomatik oynatmayı
