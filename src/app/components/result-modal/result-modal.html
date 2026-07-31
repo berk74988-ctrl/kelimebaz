@@ -70,13 +70,16 @@
       </div>
     }
 
-    <!-- 🏆 Lig puanı değişimi -->
+    <!-- 🏆 Ustalık puanı değişimi -->
     @if (lpDelta() !== 0) {
       <div class="lp" [class.down]="lpDelta() < 0">
         <span class="lp-ico" aria-hidden="true">{{ league.tier().icon }}</span>
         <span class="lp-tx">
-          <b>{{ lpDelta() > 0 ? '+' : '' }}{{ lpDelta() }} LP</b>
-          <span>{{ league.tier().name }} · {{ league.lp() }} LP</span>
+          <b>{{ lpDelta() > 0 ? '+' : '' }}{{ lpDelta() }} {{ i18n.t('league.pts') }}</b>
+          <span
+            >{{ i18n.t('tier.' + league.tier().id) }} · {{ league.lp() }}
+            {{ i18n.t('league.pts') }}</span
+          >
         </span>
       </div>
     }

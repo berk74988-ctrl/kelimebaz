@@ -1,10 +1,16 @@
 /**
  * ===========================================================================
- * LİG SİSTEMİ — saf mantık (LP, ligler, sezon ödülleri). Signal/DOM yok, test edilebilir.
+ * USTALIK YOLU — saf mantık (puan, kademeler, dönem ödülleri). Signal/DOM yok.
+ *
+ * NOT (31 Tem 2026): Arayüzde "Ustalık Yolu" olarak konumlandırılır — KİŞİSEL
+ * ilerleme, rekabet değil (gerçek lig/sıralama için hesap sistemi gerekir,
+ * kapsam dışı; bkz. docs/lig-karari.md). Kod içi terimler (LP, tier, season)
+ * KORUNDU — kayıtlı veri/`id`'ler bozulmasın diye yalnızca görünen dil değişti.
  *
  * Oyuncu maç kazandıkça LP kazanır, kaybettikçe kaybeder; LP eşiklerine göre
- * Bronz → Usta ligleri arasında yükselir/düşer. Her sezon sonunda ulaşılan lige
- * göre ödül (altın + üst liglerde tema/rozet) verilir ve yeni sezon başlar.
+ * Bronz → Usta kademeleri arasında yükselir/düşer. Her dönem sonunda ulaşılan
+ * kademeye göre ödül (altın + üst kademelerde tema/rozet) verilir, yeni dönem
+ * yumuşak sıfırlamayla başlar.
  * ===========================================================================
  */
 

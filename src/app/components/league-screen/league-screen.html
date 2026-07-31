@@ -26,7 +26,7 @@
         <div class="hrow">
           <h2 class="rank">{{ i18n.t('tier.' + league.tier().id) }}</h2>
           <span class="lp"
-            ><b>{{ i18n.num(league.lp()) }}</b> LP</span
+            ><b>{{ i18n.num(league.lp()) }}</b> {{ i18n.t('league.pts') }}</span
           >
         </div>
         <div class="track" role="progressbar" [attr.aria-valuenow]="league.lp()">
@@ -84,7 +84,7 @@
           @if (t.id === league.tier().id) {
             <span class="l-here">{{ i18n.t('league.youAreHere') }}</span>
           }
-          <span class="l-lp">{{ tierRange(t) }} LP</span>
+          <span class="l-lp">{{ tierRange(t) }} {{ i18n.t('league.pts') }}</span>
         </div>
       }
     </section>
