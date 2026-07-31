@@ -209,15 +209,26 @@ export class WordService {
   /**
    * SEVİYEYE göre rastgele cevap (serbest mod) — uzunluk VE zorluk seviyeye
    * uyumlu: düşük seviyede tanıdık, yüksek seviyede zorlu kelimeler.
+   *
+   * `preferLetter` verilirse (antrenman modu): kelimelerin bir kısmı o harfi
+   * İÇERECEK şekilde HAFİFÇE kayar — oyuncu manipüle edildiğini hissetmesin
+   * diye yalnız ~%35 olasılıkla ve aday varsa.
    */
-  randomWordForLevel(level: number): string {
+  randomWordForLevel(level: number, preferLetter?: string): string {
     if (!this.isReady) return '';
     const p = this.pool();
     if (!p) return '';
     const L = pickLength(level);
     const band = levelBand(level, Math.random());
     // Hedef banddaki kelimeler; boşsa o uzunluğun tüm havuzuna düş.
-    const candidates = p.byLenByBand[L]?.[band]?.length ? p.byLenByBand[L][band] : this.poolOf(L);
+    let candidates: readonly string[] = p.byLenByBand[L]?.[band]?.length
+      ? p.byLenByBand[L][band]
+      : this.poolOf(L);
+    // Antrenman: hafif kaydırma (her zaman değil → fark edilmez).
+    if (preferLetter && Math.random() < 0.35) {
+      const withLetter = candidates.filter((w) => w.includes(preferLetter));
+      if (withLetter.length) candidates = withLetter;
+    }
     return candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : '';
   }
 

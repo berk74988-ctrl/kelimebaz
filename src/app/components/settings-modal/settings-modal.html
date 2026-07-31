@@ -182,6 +182,27 @@
       </button>
     </div>
 
+    <!-- Antrenman: serbest modda zayıf harflere hafif odaklanma -->
+    <div class="row">
+      <div class="txt">
+        <b>{{ i18n.t('settings.training') }}</b>
+        <span>{{ i18n.t('settings.trainingDesc') }}</span>
+      </div>
+      <button
+        class="sw"
+        type="button"
+        role="switch"
+        [class.on]="playStyle.training()"
+        [attr.aria-checked]="playStyle.training()"
+        [attr.aria-label]="
+          playStyle.training() ? i18n.t('settings.trainingOff') : i18n.t('settings.trainingOn')
+        "
+        (click)="toggleTraining()"
+      >
+        <i></i>
+      </button>
+    </div>
+
     <div class="rule"></div>
 
     <h3 class="sec">{{ i18n.t('settings.sectionData') }}</h3>

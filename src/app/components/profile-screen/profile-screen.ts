@@ -8,11 +8,13 @@ import {
 } from '@angular/core';
 import { levelBonus } from '../../core/gold';
 import { PERSONAS } from '../../core/ai-personas';
+import { hasEnoughData, PLAY_STYLE_INSIGHTS } from '../../core/play-style';
 import { PROFILE_STATS } from '../../core/profile-stats';
 import { itemsByCategory } from '../../core/shop-catalog';
 import { GoldService } from '../../services/gold.service';
 import { InventoryService } from '../../services/inventory.service';
 import { LanguageService } from '../../services/language.service';
+import { PlayStyleService } from '../../services/play-style.service';
 import { ProfileService } from '../../services/profile.service';
 import { QuestService } from '../../services/quest.service';
 import { StatsService } from '../../services/stats.service';
@@ -43,11 +45,25 @@ export class ProfileScreen {
   protected readonly questService = inject(QuestService);
   protected readonly inventory = inject(InventoryService);
   protected readonly i18n = inject(LanguageService);
+  private readonly playStyle = inject(PlayStyleService);
 
   readonly back = output<void>();
   readonly openShop = output<void>();
 
   protected readonly statCards = PROFILE_STATS;
+
+  /** 🎯 "Oyun tarzın" — yeterli maç varsa hesaplanan içgörüler (cihazda). */
+  protected readonly playStyleEnough = computed(() => hasEnoughData(this.playStyle.games()));
+  protected readonly playStyleInsights = computed(() => {
+    const recs = this.playStyle.games();
+    const lang = this.i18n.lang(); // dil değişince yeniden hesapla
+    if (!hasEnoughData(recs)) return [];
+    return PLAY_STYLE_INSIGHTS.map((i) => ({
+      key: i.key,
+      icon: i.icon,
+      ins: i.compute(recs, lang),
+    })).filter((x): x is { key: string; icon: string; ins: NonNullable<typeof x.ins> } => !!x.ins);
+  });
 
   /** 🤖 Oynanmış YZ karakterlerine karşı karşılaşma kayıtları (kazanılan-kaybedilen). */
   protected vsaiRecords(): {

@@ -11,11 +11,13 @@ import {
 } from '../models/game.model';
 import { evaluateGuess, keyStatesFrom } from '../core/evaluate';
 import { goldForGame, levelBonus } from '../core/gold';
+import { weakestLetter } from '../core/play-style';
 import { buildShareText } from '../core/share';
 import { GoldService } from './gold.service';
 import { LanguageService } from './language.service';
 import { LeagueService } from './league.service';
 import { QuestService } from './quest.service';
+import { PlayStyleService } from './play-style.service';
 import { StatsService } from './stats.service';
 import { WordService } from './word.service';
 
@@ -29,6 +31,7 @@ const SAVE_KEY = 'kelimebaz:game';
 export class GameService {
   private readonly wordService = inject(WordService);
   private readonly stats = inject(StatsService);
+  private readonly playStyle = inject(PlayStyleService);
   private readonly gold = inject(GoldService);
   private readonly quests = inject(QuestService);
   private readonly league = inject(LeagueService);
@@ -181,10 +184,14 @@ export class GameService {
   /** Sıfırdan yeni oyun. */
   reset(mode: GameMode = this._mode()): void {
     this._mode.set(mode);
+    // Antrenman açıksa serbest modda zayıf harfe hafif kayar (yoksa undefined).
+    const weak = this.playStyle.training()
+      ? (weakestLetter(this.playStyle.games()) ?? undefined)
+      : undefined;
     this._answer.set(
       mode === 'daily'
         ? this.wordService.wordOfTheDay()
-        : this.wordService.randomWordForLevel(this.stats.level().level),
+        : this.wordService.randomWordForLevel(this.stats.level().level, weak),
     );
     this._guesses.set([]);
     this._current.set('');
@@ -270,6 +277,9 @@ export class GameService {
     const mode = this._mode();
     const isDaily = mode === 'daily';
     const isVsai = mode === 'vsai';
+
+    // 🎯 Oyun tarzı analizi için tahmin geçmişini yakala (cihazda kalır).
+    this.playStyle.record(this._answer(), [...this._guesses()]);
 
     // Seviye ödülü, bu oyunun puanı EKLENMEDEN önceki seviyeyle hesaplanır:
     // oyuncu bu oyuna hangi seviyeyle girdiyse onun ödülünü hak eder.

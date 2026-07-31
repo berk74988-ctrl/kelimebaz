@@ -145,6 +145,23 @@
             }
           </div>
 
+          <!-- 🎯 Oyun tarzın — cihazda hesaplanan içgörüler -->
+          <section class="play-style">
+            <h2 class="sec">{{ i18n.t('playstyle.title') }}</h2>
+            @if (playStyleEnough()) {
+              <ul class="ps-list">
+                @for (p of playStyleInsights(); track p.key) {
+                  <li class="ps-row">
+                    <span class="ps-ico" aria-hidden="true">{{ p.icon }}</span>
+                    <span class="ps-tx">{{ i18n.t(p.ins.textKey, p.ins.params) }}</span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="ps-empty">{{ i18n.t('playstyle.empty') }}</p>
+            }
+          </section>
+
           <!-- 🤖 YZ karakterlerine karşı karşılaşma kayıtları -->
           @if (vsaiRecords().length) {
             <div class="vsai-rec">

@@ -12,6 +12,7 @@ import { ContrastService } from '../../services/contrast.service';
 import { GoldService } from '../../services/gold.service';
 import { InventoryService } from '../../services/inventory.service';
 import { LanguageService } from '../../services/language.service';
+import { PlayStyleService } from '../../services/play-style.service';
 import { ImportError, PlayerDataService } from '../../services/player-data.service';
 import { StatsService } from '../../services/stats.service';
 import { ThemeService } from '../../services/theme.service';
@@ -34,6 +35,7 @@ export class SettingsModal implements AfterViewInit {
   private readonly inventory = inject(InventoryService);
   private readonly words = inject(WordService);
   protected readonly i18n = inject(LanguageService);
+  protected readonly playStyle = inject(PlayStyleService);
   private readonly playerData = inject(PlayerDataService);
 
   readonly close = output<void>();
@@ -79,6 +81,12 @@ export class SettingsModal implements AfterViewInit {
     this.statsService.reset();
     this.gold.reset();
     this.inventory.reset();
+    this.playStyle.reset();
+  }
+
+  /** Antrenman modunu aç/kapa (serbest modda zayıf harflere hafif kaydırma). */
+  protected toggleTraining(): void {
+    this.playStyle.setTraining(!this.playStyle.training());
   }
 
   // --- Veriyi dışa/içe aktar (yedekleme) ---
