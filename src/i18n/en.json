@@ -449,6 +449,7 @@
   "roomerr.empty": "No players in the room.",
   "roomerr.notPlaying": "The game is not in progress.",
   "roomerr.busy": "Server is busy, try again shortly.",
+  "roomerr.rateLimited": "You're going too fast — wait a few seconds and try again.",
   "roomerr.serverError": "Server error, please try again.",
   "roomerr.timeout": "Server didn't respond. Try again.",
   "roomerr.network": "Couldn't reach the server. Check your connection and try again."

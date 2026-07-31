@@ -449,6 +449,7 @@
   "roomerr.empty": "Odada oyuncu yok.",
   "roomerr.notPlaying": "Oyun şu an oynanmıyor.",
   "roomerr.busy": "Sunucu şu an yoğun, biraz sonra tekrar dene.",
+  "roomerr.rateLimited": "Çok hızlı gidiyorsun — birkaç saniye bekleyip tekrar dene.",
   "roomerr.serverError": "Sunucu hatası, tekrar dene.",
   "roomerr.timeout": "Sunucu yanıt vermedi. Tekrar dene.",
   "roomerr.network": "Sunucuya bağlanılamadı. İnternetini kontrol edip tekrar dene."

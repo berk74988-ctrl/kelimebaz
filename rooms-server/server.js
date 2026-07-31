@@ -17,9 +17,72 @@
  */
 
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 const hintUtil = require('./hint-util');
+const badWords = require('./bad-words');
 
 const PORT = process.env.PORT || 4243;
+
+// --- IP/oyuncu başına kayan pencere hız sınırı (bellekte) ---
+// Herkese açık uç nokta: kötüye kullanımı sınırla. Aşınca 429 döner.
+function rateLimiter(limit, windowMs) {
+  const hits = new Map(); // anahtar -> zaman damgaları
+  setInterval(() => {
+    const t = Date.now();
+    for (const [k, arr] of hits) {
+      const keep = arr.filter((x) => t - x < windowMs);
+      if (keep.length) hits.set(k, keep);
+      else hits.delete(k);
+    }
+  }, Math.max(windowMs, 60_000)).unref?.();
+  return function ok(key) {
+    const t = Date.now();
+    const arr = (hits.get(key) || []).filter((x) => t - x < windowMs);
+    if (arr.length >= limit) {
+      hits.set(key, arr);
+      return false;
+    }
+    arr.push(t);
+    hits.set(key, arr);
+    return true;
+  };
+}
+
+// Eşikler (env ile ayarlanabilir). Normal oyun akışını engellemeyecek kadar
+// geniş, kötüye kullanımı durduracak kadar dar.
+const rlCreate = rateLimiter(Number(process.env.RL_CREATE || 10), 60_000); // dakikada oda
+const rlJoin = rateLimiter(Number(process.env.RL_JOIN || 30), 60_000); // dakikada katılma
+const rlChatIp = rateLimiter(Number(process.env.RL_CHAT_IP || 40), 60_000); // dakikada IP
+const rlChatPlayer = rateLimiter(Number(process.env.RL_CHAT_PLAYER || 5), 10_000); // 10 sn / oyuncu
+
+// --- İzin verilen CORS kökenleri (yayın kökeni + yerel geliştirme) ---
+// '*' YERİNE beyaz liste: yalnızca oyunun yayınlandığı köken ve geliştirme
+// sunucusu API'yi tarayıcıdan çağırabilir.
+const ALLOWED_ORIGINS = (
+  process.env.ALLOWED_ORIGINS ||
+  'http://34.158.136.9,http://localhost:4200,http://127.0.0.1:4200'
+)
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function pickOrigin(req) {
+  const origin = req.headers.origin;
+  // İzinli köken → aynen yansıt. İzinsiz/kökensiz → varsayılan yayın kökeni
+  // (izinsiz tarayıcı isteği Allow-Origin uyuşmazlığından ENGELLENİR).
+  return origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+}
+
+// --- Basit erişim/kötüye kullanım günlüğü ---
+const stats = { requests: 0, errors: 0, rateLimited: 0, masked: 0, startedAt: Date.now() };
+setInterval(() => {
+  const errPct = stats.requests ? Math.round((stats.errors / stats.requests) * 100) : 0;
+  console.log(
+    `[stat] istek=${stats.requests} hata=${stats.errors} (%${errPct}) 429=${stats.rateLimited} ` +
+      `filtre=${stats.masked} oda=${rooms.size}`,
+  );
+}, 5 * 60 * 1000).unref?.();
 
 // --- YZ İPUCU (çalışma zamanı, maliyetli) yapılandırması ---
 // API anahtarı YALNIZCA sunucuda env'de durur; istemciye asla gönderilmez.
@@ -29,27 +92,8 @@ const HINT_MODEL = process.env.HINT_MODEL || 'claude-opus-5';
 const HINT_RL_PER_MIN = Number(process.env.HINT_RL_PER_MIN || 8); // IP başına dakikada
 const HINT_ENABLED = !!HINT_KEY;
 
-// IP başına kayan-dakika hız sınırı (bellekte; süreç yeniden başlarsa sıfırlanır).
-const hintHits = new Map(); // ip -> number[] (istek zaman damgaları)
-function hintRateOk(ip) {
-  const t = Date.now();
-  const arr = (hintHits.get(ip) || []).filter((x) => t - x < 60_000);
-  if (arr.length >= HINT_RL_PER_MIN) {
-    hintHits.set(ip, arr);
-    return false;
-  }
-  arr.push(t);
-  hintHits.set(ip, arr);
-  return true;
-}
-setInterval(() => {
-  const t = Date.now();
-  for (const [ip, arr] of hintHits) {
-    const keep = arr.filter((x) => t - x < 60_000);
-    if (keep.length) hintHits.set(ip, keep);
-    else hintHits.delete(ip);
-  }
-}, 5 * 60 * 1000).unref?.();
+// IP başına dakikalık hız sınırı (yukarıdaki genel fabrikayla).
+const rlHint = rateLimiter(HINT_RL_PER_MIN, 60_000);
 
 /** Anthropic Messages API'yi çağır (bağımlılıksız fetch — Node 18+). */
 async function callAnthropic(system, user) {
@@ -85,7 +129,10 @@ const rooms = new Map();
 
 const MAX_ATTEMPTS = 6;
 const MAX_ROOMS = 500; // bellek koruması — herkese açık port, kötüye kullanıma karşı
+const WARN_ROOMS = Math.floor(MAX_ROOMS * 0.8); // bu eşiği geçince uyarı günlüğü
 const ROOM_TTL_MS = 3 * 60 * 60 * 1000; // 3 saat hareketsizlikten sonra silinir
+// Zarif kapanma: SIGTERM'de aktif odalar buraya yazılır, açılışta geri okunur.
+const STATE_FILE = process.env.STATE_FILE || path.join(__dirname, 'rooms-state.json');
 const MAX_MESSAGES = 200; // odada saklanan sohbet mesajı üst sınırı (bellek)
 const CHAT_VIEW = 40; // istemciye gönderilen son mesaj sayısı
 const MAX_MSG_LEN = 200; // tek mesaj karakter sınırı
@@ -111,17 +158,35 @@ function makeCode() {
 }
 
 function sanitizeName(raw) {
-  const s = String(raw || '').trim().slice(0, 16);
-  return s || 'Oyuncu';
+  const trimmed = String(raw || '').trim().slice(0, 16);
+  const masked = badWords.mask(trimmed);
+  if (masked !== trimmed) stats.masked++;
+  // Boşsa ya da küfür yüzünden tamamı maskelendiyse varsayılana düş.
+  if (!masked || /^[*\s]+$/.test(masked)) return 'Oyuncu';
+  return masked;
 }
 
-/** Sohbet metni: kontrol karakterleri temizlenir, kırpılır, uzunluk sınırlanır. */
+/** Oda içinde aynı ad varsa numaralandır: "Berk", "Berk (2)", "Berk (3)"... */
+function uniqueName(room, name) {
+  const taken = new Set([...room.players.values()].map((p) => p.name));
+  if (!taken.has(name)) return name;
+  for (let i = 2; i < 100; i++) {
+    const candidate = `${name} (${i})`.slice(0, 20);
+    if (!taken.has(candidate)) return candidate;
+  }
+  return name;
+}
+
+/** Sohbet metni: kontrol karakterleri temizlenir, kırpılır, küfür maskelenir. */
 function sanitizeText(raw) {
-  return String(raw || '')
+  const clean = String(raw || '')
     .replace(/[\u0000-\u001f\u007f]/g, ' ') // kontrol karakterleri -> bosluk
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, MAX_MSG_LEN);
+  const masked = badWords.mask(clean);
+  if (masked !== clean) stats.masked++;
+  return masked;
 }
 
 function clampInt(v, min, max, dflt) {
@@ -224,7 +289,10 @@ function send(res, status, body) {
   const data = JSON.stringify(body);
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': '*',
+    // '*' değil: yalnızca izinli köken (yayın + geliştirme). Ana işleyici her
+    // istekte res.corsOrigin'i ayarlar.
+    'Access-Control-Allow-Origin': res.corsOrigin || ALLOWED_ORIGINS[0],
+    'Vary': 'Origin',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Cache-Control': 'no-store',
@@ -275,7 +343,14 @@ function auth(body) {
 
 const routes = {
   'POST /create': async (req, res) => {
+    if (!rlCreate(clientIp(req))) {
+      stats.rateLimited++;
+      return send(res, 429, { error: 'rate_limited' });
+    }
     if (rooms.size >= MAX_ROOMS) return send(res, 503, { error: 'busy' });
+    if (rooms.size >= WARN_ROOMS) {
+      console.warn(`[uyarı] oda sayısı yüksek: ${rooms.size}/${MAX_ROOMS} (sınıra yaklaşılıyor)`);
+    }
     const body = await readJson(req);
     const code = makeCode();
     const playerId = makeId();
@@ -310,6 +385,10 @@ const routes = {
   },
 
   'POST /join': async (req, res) => {
+    if (!rlJoin(clientIp(req))) {
+      stats.rateLimited++;
+      return send(res, 429, { error: 'rate_limited' });
+    }
     const body = await readJson(req);
     const code = String(body.code || '').toUpperCase();
     const room = rooms.get(code);
@@ -323,7 +402,7 @@ const routes = {
     room.players.set(playerId, {
       id: playerId,
       token,
-      name: sanitizeName(body.name),
+      name: uniqueName(room, sanitizeName(body.name)),
       finished: false,
       solved: false,
       attempts: 0,
@@ -408,9 +487,18 @@ const routes = {
   },
 
   'POST /chat': async (req, res) => {
+    if (!rlChatIp(clientIp(req))) {
+      stats.rateLimited++;
+      return send(res, 429, { error: 'rate_limited' });
+    }
     const body = await readJson(req);
     const { error, room, player } = auth(body);
     if (error) return send(res, error === 'not_found' ? 404 : 403, { error });
+    // Oyuncu başına: 10 sn'de en fazla N mesaj (spam koruması).
+    if (!rlChatPlayer(player.id)) {
+      stats.rateLimited++;
+      return send(res, 429, { error: 'rate_limited' });
+    }
     const text = sanitizeText(body.text);
     if (!text) return send(res, 200, { room: roomView(room, player.id) }); // boş → no-op
     room.messages.push({ id: makeId(8), playerId: player.id, name: player.name, text, ts: now() });
@@ -446,7 +534,7 @@ const routes = {
   'POST /hint': async (req, res) => {
     if (!HINT_ENABLED) return send(res, 503, { error: 'disabled' });
     const ip = clientIp(req);
-    if (!hintRateOk(ip)) return send(res, 429, { error: 'rate_limited' });
+    if (!rlHint(ip)) return send(res, 429, { error: 'rate_limited' });
 
     const body = await readJson(req);
     const v = hintUtil.validateInput(body);
@@ -471,7 +559,55 @@ const routes = {
   },
 };
 
+// --- Kalıcılık: zarif kapanmada odaları diske yaz, açılışta geri oku ---
+
+function serializeRooms() {
+  const out = [];
+  for (const room of rooms.values()) {
+    out.push({ ...room, players: [...room.players.values()] });
+  }
+  return out;
+}
+
+function saveState() {
+  try {
+    fs.writeFileSync(STATE_FILE, JSON.stringify(serializeRooms()));
+    console.log(`[kapanma] ${rooms.size} oda diske yazıldı → ${STATE_FILE}`);
+  } catch (e) {
+    console.error('[kapanma] durum yazılamadı:', e.message);
+  }
+}
+
+function loadState() {
+  try {
+    if (!fs.existsSync(STATE_FILE)) return;
+    const arr = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+    const cutoff = now() - ROOM_TTL_MS;
+    let n = 0;
+    for (const r of Array.isArray(arr) ? arr : []) {
+      if (!r || !r.code || !(r.updatedAt > cutoff)) continue; // süresi geçmişi atla
+      r.players = new Map((r.players || []).map((p) => [p.id, p]));
+      r.messages = Array.isArray(r.messages) ? r.messages : [];
+      rooms.set(r.code, r);
+      n++;
+    }
+    fs.unlinkSync(STATE_FILE); // tek seferlik: çökme sonrası bayat durum yüklenmesin
+    if (n) console.log(`[açılış] ${n} oda diskten geri yüklendi`);
+  } catch (e) {
+    console.error('[açılış] durum okunamadı:', e.message);
+  }
+}
+
+loadState(); // süreç başlarken varsa önceki oturumun odalarını geri yükle
+
 const server = http.createServer(async (req, res) => {
+  // Her istekte: izinli CORS kökenini belirle + erişim sayaçlarını güncelle.
+  res.corsOrigin = pickOrigin(req);
+  res.on('finish', () => {
+    stats.requests++;
+    if (res.statusCode >= 400) stats.errors++;
+  });
+
   if (req.method === 'OPTIONS') return send(res, 204, {});
 
   const url = new URL(req.url, 'http://localhost');
@@ -495,3 +631,16 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, HOST, () => {
   console.log(`berk-rooms dinliyor: http://${HOST}:${PORT}`);
 });
+
+// Zarif kapanma: SIGTERM (systemd restart/stop) veya SIGINT (Ctrl-C) gelince
+// aktif odaları diske yaz, sonra çık → yeniden başlayınca odalar korunur.
+let shuttingDown = false;
+function shutdown() {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  saveState();
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(0), 2000).unref?.(); // bağlantı takılırsa da çık
+}
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

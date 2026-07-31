@@ -281,6 +281,16 @@ sudo python3 rooms-server/nginx_add_rooms.py
 ```
 Sunucu yalnızca `127.0.0.1`'de dinler — internete doğrudan açık değildir, dışarıya **aynı köken** üzerinden nginx `/berk/rooms/` yolu açar (backend maruz kalmaz). Bellek koruması: en fazla 500 oda, 3 saat hareketsizlikte oda silinir, mesaj/uzunluk sınırları var.
 
+**Kötüye kullanıma karşı sertleştirme** (herkese açık uç nokta):
+
+- **Hız sınırı** (IP başına, kayan pencere): `/create`, `/join`, `/chat` için ayrı eşikler + `/chat`'te oyuncu başına 10 sn'de 5 mesaj. Aşılınca **429 `rate_limited`** → istemci anlamlı mesaj gösterir. Eşikler env ile ayarlanır (`RL_CREATE`, `RL_JOIN`, `RL_CHAT_IP`, `RL_CHAT_PLAYER`).
+- **CORS beyaz listesi**: `*` değil — yalnızca yayın kökeni + yerel geliştirme (`ALLOWED_ORIGINS`). İzinsiz köken engellenir.
+- **Küfür filtresi** (`rooms-server/bad-words.js`, TR + EN): ad ve sohbette yasaklı kelimeler yıldızla maskelenir. Kelime bazında normalize (leet/ayraç kaçışı, Türkçe→ASCII) + tam-eşleşme/önek → masum kelimelerde (ör. "sıkışık", "götür") yanlış pozitif yok.
+- **Aynı ad numaralandırılır**: oda içinde "Berk", "Berk (2)"…
+- **Zarif kapanma**: SIGTERM'de aktif odalar diske yazılır (`rooms-state.json`), açılışta geri okunur → **servis yeniden başlayınca odalar korunur** (systemd `Restart=always` ile uyumlu).
+- **Erişim günlüğü**: 5 dakikada bir istek/hata/429/filtre/oda özeti; `MAX_ROOMS`'un %80'i geçilince uyarı.
+- Doğrulama: `npm run check:rooms` (tarayıcısız; hız sınırı/CORS/küfür/dup/kalıcılık — Linux'ta gerçek SIGTERM round-trip). CI'da koşar; `scripts/room-e2e.mjs` normal akışın bozulmadığını doğrular.
+
 ---
 
 ## Test

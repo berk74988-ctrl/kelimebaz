@@ -60,6 +60,7 @@ const ERRORS: Record<string, string> = {
   empty: 'roomerr.empty',
   not_playing: 'roomerr.notPlaying',
   busy: 'roomerr.busy',
+  rate_limited: 'roomerr.rateLimited',
   server_error: 'roomerr.serverError',
   timeout: 'roomerr.timeout',
   network: 'roomerr.network',
