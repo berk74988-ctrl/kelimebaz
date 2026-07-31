@@ -186,6 +186,29 @@
 
     <h3 class="sec">{{ i18n.t('settings.sectionData') }}</h3>
 
+    <!-- Yedekleme: dışa/içe aktar -->
+    <div class="row">
+      <div class="txt">
+        <b>{{ i18n.t('settings.backup') }}</b>
+        <span>{{ i18n.t('settings.backupDesc') }}</span>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" (click)="exportData()">
+          {{ i18n.t('settings.exportData') }}
+        </button>
+        <button class="btn" type="button" (click)="importData()">
+          {{ i18n.t('settings.importData') }}
+        </button>
+      </div>
+    </div>
+    <input
+      #fileInput
+      type="file"
+      accept="application/json,.json"
+      hidden
+      (change)="onFileSelected($event)"
+    />
+
     <!-- Veri -->
     <div class="row">
       <div class="txt">

@@ -292,6 +292,43 @@
   }
 }
 
+/* Nötr eylem butonu (dışa/içe aktar) — hover'da vurgu rengine döner. */
+.btn {
+  flex: none;
+  padding: 8px 14px;
+
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.1s ease;
+
+  &:hover {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+/* İki butonu (dışa/içe) yan yana; dar ekranda alt satıra kayar. */
+.actions {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .rule {
   height: 1px;
   margin: 12px 0;
