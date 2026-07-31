@@ -19,7 +19,11 @@ describe('Board — animasyonlar', () => {
   const ALL_GREEN: LetterState[] = ['correct', 'correct', 'correct', 'correct', 'correct'];
   const MIXED: LetterState[] = ['correct', 'absent', 'present', 'absent', 'correct'];
 
-  function render(rows: Tile[][], submitted: number, status: 'playing' | 'won' | 'lost' = 'playing') {
+  function render(
+    rows: Tile[][],
+    submitted: number,
+    status: 'playing' | 'won' | 'lost' = 'playing',
+  ) {
     const fixture: ComponentFixture<Board> = TestBed.createComponent(Board);
     fixture.componentRef.setInput('rows', rows);
     fixture.componentRef.setInput('submitted', submitted);
@@ -30,7 +34,10 @@ describe('Board — animasyonlar', () => {
 
   describe('kademeli açılma (stagger)', () => {
     it('gönderilen satırda harfler 90ms arayla açılır', () => {
-      const el = render([row('KALEM', MIXED), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow()], 1);
+      const el = render(
+        [row('KALEM', MIXED), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow()],
+        1,
+      );
 
       const tiles = el.querySelectorAll<HTMLElement>('app-tile');
       const delays = Array.from(tiles)
@@ -42,7 +49,14 @@ describe('Board — animasyonlar', () => {
 
     it('henüz gönderilmemiş satırda gecikme yoktur', () => {
       const el = render(
-        [row('KALEM', MIXED), row('KİT..', ['empty', 'empty', 'empty', 'empty', 'empty']), emptyRow(), emptyRow(), emptyRow(), emptyRow()],
+        [
+          row('KALEM', MIXED),
+          row('KİT..', ['empty', 'empty', 'empty', 'empty', 'empty']),
+          emptyRow(),
+          emptyRow(),
+          emptyRow(),
+          emptyRow(),
+        ],
         1,
       );
 
@@ -54,7 +68,10 @@ describe('Board — animasyonlar', () => {
     });
 
     it('sadece gönderilen satırlar "reveal" alır', () => {
-      const el = render([row('KALEM', MIXED), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow()], 1);
+      const el = render(
+        [row('KALEM', MIXED), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow()],
+        1,
+      );
       const tiles = el.querySelectorAll('app-tile');
 
       expect(tiles[0].classList.contains('reveal')).toBe(true); // gönderildi
@@ -65,7 +82,14 @@ describe('Board — animasyonlar', () => {
   describe('kutlama', () => {
     it('kazanınca kazanılan satır "win" sınıfı alır', () => {
       const el = render(
-        [row('KALEM', MIXED), row('ÇİÇEK', ALL_GREEN), emptyRow(), emptyRow(), emptyRow(), emptyRow()],
+        [
+          row('KALEM', MIXED),
+          row('ÇİÇEK', ALL_GREEN),
+          emptyRow(),
+          emptyRow(),
+          emptyRow(),
+          emptyRow(),
+        ],
         2,
         'won',
       );
@@ -88,7 +112,10 @@ describe('Board — animasyonlar', () => {
     });
 
     it('oyun sürerken kutlama olmaz', () => {
-      const el = render([row('KALEM', MIXED), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow()], 1);
+      const el = render(
+        [row('KALEM', MIXED), emptyRow(), emptyRow(), emptyRow(), emptyRow(), emptyRow()],
+        1,
+      );
 
       for (const r of Array.from(el.querySelectorAll('.row'))) {
         expect(r.classList.contains('win')).toBe(false);

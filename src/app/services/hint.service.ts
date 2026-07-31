@@ -56,7 +56,9 @@ export class HintService {
     if (this.cache.has(lang)) return Promise.resolve();
     const existing = this.inflight.get(lang);
     if (existing) return existing;
-    const p = (lang === 'tr' ? import('../data/hints-tr-native.json') : import('../data/hints-tr.json'))
+    const p = (
+      lang === 'tr' ? import('../data/hints-tr-native.json') : import('../data/hints-tr.json')
+    )
       .then((m) => {
         const map = ((m as { default?: unknown }).default ?? m) as HintMap;
         this.cache.set(lang, map);

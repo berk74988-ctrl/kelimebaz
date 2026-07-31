@@ -28,7 +28,13 @@ async function startGame(page, answer, guesses = []) {
     ({ ans, gs }) => {
       localStorage.setItem(
         'kelimebaz:game:practice',
-        JSON.stringify({ mode: 'practice', dayIndex: -1, answer: ans, guesses: gs, status: 'playing' }),
+        JSON.stringify({
+          mode: 'practice',
+          dayIndex: -1,
+          answer: ans,
+          guesses: gs,
+          status: 'playing',
+        }),
       );
     },
     { ans: answer, gs: guesses },

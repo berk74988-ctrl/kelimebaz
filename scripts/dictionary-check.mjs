@@ -20,22 +20,51 @@ const ALPHABET = [...'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ'];
 /** Geçerli Türkçe — KABUL EDİLMELİ. Cevap havuzunda olmayanlar seçildi. */
 const SHOULD_ACCEPT = [
   // kök kelimeler
-  'BEYİN', 'ERKEK', 'GÜNAH', 'YANAK', 'DELİK', 'ALKOL',
+  'BEYİN',
+  'ERKEK',
+  'GÜNAH',
+  'YANAK',
+  'DELİK',
+  'ALKOL',
   // çekimli biçimler — hiçbir kök sözlüğünde YOK, korpustan + biçimbilimle geldi
-  'GELDİ', 'OLSUN', 'BABAM', 'YERDE', 'EVDEN', 'ALDIM', 'YOKTU', 'ADINI', 'MUSUN',
+  'GELDİ',
+  'OLSUN',
+  'BABAM',
+  'YERDE',
+  'EVDEN',
+  'ALDIM',
+  'YOKTU',
+  'ADINI',
+  'MUSUN',
   // Vikisözlük çekim tabloları — korpusta yeterince geçmedikleri için eskiden reddediliyordu
-  'ÜTÜYE', 'ÖZETE', 'AĞAMI', 'YENSE', 'ÇÖZSE',
+  'ÜTÜYE',
+  'ÖZETE',
+  'AĞAMI',
+  'YENSE',
+  'ÇÖZSE',
   // alıntı kelimeler (Türkçenin hece yapısına uymaz ama geçerli)
-  'ANTRE', 'KLİŞE', 'PLAZA',
+  'ANTRE',
+  'KLİŞE',
+  'PLAZA',
 ];
 
 /** Uydurma diziler ve yazım hataları — REDDEDİLMELİ. */
 const SHOULD_REJECT = [
-  'ZZZZZ', 'ABCDE', 'ÇÇÇÇÇ', 'AAAAA', // uydurma
-  'ALDİM', 'SİMDİ', 'DEGİL', // yazım hatası (ALDIM / ŞİMDİ / DEĞİL)
-  'MORAN', 'JETER', // kurallara aykırı türetme (isim köküne fiil eki)
-  'ÜVEZM', 'KEDYİ', // Vikisözlük şablon hatası (doğrusu ÜVEZİM)
-  'PETER', 'FROST', 'SARAH', 'PARİS', // özel ad
+  'ZZZZZ',
+  'ABCDE',
+  'ÇÇÇÇÇ',
+  'AAAAA', // uydurma
+  'ALDİM',
+  'SİMDİ',
+  'DEGİL', // yazım hatası (ALDIM / ŞİMDİ / DEĞİL)
+  'MORAN',
+  'JETER', // kurallara aykırı türetme (isim köküne fiil eki)
+  'ÜVEZM',
+  'KEDYİ', // Vikisözlük şablon hatası (doğrusu ÜVEZİM)
+  'PETER',
+  'FROST',
+  'SARAH',
+  'PARİS', // özel ad
 ];
 
 const browser = await chromium.launch();
@@ -46,7 +75,13 @@ async function resetBoard() {
   await page.evaluate(() => {
     localStorage.setItem(
       'kelimebaz:game:practice',
-      JSON.stringify({ mode: 'practice', dayIndex: -1, answer: 'KALEM', guesses: [], status: 'playing' }),
+      JSON.stringify({
+        mode: 'practice',
+        dayIndex: -1,
+        answer: 'KALEM',
+        guesses: [],
+        status: 'playing',
+      }),
     );
   });
   await page.reload({ waitUntil: 'networkidle' });
@@ -69,7 +104,9 @@ async function tryWord(word) {
   await page.locator('.key[aria-label="ENTER"]').click();
   await page.waitForTimeout(400);
 
-  const toast = await page.evaluate(() => document.querySelector('.toast')?.textContent?.trim() ?? '');
+  const toast = await page.evaluate(
+    () => document.querySelector('.toast')?.textContent?.trim() ?? '',
+  );
   const accepted = toast !== 'Sözlükte yok';
 
   if (accepted) {
@@ -139,12 +176,17 @@ await resetBoard();
 const posFails = [];
 for (const [code, key, expected] of US_KEYS) {
   await page.evaluate(
-    ({ c, k }) => window.dispatchEvent(new KeyboardEvent('keydown', { code: c, key: k, cancelable: true, bubbles: true })),
+    ({ c, k }) =>
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { code: c, key: k, cancelable: true, bubbles: true }),
+      ),
     { c: code, k: key },
   );
   await page.waitForTimeout(80);
   const ok = (await boardText()).includes(expected);
-  console.log(`${ok ? '✓' : '✗'} ${code.padEnd(13)} (key="${key}") → ${expected}  ${ok ? '' : 'YAZILMADI'}`);
+  console.log(
+    `${ok ? '✓' : '✗'} ${code.padEnd(13)} (key="${key}") → ${expected}  ${ok ? '' : 'YAZILMADI'}`,
+  );
   if (!ok) posFails.push(expected);
   await page.locator('.key[aria-label="Sil"]').click();
 }

@@ -20,7 +20,10 @@ describe('Paylaşım metni', () => {
 
   describe('emoji ızgarası', () => {
     it('sonuca BİREBİR uyar', () => {
-      const grid = buildShareGrid([guess('KİTAP', [G, B, B, Y, B]), guess('KALEM', [G, Y, B, B, G])]);
+      const grid = buildShareGrid([
+        guess('KİTAP', [G, B, B, Y, B]),
+        guess('KALEM', [G, Y, B, B, G]),
+      ]);
       expect(grid).toBe('🟩⬜⬜🟨⬜\n🟩🟨⬜⬜🟩');
     });
 
@@ -41,17 +44,35 @@ describe('Paylaşım metni', () => {
 
   describe('buildShareText — başlık + skor + ızgara', () => {
     it('verilen başlığı ve kazanma skorunu birleştirir', () => {
-      const text = buildShareText({ title: 'Kelimebaz #193', status: 'won', attempts: 3, maxAttempts: 6, guesses: [] });
+      const text = buildShareText({
+        title: 'Kelimebaz #193',
+        status: 'won',
+        attempts: 3,
+        maxAttempts: 6,
+        guesses: [],
+      });
       expect(text.split('\n')[0]).toBe('Kelimebaz #193 3/6');
     });
 
     it('kaybedince skor X/6 olur', () => {
-      const text = buildShareText({ title: 'Kelimebaz #193', status: 'lost', attempts: 6, maxAttempts: 6, guesses: [] });
+      const text = buildShareText({
+        title: 'Kelimebaz #193',
+        status: 'lost',
+        attempts: 6,
+        maxAttempts: 6,
+        guesses: [],
+      });
       expect(text.split('\n')[0]).toBe('Kelimebaz #193 X/6');
     });
 
     it('başlık DİLDEN BAĞIMSIZ geçer — İngilizce başlık aynen korunur', () => {
-      const text = buildShareText({ title: 'Kelimebaz (free play)', status: 'won', attempts: 4, maxAttempts: 6, guesses: [] });
+      const text = buildShareText({
+        title: 'Kelimebaz (free play)',
+        status: 'won',
+        attempts: 4,
+        maxAttempts: 6,
+        guesses: [],
+      });
       expect(text.split('\n')[0]).toBe('Kelimebaz (free play) 4/6');
     });
 
@@ -71,7 +92,10 @@ describe('Paylaşım metni', () => {
     const HAS_LETTER = /\p{Letter}/u;
 
     it('ızgarada harf yoktur', () => {
-      const grid = buildShareGrid([guess('KİTAP', [G, B, Y, B, G]), guess('ÇİÇEK', [G, G, G, G, G])]);
+      const grid = buildShareGrid([
+        guess('KİTAP', [G, B, Y, B, G]),
+        guess('ÇİÇEK', [G, G, G, G, G]),
+      ]);
       expect(HAS_LETTER.test(grid)).toBe(false);
     });
 

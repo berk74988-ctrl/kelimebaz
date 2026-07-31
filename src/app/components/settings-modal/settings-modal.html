@@ -8,7 +8,14 @@
     tabindex="-1"
     (click)="$event.stopPropagation()"
   >
-    <button class="x" type="button" [attr.aria-label]="i18n.t('common.close')" (click)="close.emit()">✕</button>
+    <button
+      class="x"
+      type="button"
+      [attr.aria-label]="i18n.t('common.close')"
+      (click)="close.emit()"
+    >
+      ✕
+    </button>
 
     <h2 class="head">{{ i18n.t('settings.title') }}</h2>
 
@@ -64,7 +71,9 @@
           role="switch"
           [class.on]="audio.musicOn()"
           [attr.aria-checked]="audio.musicOn()"
-          [attr.aria-label]="audio.musicOn() ? i18n.t('settings.musicOff') : i18n.t('settings.musicOn')"
+          [attr.aria-label]="
+            audio.musicOn() ? i18n.t('settings.musicOff') : i18n.t('settings.musicOn')
+          "
           (click)="audio.toggleMusic()"
         >
           <i></i>
@@ -83,7 +92,9 @@
           [value]="pct(audio.musicVol())"
           (input)="onMusicVol($event)"
         />
-        <span class="pc">{{ i18n.lang() === 'en' ? pct(audio.musicVol()) + '%' : '%' + pct(audio.musicVol()) }}</span>
+        <span class="pc">{{
+          i18n.lang() === 'en' ? pct(audio.musicVol()) + '%' : '%' + pct(audio.musicVol())
+        }}</span>
       </div>
     </div>
 
@@ -119,7 +130,9 @@
           [value]="pct(audio.sfxVol())"
           (input)="onSfxVol($event)"
         />
-        <span class="pc">{{ i18n.lang() === 'en' ? pct(audio.sfxVol()) + '%' : '%' + pct(audio.sfxVol()) }}</span>
+        <span class="pc">{{
+          i18n.lang() === 'en' ? pct(audio.sfxVol()) + '%' : '%' + pct(audio.sfxVol())
+        }}</span>
       </div>
     </div>
 
@@ -139,7 +152,9 @@
         role="switch"
         [class.on]="theme.theme() === 'dark'"
         [attr.aria-checked]="theme.theme() === 'dark'"
-        [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('settings.lightMode') : i18n.t('settings.darkMode')"
+        [attr.aria-label]="
+          theme.theme() === 'dark' ? i18n.t('settings.lightMode') : i18n.t('settings.darkMode')
+        "
         (click)="theme.toggle()"
       >
         <i></i>
@@ -183,11 +198,23 @@
           }
         </span>
       </div>
-      <button class="danger" type="button" [disabled]="statsService.isEmpty()" (click)="resetStats()">
+      <button
+        class="danger"
+        type="button"
+        [disabled]="statsService.isEmpty()"
+        (click)="resetStats()"
+      >
         {{ i18n.t('common.reset') }}
       </button>
     </div>
 
-    <p class="foot">📚 {{ i18n.t('settings.dictFooter', { count: dictSize.toLocaleString(i18n.lang() === 'en' ? 'en' : 'tr') }) }}</p>
+    <p class="foot">
+      📚
+      {{
+        i18n.t('settings.dictFooter', {
+          count: dictSize.toLocaleString(i18n.lang() === 'en' ? 'en' : 'tr'),
+        })
+      }}
+    </p>
   </div>
 </div>

@@ -46,7 +46,7 @@ export class LanguageService {
     const load = lang === 'en' ? import('../../i18n/en.json') : Promise.resolve(null);
     const p = load
       .then((m) => {
-        if (m) this.dicts.set(lang, ((m as { default?: Dict }).default ?? (m as unknown as Dict)));
+        if (m) this.dicts.set(lang, (m as { default?: Dict }).default ?? (m as unknown as Dict));
         this.rev.update((n) => n + 1);
       })
       .catch(() => {

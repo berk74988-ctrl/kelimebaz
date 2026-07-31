@@ -1,52 +1,61 @@
 <!doctype html>
 <html lang="tr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- NOT: Başlık/açıklama STATİK varsayılan Türkçedir (JS'siz crawler'lar için).
+    <!-- NOT: Başlık/açıklama STATİK varsayılan Türkçedir (JS'siz crawler'lar için).
        Çalışma zamanında SeoService bunları aktif dile göre günceller (tr/en). -->
-  <title>Kelimebaz — Türkçe Kelime Oyunu</title>
-  <meta name="description" content="Gizli kelimeyi 6 tahminde bul! Her gün yeni kelime, sınırsız serbest oyun, arkadaş yarışı ve yapay zekâya karşı düello.">
-  <base href="/">
+    <title>Kelimebaz — Türkçe Kelime Oyunu</title>
+    <meta
+      name="description"
+      content="Gizli kelimeyi 6 tahminde bul! Her gün yeni kelime, sınırsız serbest oyun, arkadaş yarışı ve yapay zekâya karşı düello."
+    />
+    <base href="/" />
 
-  <!-- İki dilli site — arama motorlarına alternatif dilleri bildir -->
-  <link rel="canonical" href="http://34.158.136.9/berk/kelimebaz/">
-  <link rel="alternate" hreflang="tr" href="http://34.158.136.9/berk/kelimebaz/">
-  <link rel="alternate" hreflang="en" href="http://34.158.136.9/berk/kelimebaz/?lang=en">
-  <link rel="alternate" hreflang="x-default" href="http://34.158.136.9/berk/kelimebaz/">
+    <!-- İki dilli site — arama motorlarına alternatif dilleri bildir -->
+    <link rel="canonical" href="http://34.158.136.9/berk/kelimebaz/" />
+    <link rel="alternate" hreflang="tr" href="http://34.158.136.9/berk/kelimebaz/" />
+    <link rel="alternate" hreflang="en" href="http://34.158.136.9/berk/kelimebaz/?lang=en" />
+    <link rel="alternate" hreflang="x-default" href="http://34.158.136.9/berk/kelimebaz/" />
 
-  <!-- Simge: SVG (keskin, temaya uyumlu), eski tarayıcılar için .ico yedeği -->
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <!-- Simge: SVG (keskin, temaya uyumlu), eski tarayıcılar için .ico yedeği -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
 
-  <!-- PWA: ana ekrana kurulabilir, çevrimdışı oynanabilir uygulama -->
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Kelimebaz">
-  <meta name="application-name" content="Kelimebaz">
+    <!-- PWA: ana ekrana kurulabilir, çevrimdışı oynanabilir uygulama -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Kelimebaz" />
+    <meta name="application-name" content="Kelimebaz" />
 
-  <!-- Mobil tarayıcı çubuğu (aşağıdaki script temaya göre günceller) -->
-  <meta name="theme-color" content="#10131a">
+    <!-- Mobil tarayıcı çubuğu (aşağıdaki script temaya göre günceller) -->
+    <meta name="theme-color" content="#10131a" />
 
-  <!-- Link paylaşıldığında güzel görünsün (SeoService dile göre günceller) -->
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Kelimebaz">
-  <meta property="og:url" content="http://34.158.136.9/berk/kelimebaz/">
-  <meta property="og:title" content="Kelimebaz — Türkçe Kelime Oyunu">
-  <meta property="og:description" content="Gizli kelimeyi 6 tahminde bul! Her gün yeni kelime, sınırsız serbest oyun.">
-  <meta property="og:locale" content="tr_TR">
-  <meta property="og:locale:alternate" content="en_US">
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Kelimebaz — Türkçe Kelime Oyunu">
-  <meta name="twitter:description" content="Gizli kelimeyi 6 tahminde bul! Her gün yeni kelime, sınırsız serbest oyun.">
+    <!-- Link paylaşıldığında güzel görünsün (SeoService dile göre günceller) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kelimebaz" />
+    <meta property="og:url" content="http://34.158.136.9/berk/kelimebaz/" />
+    <meta property="og:title" content="Kelimebaz — Türkçe Kelime Oyunu" />
+    <meta
+      property="og:description"
+      content="Gizli kelimeyi 6 tahminde bul! Her gün yeni kelime, sınırsız serbest oyun."
+    />
+    <meta property="og:locale" content="tr_TR" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Kelimebaz — Türkçe Kelime Oyunu" />
+    <meta
+      name="twitter:description"
+      content="Gizli kelimeyi 6 tahminde bul! Her gün yeni kelime, sınırsız serbest oyun."
+    />
 
-  <meta name="color-scheme" content="dark light">
+    <meta name="color-scheme" content="dark light" />
 
-  <!--
+    <!--
     TEMAYI ANGULAR'DAN ÖNCE UYGULA.
 
     Bu script olmadan sayfa önce varsayılan (koyu) temayla boyanır, sonra
@@ -55,33 +64,33 @@
 
     Aynı şey yüksek kontrast (renk körü) modu için de geçerli.
   -->
-  <script>
-    (function () {
-      var root = document.documentElement;
-      try {
-        var saved = localStorage.getItem('kelimebaz:theme');
-        var theme =
-          saved === 'light' || saved === 'dark'
-            ? saved
-            : window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
-              ? 'light'
-              : 'dark';
+    <script>
+      (function () {
+        var root = document.documentElement;
+        try {
+          var saved = localStorage.getItem('kelimebaz:theme');
+          var theme =
+            saved === 'light' || saved === 'dark'
+              ? saved
+              : window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+                ? 'light'
+                : 'dark';
 
-        root.dataset.theme = theme;
+          root.dataset.theme = theme;
 
-        if (localStorage.getItem('kelimebaz:contrast') === '1') {
-          root.dataset.contrast = 'high';
+          if (localStorage.getItem('kelimebaz:contrast') === '1') {
+            root.dataset.contrast = 'high';
+          }
+
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', theme === 'light' ? '#f6f7fb' : '#10131a');
+        } catch (e) {
+          root.dataset.theme = 'dark'; // depolama kapalıysa varsayılan
         }
-
-        var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', theme === 'light' ? '#f6f7fb' : '#10131a');
-      } catch (e) {
-        root.dataset.theme = 'dark'; // depolama kapalıysa varsayılan
-      }
-    })();
-  </script>
-</head>
-<body>
-  <app-root></app-root>
-</body>
+      })();
+    </script>
+  </head>
+  <body>
+    <app-root></app-root>
+  </body>
 </html>

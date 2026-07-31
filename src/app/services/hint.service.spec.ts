@@ -19,7 +19,10 @@ function leaks(word: string, hint: string): boolean {
   const last = W[W.length - 1];
   if (SOFTEN[last] && W.length >= 4) stems.add(W.slice(0, -1) + SOFTEN[last]);
   if (last === 'K' && W.length >= 4) stems.add(W.slice(0, -1) + 'G');
-  const tokens = (hint || '').toLocaleUpperCase('tr').split(/[^A-ZÇĞİÖŞÜ]+/).filter(Boolean);
+  const tokens = (hint || '')
+    .toLocaleUpperCase('tr')
+    .split(/[^A-ZÇĞİÖŞÜ]+/)
+    .filter(Boolean);
   return tokens.some((tok) => [...stems].some((s) => tok.startsWith(s)));
 }
 

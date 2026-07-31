@@ -1,7 +1,14 @@
 <main class="screen">
   <!-- Üst çubuk: geri · başlık · altın -->
   <header class="bar">
-    <button class="back" type="button" [attr.aria-label]="i18n.t('common.backTitle')" (click)="back.emit()">←</button>
+    <button
+      class="back"
+      type="button"
+      [attr.aria-label]="i18n.t('common.backTitle')"
+      (click)="back.emit()"
+    >
+      ←
+    </button>
     <h1 class="title">{{ i18n.t('shop.title') }}</h1>
     <div class="coin" [attr.aria-label]="i18n.t('shop.goldAria', { balance: gold.balance() })">
       <span aria-hidden="true">🪙</span>
@@ -35,17 +42,34 @@
         [class.equipped]="st === 'equipped'"
         [class.locked]="st === 'locked'"
         [disabled]="st === 'locked'"
-        [attr.aria-label]="i18n.t('shopitem.' + item.id) + (st === 'equipped' ? i18n.t('shop.ariaEquipped') : st === 'owned' ? i18n.t('shop.ariaOwned') : i18n.t('shop.ariaBuyable', { price: item.price }))"
+        [attr.aria-label]="
+          i18n.t('shopitem.' + item.id) +
+          (st === 'equipped'
+            ? i18n.t('shop.ariaEquipped')
+            : st === 'owned'
+              ? i18n.t('shop.ariaOwned')
+              : i18n.t('shop.ariaBuyable', { price: item.price }))
+        "
         (click)="onItem(item)"
       >
         <!-- Önizleme -->
         <div class="pv">
           @switch (item.category) {
             @case ('theme') {
-              <span class="pv-swatch" [style.background]="'linear-gradient(135deg, ' + item.preview + ', ' + item.preview2 + ')'"></span>
+              <span
+                class="pv-swatch"
+                [style.background]="
+                  'linear-gradient(135deg, ' + item.preview + ', ' + item.preview2 + ')'
+                "
+              ></span>
             }
             @case ('frame') {
-              <span class="pv-frame" [style.background]="item.preview === 'transparent' ? 'var(--surface-2)' : item.preview">
+              <span
+                class="pv-frame"
+                [style.background]="
+                  item.preview === 'transparent' ? 'var(--surface-2)' : item.preview
+                "
+              >
                 <span class="pv-frame-in">🙂</span>
               </span>
             }

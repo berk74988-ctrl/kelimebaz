@@ -30,7 +30,9 @@ const MB = (b) => (b / 1048576).toFixed(2);
 const name = (p) => p.split(/[\\/]/).pop();
 
 function encode(out, codecArgs, label) {
-  execFileSync(ffmpegPath, ['-y', '-t', TRIM, '-i', SRC, '-af', FADE, ...codecArgs, out], { stdio: 'ignore' });
+  execFileSync(ffmpegPath, ['-y', '-t', TRIM, '-i', SRC, '-af', FADE, ...codecArgs, out], {
+    stdio: 'ignore',
+  });
   console.log(`✓ ${label}: ${MB(statSync(out).size)} MB → ${name(out)}`);
 }
 
@@ -43,7 +45,9 @@ encode(OUT_MP3, ['-c:a', 'libmp3lame', '-b:a', '96k', '-vn'], 'MP3 96k (yedek)')
 const ogg = statSync(OUT_OGG).size;
 const mp3 = statSync(OUT_MP3).size;
 console.log(`\nÖNCESİ:  ${MB(before)} MB`);
-console.log(`SONRASI: opus ${MB(ogg)} MB (%${(100 * (1 - ogg / before)).toFixed(0)} küçük) · mp3 ${MB(mp3)} MB (%${(100 * (1 - mp3 / before)).toFixed(0)} küçük)`);
+console.log(
+  `SONRASI: opus ${MB(ogg)} MB (%${(100 * (1 - ogg / before)).toFixed(0)} küçük) · mp3 ${MB(mp3)} MB (%${(100 * (1 - mp3 / before)).toFixed(0)} küçük)`,
+);
 
 if (ogg > LIMIT || mp3 > LIMIT) {
   console.error(`\n❌ 1.5 MB sınırı aşıldı — bit hızını düşür.`);

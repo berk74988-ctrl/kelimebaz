@@ -8,14 +8,23 @@
     tabindex="-1"
     (click)="$event.stopPropagation()"
   >
-    <button class="x" type="button" [attr.aria-label]="i18n.t('statsmodal.closeAria')" (click)="close.emit()">✕</button>
+    <button
+      class="x"
+      type="button"
+      [attr.aria-label]="i18n.t('statsmodal.closeAria')"
+      (click)="close.emit()"
+    >
+      ✕
+    </button>
 
     <h2 class="head">{{ i18n.t('statsmodal.title') }}</h2>
 
     <app-stats-panel [highlight]="highlight" />
 
     @if (!statsService.isEmpty()) {
-      <button class="reset" type="button" (click)="resetStats()">{{ i18n.t('statsmodal.reset') }}</button>
+      <button class="reset" type="button" (click)="resetStats()">
+        {{ i18n.t('statsmodal.reset') }}
+      </button>
     }
   </div>
 </div>

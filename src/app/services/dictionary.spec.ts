@@ -56,7 +56,17 @@ describe('Sözlük — kapsam ve kalite', () => {
   describe('çekimli biçimler — hiçbir kök sözlüğünde yoktur, biçimbilimle geldi', () => {
     // Oyuncu tahtaya "GEL" değil "GELDİ" yazar. Bunlar reddedilirse oyun,
     // dilin en sık kullanılan kelimelerini yok saymış olur.
-    for (const w of ['GELDİ', 'OLSUN', 'BABAM', 'YERDE', 'EVDEN', 'ALDIM', 'YOKTU', 'ADINI', 'MUSUN']) {
+    for (const w of [
+      'GELDİ',
+      'OLSUN',
+      'BABAM',
+      'YERDE',
+      'EVDEN',
+      'ALDIM',
+      'YOKTU',
+      'ADINI',
+      'MUSUN',
+    ]) {
       it(`${w} kabul edilir`, () => expect(words.isValid(w)).toBe(true));
     }
   });

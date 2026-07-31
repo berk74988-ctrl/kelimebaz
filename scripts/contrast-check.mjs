@@ -25,7 +25,10 @@ function parseColor(c) {
   }
   const m = s.match(/rgba?\(([^)]+)\)/);
   if (!m) throw new Error(`renk çözümlenemedi: ${c}`);
-  return m[1].split(',').slice(0, 3).map((x) => parseFloat(x));
+  return m[1]
+    .split(',')
+    .slice(0, 3)
+    .map((x) => parseFloat(x));
 }
 
 /** WCAG bağıl parlaklık */
@@ -90,12 +93,15 @@ for (const { theme, high } of MODES) {
   );
   await page.waitForTimeout(150);
 
-  const vars = await page.evaluate((names) => {
-    const cs = getComputedStyle(document.documentElement);
-    const out = {};
-    for (const n of names) out[n] = cs.getPropertyValue(n).trim();
-    return out;
-  }, [...new Set(PAIRS.flatMap(([, f, b]) => [f, b]))]);
+  const vars = await page.evaluate(
+    (names) => {
+      const cs = getComputedStyle(document.documentElement);
+      const out = {};
+      for (const n of names) out[n] = cs.getPropertyValue(n).trim();
+      return out;
+    },
+    [...new Set(PAIRS.flatMap(([, f, b]) => [f, b]))],
+  );
 
   const themeName = theme === 'dark' ? '🌙 KARANLIK' : '☀️ AYDINLIK';
   console.log(`\n${themeName} TEMA${high ? '  +  👁 YÜKSEK KONTRAST (renk körü)' : ''}`);

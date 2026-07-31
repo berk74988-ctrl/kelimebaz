@@ -3,7 +3,7 @@
  *
  * ÖLÇER (iddia etmez):
  *   1. Müzik dosyası gerçekten sunuluyor mu, çalınabilir mi?
- *   2. Otomatik başlatma engellendiğinde ilk etkileşimde başlıyor mu?
+ *   2. Müzik İLK AÇILIŞTA İNDİRİLMEZ (öğe yok); ilk etkileşimde oluşup başlıyor mu?
  *   3. Kaydırıcılar müziğin ve efektlerin sesini AYRI AYRI değiştiriyor mu?
  *   4. Ayarlar sayfa yenilenince aynı şekilde geri geliyor mu?
  *
@@ -44,7 +44,7 @@ console.log('─'.repeat(64));
 }
 
 // ---------------------------------------------------------------------------
-console.log('\n2) OTOMATİK BAŞLATMA');
+console.log('\n2) TEMBEL YÜKLEME + İLK ETKİLEŞİMDE BAŞLATMA');
 console.log('─'.repeat(64));
 
 {
@@ -68,20 +68,33 @@ console.log('─'.repeat(64));
     return el ? { src: el.src, loop: el.loop, paused: el.paused, volume: el.volume } : null;
   });
 
-  check('açılışta <audio> kuruldu', !!before, before ? new URL(before.src).pathname : 'YOK');
-  check('döngüde çalacak şekilde ayarlı', before?.loop === true);
-  check('ses seviyesi varsayılanda', before?.volume > 0 && before?.volume < 1, `${before?.volume}`);
+  // Müzik İLK AÇILIŞTA indirilmemeli: <audio> öğesi henüz oluşturulmamış olmalı.
+  check(
+    'açılışta <audio> YOK (ilk açılışta indirilmez)',
+    !before,
+    before ? 'oluşturulmuş!' : 'doğru',
+  );
 
-  // Tarayıcı sesli otomatik oynatmayı engelleyebilir (standart politika).
-  // Engellendiyse İLK ETKİLEŞİMDE başlamalı — asıl sınav bu.
+  // İlk kullanıcı etkileşimi → öğe O ZAMAN oluşturulur, kaynağı iner ve çalar.
   await page.mouse.click(10, 10);
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(900);
 
   const after = await page.evaluate(() => {
     const el = window.__kbAudio;
-    return el ? { paused: el.paused, currentTime: el.currentTime } : null;
+    return el
+      ? {
+          src: el.src,
+          loop: el.loop,
+          paused: el.paused,
+          volume: el.volume,
+          currentTime: el.currentTime,
+        }
+      : null;
   });
 
+  check('etkileşimde <audio> oluşturuldu', !!after, after ? new URL(after.src).pathname : 'YOK');
+  check('döngüde çalacak şekilde ayarlı', after?.loop === true);
+  check('ses seviyesi varsayılanda', after?.volume > 0 && after?.volume < 1, `${after?.volume}`);
   check(
     'ilk etkileşimden sonra müzik ÇALIYOR',
     after && after.paused === false,
@@ -122,7 +135,11 @@ console.log('─'.repeat(64));
   await page.waitForTimeout(300);
 
   const vol = await page.evaluate(() => window.__kbAudio?.volume ?? null);
-  check('müzik kaydırıcısı <audio>.volume değiştiriyor', Math.abs(vol - 0.2) < 0.02, `volume=${vol}`);
+  check(
+    'müzik kaydırıcısı <audio>.volume değiştiriyor',
+    Math.abs(vol - 0.2) < 0.02,
+    `volume=${vol}`,
+  );
 
   const stored = await page.evaluate(() => ({
     m: localStorage.getItem('kelimebaz:audio:musicVol'),

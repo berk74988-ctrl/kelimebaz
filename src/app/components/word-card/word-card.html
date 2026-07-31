@@ -13,20 +13,32 @@
     </button>
 
     <!-- [hidden]: kapalıyken hem görsel hem ekran-okuyucudan gizli; aria-controls hep çözülür -->
-    <div class="wc-body" id="wc-body" role="region" [attr.aria-label]="i18n.t('wordCard.title')" [hidden]="!expanded()">
+    <div
+      class="wc-body"
+      id="wc-body"
+      role="region"
+      [attr.aria-label]="i18n.t('wordCard.title')"
+      [hidden]="!expanded()"
+    >
       <p class="wc-def">{{ c.t }}</p>
       <p class="wc-ex">
         <span class="wc-lbl">{{ i18n.t('wordCard.example') }}</span>
         <i>{{ c.e }}</i>
       </p>
       @if (c.k) {
-        <p class="wc-row"><span class="wc-lbl">{{ i18n.t('wordCard.origin') }}</span> {{ c.k }}</p>
+        <p class="wc-row">
+          <span class="wc-lbl">{{ i18n.t('wordCard.origin') }}</span> {{ c.k }}
+        </p>
       }
       @if (c.s?.length) {
-        <p class="wc-row"><span class="wc-lbl">{{ i18n.t('wordCard.synonyms') }}</span> {{ c.s!.join(', ') }}</p>
+        <p class="wc-row">
+          <span class="wc-lbl">{{ i18n.t('wordCard.synonyms') }}</span> {{ c.s!.join(', ') }}
+        </p>
       }
       @if (c.z?.length) {
-        <p class="wc-row"><span class="wc-lbl">{{ i18n.t('wordCard.antonyms') }}</span> {{ c.z!.join(', ') }}</p>
+        <p class="wc-row">
+          <span class="wc-lbl">{{ i18n.t('wordCard.antonyms') }}</span> {{ c.z!.join(', ') }}
+        </p>
       }
     </div>
   </section>

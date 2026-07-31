@@ -86,7 +86,10 @@ export class WordService {
     const [answersMod, validMod] =
       lang === 'tr'
         ? await Promise.all([import('../data/words.json'), import('../data/valid-words.json')])
-        : await Promise.all([import('../data/words-en.json'), import('../data/valid-words-en.json')]);
+        : await Promise.all([
+            import('../data/words-en.json'),
+            import('../data/valid-words-en.json'),
+          ]);
     const a = ((answersMod as { default?: unknown }).default ?? answersMod) as { words: string[] };
     const v = ((validMod as { default?: unknown }).default ?? validMod) as { words: string };
     return buildPool(a.words, v.words, lang);

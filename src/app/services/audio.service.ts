@@ -5,7 +5,6 @@ const K_SFX_VOL = 'kelimebaz:audio:sfxVol';
 const K_MUSIC_ON = 'kelimebaz:audio:musicOn';
 const K_SFX_ON = 'kelimebaz:audio:sfxOn';
 
-
 /** Çalınabilecek efektler. */
 export type Sfx = 'key' | 'delete' | 'invalid' | 'reveal' | 'win' | 'lose';
 
@@ -45,7 +44,9 @@ export class AudioService {
   readonly blocked = this._blocked.asReadonly();
 
   /** Müzik şu an gerçekten duyuluyor mu? */
-  readonly musicAudible = computed(() => this._musicOn() && this._musicVol() > 0 && !this._blocked());
+  readonly musicAudible = computed(
+    () => this._musicOn() && this._musicVol() > 0 && !this._blocked(),
+  );
 
   private el: HTMLAudioElement | null = null;
   private ctx: AudioContext | null = null;
@@ -236,7 +237,8 @@ export class AudioService {
     if (this.ctx) return this.ctx;
     const Ctor: typeof AudioContext | undefined =
       typeof window !== 'undefined'
-        ? (window.AudioContext ?? (window as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
+        ? (window.AudioContext ??
+          (window as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
         : undefined;
     if (!Ctor) return null; // WebAudio yoksa oyun sessiz çalışır, kırılmaz
     this.ctx = new Ctor();

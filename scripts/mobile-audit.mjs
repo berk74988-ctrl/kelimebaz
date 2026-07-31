@@ -32,18 +32,33 @@ async function shot(name, width, height, nav) {
     return { v: de.scrollHeight - de.clientHeight, h: de.scrollWidth - de.clientWidth };
   });
   await page.screenshot({ path: `${OUT}/${name}-${width}x${height}.png`, fullPage: false });
-  console.log(`  ✓ ${name} ${width}×${height}  ${over.v > 1 ? 'DİKEY+' + over.v : 'sığar'}${over.h > 0 ? ' YATAY+' + over.h : ''}`);
+  console.log(
+    `  ✓ ${name} ${width}×${height}  ${over.v > 1 ? 'DİKEY+' + over.v : 'sığar'}${over.h > 0 ? ' YATAY+' + over.h : ''}`,
+  );
   await ctx.close();
 }
 
 const screens = {
   title: async () => {},
-  game: async (p) => { await p.getByRole('button', { name: /Günün Kelimesi|Sonucu Gör/ }).click(); await p.waitForSelector('app-board'); },
-  profile: async (p) => { await p.getByRole('button', { name: /^Profil$/ }).click(); },
-  shop: async (p) => { await p.getByRole('button', { name: /^Mağaza$/ }).click(); },
-  league: async (p) => { await p.locator('.mode', { hasText: 'LP' }).click(); },
-  settings: async (p) => { await p.getByRole('button', { name: /Ayarlar/ }).click(); },
-  room: async (p) => { await p.locator('.mode', { hasText: 'Arkadaşlarla' }).click(); },
+  game: async (p) => {
+    await p.getByRole('button', { name: /Günün Kelimesi|Sonucu Gör/ }).click();
+    await p.waitForSelector('app-board');
+  },
+  profile: async (p) => {
+    await p.getByRole('button', { name: /^Profil$/ }).click();
+  },
+  shop: async (p) => {
+    await p.getByRole('button', { name: /^Mağaza$/ }).click();
+  },
+  league: async (p) => {
+    await p.locator('.mode', { hasText: 'LP' }).click();
+  },
+  settings: async (p) => {
+    await p.getByRole('button', { name: /Ayarlar/ }).click();
+  },
+  room: async (p) => {
+    await p.locator('.mode', { hasText: 'Arkadaşlarla' }).click();
+  },
 };
 
 const sizes = [

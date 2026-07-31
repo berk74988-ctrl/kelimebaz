@@ -4,6 +4,8 @@
 
 **Türkçe kelime bulmaca oyunu.** Gizli kelimeyi 6 tahminde bul (kelime uzunluğu seviyene göre 4-7 harf).
 
+[![CI](https://github.com/berk74988-ctrl/kelimebaz/actions/workflows/ci.yml/badge.svg)](https://github.com/berk74988-ctrl/kelimebaz/actions/workflows/ci.yml)
+
 ### ▶️ [**Oyna: 34.158.136.9/berk/kelimebaz**](http://34.158.136.9/berk/kelimebaz/)
 
 ![Kelimebaz](docs/screenshots/2-oyun.png)

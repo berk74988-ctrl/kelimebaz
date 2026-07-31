@@ -12,7 +12,10 @@ let fail = 0;
 
 async function seed(page, league) {
   await page.evaluate((l) => {
-    localStorage.setItem('kelimebaz:gold', JSON.stringify({ balance: 540, earned: 900, spent: 360 }));
+    localStorage.setItem(
+      'kelimebaz:gold',
+      JSON.stringify({ balance: 540, earned: 900, spent: 360 }),
+    );
     localStorage.setItem('kelimebaz:league', JSON.stringify(l));
   }, league);
 }
@@ -39,7 +42,13 @@ async function openLeague(width, height, league) {
 async function leagueScreen(name, width, height) {
   const now = Date.now();
   const { c, page } = await openLeague(width, height, {
-    lp: 725, season: 3, seasonStart: now - 4 * DAY, wins: 21, losses: 9, peakLp: 812, history: [],
+    lp: 725,
+    season: 3,
+    seasonStart: now - 4 * DAY,
+    wins: 21,
+    losses: 9,
+    peakLp: 812,
+    history: [],
   });
   const scroll = await page.evaluate(() => {
     const el = document.querySelector('.content');
@@ -54,14 +63,22 @@ async function leagueScreen(name, width, height) {
   await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: false });
   const ok = !scroll.content && !scroll.page;
   if (!ok) fail++;
-  console.log(`  ${ok ? '✓' : '✗'} ${name} (${width}×${height}) — içerik ${scroll.content ? 'KAYDIRIYOR' : 'sığıyor'} (${scroll.sh}/${scroll.ch})${scroll.page ? ' + SAYFA' : ''}`);
+  console.log(
+    `  ${ok ? '✓' : '✗'} ${name} (${width}×${height}) — içerik ${scroll.content ? 'KAYDIRIYOR' : 'sığıyor'} (${scroll.sh}/${scroll.ch})${scroll.page ? ' + SAYFA' : ''}`,
+  );
   await c.close();
 }
 
 async function rewardModal(name, width, height) {
   const now = Date.now();
   const { c, page } = await openLeague(width, height, {
-    lp: 1320, season: 5, seasonStart: now - 20 * DAY, wins: 44, losses: 12, peakLp: 1435, history: [],
+    lp: 1320,
+    season: 5,
+    seasonStart: now - 20 * DAY,
+    wins: 44,
+    losses: 12,
+    peakLp: 1435,
+    history: [],
   });
   await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: false });
   console.log(`  ✓ ${name} (ödül modalı)`);

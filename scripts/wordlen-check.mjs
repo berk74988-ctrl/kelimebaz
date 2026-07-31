@@ -8,11 +8,17 @@ import { chromium } from 'playwright';
 const TARGET = process.argv[2] ?? 'http://localhost:4200';
 const browser = await chromium.launch();
 let fail = 0;
-const check = (n, ok, d = '') => { if (!ok) fail++; console.log(`${ok ? '✓' : '✗'} ${n}${d ? '  — ' + d : ''}`); };
+const check = (n, ok, d = '') => {
+  if (!ok) fail++;
+  console.log(`${ok ? '✓' : '✗'} ${n}${d ? '  — ' + d : ''}`);
+};
 
 const WORDS = ['ADAM', 'GÜNEŞ', 'DOKTOR', 'TELEFON']; // 4,5,6,7
 
-for (const size of [{ n: 'mobil', w: 390, h: 844 }, { n: 'masaüstü', w: 1280, h: 860 }]) {
+for (const size of [
+  { n: 'mobil', w: 390, h: 844 },
+  { n: 'masaüstü', w: 1280, h: 860 },
+]) {
   const ctx = await browser.newContext({ viewport: { width: size.w, height: size.h } });
   const page = await ctx.newPage();
   const errors = [];
@@ -22,9 +28,16 @@ for (const size of [{ n: 'mobil', w: 390, h: 844 }, { n: 'masaüstü', w: 1280, 
     await page.goto(TARGET, { waitUntil: 'domcontentloaded' });
     // Kayıtlı serbest oyunu bu kelimeyle tohumla → "Serbest Oyna" onu sürdürür
     await page.evaluate((w) => {
-      localStorage.setItem('kelimebaz:game:practice', JSON.stringify({
-        mode: 'practice', dayIndex: -1, answer: w, guesses: [], status: 'playing',
-      }));
+      localStorage.setItem(
+        'kelimebaz:game:practice',
+        JSON.stringify({
+          mode: 'practice',
+          dayIndex: -1,
+          answer: w,
+          guesses: [],
+          status: 'playing',
+        }),
+      );
     }, word);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /Serbest Oyna/ }).click();
@@ -33,10 +46,16 @@ for (const size of [{ n: 'mobil', w: 390, h: 844 }, { n: 'masaüstü', w: 1280, 
 
     // 1) İlk satırdaki kutu sayısı = kelime uzunluğu
     const cols = await page.locator('app-board .row').first().locator('app-tile').count();
-    check(`[${size.n}] ${word} (${[...word].length}h): tahta ${cols} kolon`, cols === [...word].length, `${cols}`);
+    check(
+      `[${size.n}] ${word} (${[...word].length}h): tahta ${cols} kolon`,
+      cols === [...word].length,
+      `${cols}`,
+    );
 
     // 2) Yatay taşma yok
-    const overflowX = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+    const overflowX = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    );
     check(`[${size.n}] ${word}: yatay taşma yok`, !overflowX);
 
     // 3) Tahta genişliği ekrana sığıyor
@@ -59,5 +78,9 @@ for (const size of [{ n: 'mobil', w: 390, h: 844 }, { n: 'masaüstü', w: 1280, 
 }
 
 await browser.close();
-console.log(fail === 0 ? '\n✅ Değişken uzunluk her ekranda düzgün çalışıyor' : `\n❌ ${fail} kontrol başarısız`);
+console.log(
+  fail === 0
+    ? '\n✅ Değişken uzunluk her ekranda düzgün çalışıyor'
+    : `\n❌ ${fail} kontrol başarısız`,
+);
 process.exit(fail === 0 ? 0 : 1);

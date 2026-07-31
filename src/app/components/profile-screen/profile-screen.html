@@ -1,9 +1,21 @@
 <main class="screen">
   <!-- Üst çubuk -->
   <header class="bar">
-    <button class="back" type="button" [attr.aria-label]="i18n.t('common.backTitle')" (click)="back.emit()">←</button>
+    <button
+      class="back"
+      type="button"
+      [attr.aria-label]="i18n.t('common.backTitle')"
+      (click)="back.emit()"
+    >
+      ←
+    </button>
     <h1 class="title">{{ i18n.t('profile.title') }}</h1>
-    <button class="coin" type="button" [attr.aria-label]="i18n.t('profile.openShop')" (click)="openShop.emit()">
+    <button
+      class="coin"
+      type="button"
+      [attr.aria-label]="i18n.t('profile.openShop')"
+      (click)="openShop.emit()"
+    >
       <span aria-hidden="true">🪙</span>
       <b>{{ i18n.num(gold.balance()) }}</b>
     </button>
@@ -27,7 +39,12 @@
           </div>
         </div>
 
-        <label class="ph-btn" [attr.aria-label]="profile.hasPhoto() ? i18n.t('profile.photoChange') : i18n.t('profile.photoUpload')">
+        <label
+          class="ph-btn"
+          [attr.aria-label]="
+            profile.hasPhoto() ? i18n.t('profile.photoChange') : i18n.t('profile.photoUpload')
+          "
+        >
           📷
           <input type="file" accept="image/*" (change)="onPhoto($event)" />
         </label>
@@ -45,13 +62,17 @@
             (input)="onName($event)"
           />
           @if (badge()) {
-            <span class="name-badge" [attr.aria-label]="i18n.t('profile.badge')">{{ badge() }}</span>
+            <span class="name-badge" [attr.aria-label]="i18n.t('profile.badge')">{{
+              badge()
+            }}</span>
           }
         </div>
 
         <div class="lv-top">
           <span class="lv-badge">{{ i18n.t('profile.level', { level: level.level }) }}</span>
-          <span class="lv-num">{{ i18n.t('profile.levelPoints', { into: level.into, need: level.need }) }}</span>
+          <span class="lv-num">{{
+            i18n.t('profile.levelPoints', { into: level.into, need: level.need })
+          }}</span>
         </div>
         <div
           class="lv-track"
@@ -80,13 +101,31 @@
 
     <!-- ── Sekmeler ── -->
     <nav class="segs" [attr.aria-label]="i18n.t('profile.sections')">
-      <button class="seg" type="button" [class.on]="tab() === 'stats'" [attr.aria-pressed]="tab() === 'stats'" (click)="tab.set('stats')">
+      <button
+        class="seg"
+        type="button"
+        [class.on]="tab() === 'stats'"
+        [attr.aria-pressed]="tab() === 'stats'"
+        (click)="tab.set('stats')"
+      >
         📊 {{ i18n.t('profile.tabStats') }}
       </button>
-      <button class="seg" type="button" [class.on]="tab() === 'quests'" [attr.aria-pressed]="tab() === 'quests'" (click)="tab.set('quests')">
+      <button
+        class="seg"
+        type="button"
+        [class.on]="tab() === 'quests'"
+        [attr.aria-pressed]="tab() === 'quests'"
+        (click)="tab.set('quests')"
+      >
         🎯 {{ i18n.t('profile.tabQuests') }}
       </button>
-      <button class="seg" type="button" [class.on]="tab() === 'avatar'" [attr.aria-pressed]="tab() === 'avatar'" (click)="tab.set('avatar')">
+      <button
+        class="seg"
+        type="button"
+        [class.on]="tab() === 'avatar'"
+        [attr.aria-pressed]="tab() === 'avatar'"
+        (click)="tab.set('avatar')"
+      >
         🎨 {{ i18n.t('profile.tabAvatar') }}
       </button>
     </nav>
@@ -136,7 +175,9 @@
         @case ('quests') {
           <div class="q-head">
             <h2 class="sec" style="margin: 0">{{ i18n.t('profile.dailyQuests') }}</h2>
-            <span class="q-count">{{ questService.completedCount() }} / {{ questService.quests.length }}</span>
+            <span class="q-count"
+              >{{ questService.completedCount() }} / {{ questService.quests.length }}</span
+            >
           </div>
 
           <div class="quests">

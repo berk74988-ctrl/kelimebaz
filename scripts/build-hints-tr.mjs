@@ -12,11 +12,29 @@ const EN = new URL('../src/app/data/hints-en.json', import.meta.url);
 const TR = new URL('../src/app/data/hints-tr.json', import.meta.url);
 
 const CAT_TR = {
-  Animal: 'Hayvan', Food: 'Yiyecek', Place: 'Yer', Person: 'Kişi', Tool: 'Eşya',
-  Plant: 'Bitki', Material: 'Madde', Nature: 'Doğa', Color: 'Renk', Time: 'Zaman',
-  Body: 'Vücut', Clothing: 'Giysi', Vehicle: 'Araç', Noun: 'İsim', Verb: 'Fiil',
-  Adjective: 'Sıfat', Adverb: 'Zarf', Pronoun: 'Zamir', Preposition: 'Edat',
-  Conjunction: 'Bağlaç', Exclamation: 'Ünlem', Determiner: 'Belirteç', Word: 'Kelime',
+  Animal: 'Hayvan',
+  Food: 'Yiyecek',
+  Place: 'Yer',
+  Person: 'Kişi',
+  Tool: 'Eşya',
+  Plant: 'Bitki',
+  Material: 'Madde',
+  Nature: 'Doğa',
+  Color: 'Renk',
+  Time: 'Zaman',
+  Body: 'Vücut',
+  Clothing: 'Giysi',
+  Vehicle: 'Araç',
+  Noun: 'İsim',
+  Verb: 'Fiil',
+  Adjective: 'Sıfat',
+  Adverb: 'Zarf',
+  Pronoun: 'Zamir',
+  Preposition: 'Edat',
+  Conjunction: 'Bağlaç',
+  Exclamation: 'Ünlem',
+  Determiner: 'Belirteç',
+  Word: 'Kelime',
 };
 
 async function gtx(lines, tries = 5) {
@@ -28,7 +46,10 @@ async function gtx(lines, tries = 5) {
       const to = setTimeout(() => ctrl.abort(), 12000);
       const r = await fetch(url, { signal: ctrl.signal });
       clearTimeout(to);
-      if (r.status === 429) { await new Promise((s) => setTimeout(s, 1000 + t * 1500)); continue; }
+      if (r.status === 429) {
+        await new Promise((s) => setTimeout(s, 1000 + t * 1500));
+        continue;
+      }
       if (!r.ok) throw new Error('http ' + r.status);
       const d = await r.json();
       const segs = d[0].map((s) => s[0]).join('');
@@ -36,7 +57,9 @@ async function gtx(lines, tries = 5) {
       if (out.length === lines.length) return out.map((s) => s.trim());
       // hizalama bozuldu → tek tek çevir (güvenli yol)
       const one = [];
-      for (const ln of lines) { one.push((await gtxOne(ln)) || ln); }
+      for (const ln of lines) {
+        one.push((await gtxOne(ln)) || ln);
+      }
       return one;
     } catch {
       if (t === tries - 1) return null;
@@ -47,30 +70,53 @@ async function gtx(lines, tries = 5) {
 }
 async function gtxOne(line) {
   const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=tr&dt=t&q=${encodeURIComponent(line)}`;
-  try { const r = await fetch(url); const d = await r.json(); return d[0].map((s) => s[0]).join('').trim(); } catch { return null; }
+  try {
+    const r = await fetch(url);
+    const d = await r.json();
+    return d[0]
+      .map((s) => s[0])
+      .join('')
+      .trim();
+  } catch {
+    return null;
+  }
 }
 
 const en = JSON.parse(await readFile(EN));
 let tr = {};
-try { tr = JSON.parse(await readFile(TR)); } catch { tr = {}; }
+try {
+  tr = JSON.parse(await readFile(TR));
+} catch {
+  tr = {};
+}
 
 const words = Object.keys(en);
 const todo = words.filter((w) => !tr[w]);
-console.log(`Çeviri: ${todo.length} eksik ipucu (mevcut: ${Object.keys(tr).length} / toplam ${words.length})`);
+console.log(
+  `Çeviri: ${todo.length} eksik ipucu (mevcut: ${Object.keys(tr).length} / toplam ${words.length})`,
+);
 
 // açıklaması olan kelimeleri toplu çevir; sadece kategorili olanları anında ata
-const BATCH = 20, CONC = 3;
+const BATCH = 20,
+  CONC = 3;
 const batches = [];
 let cur = [];
 for (const w of todo) {
   const h = (en[w].h || '').trim();
-  if (!h) { tr[w] = { c: CAT_TR[en[w].c] || en[w].c, h: '' }; continue; } // açıklama yok → sadece kategori
+  if (!h) {
+    tr[w] = { c: CAT_TR[en[w].c] || en[w].c, h: '' };
+    continue;
+  } // açıklama yok → sadece kategori
   cur.push(w);
-  if (cur.length >= BATCH) { batches.push(cur); cur = []; }
+  if (cur.length >= BATCH) {
+    batches.push(cur);
+    cur = [];
+  }
 }
 if (cur.length) batches.push(cur);
 
-let bi = 0, done = 0;
+let bi = 0,
+  done = 0;
 async function worker() {
   while (bi < batches.length) {
     const batch = batches[bi++];
@@ -78,15 +124,21 @@ async function worker() {
     const res = await gtx(lines);
     for (let i = 0; i < batch.length; i++) {
       const w = batch[i];
-      const ht = (res && res[i]) ? res[i] : en[w].h; // çeviri olmazsa İngilizce'ye düş
+      const ht = res && res[i] ? res[i] : en[w].h; // çeviri olmazsa İngilizce'ye düş
       tr[w] = { c: CAT_TR[en[w].c] || en[w].c, h: ht };
     }
     done += batch.length;
-    if (done % 200 < BATCH) { console.log(`  ~${done}/${todo.length} çevrildi`); await writeFile(TR, JSON.stringify(tr)); }
+    if (done % 200 < BATCH) {
+      console.log(`  ~${done}/${todo.length} çevrildi`);
+      await writeFile(TR, JSON.stringify(tr));
+    }
   }
 }
 await Promise.all(Array.from({ length: CONC }, worker));
 
 await writeFile(TR, JSON.stringify(tr));
-console.log(`\n✅ Bitti: ${Object.keys(tr).length} Türkçe ipucu → src/app/data/hints-tr.json (${(JSON.stringify(tr).length / 1024).toFixed(0)} KB)`);
-for (const w of ['APPLE', 'TIGER', 'DOCTOR', 'HOUSE', 'GREEN', 'RIVER']) if (tr[w]) console.log(`  ${w}: [${tr[w].c}] ${tr[w].h}`);
+console.log(
+  `\n✅ Bitti: ${Object.keys(tr).length} Türkçe ipucu → src/app/data/hints-tr.json (${(JSON.stringify(tr).length / 1024).toFixed(0)} KB)`,
+);
+for (const w of ['APPLE', 'TIGER', 'DOCTOR', 'HOUSE', 'GREEN', 'RIVER'])
+  if (tr[w]) console.log(`  ${w}: [${tr[w].c}] ${tr[w].h}`);

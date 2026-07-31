@@ -58,9 +58,16 @@
   border-radius: 18px;
   cursor: pointer;
   border: 1px solid var(--border, #2c3a48);
-  background: linear-gradient(160deg, var(--surface, #1b2733), color-mix(in srgb, var(--surface, #16202a) 80%, #000));
+  background: linear-gradient(
+    160deg,
+    var(--surface, #1b2733),
+    color-mix(in srgb, var(--surface, #16202a) 80%, #000)
+  );
   color: var(--text, #e8eef2);
-  transition: transform 0.12s, border-color 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.12s,
+    border-color 0.15s,
+    box-shadow 0.15s;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
   &:hover {
     transform: translateY(-3px);
@@ -177,7 +184,9 @@
   animation: vsHudIn 0.3s ease;
   &.won {
     border-color: #58c37a;
-    box-shadow: 0 0 0 2px #58c37a55, 0 8px 24px rgba(0, 0, 0, 0.45);
+    box-shadow:
+      0 0 0 2px #58c37a55,
+      0 8px 24px rgba(0, 0, 0, 0.45);
   }
   &.lost {
     border-color: #7c8a97;
@@ -386,7 +395,11 @@
 }
 .vs-res-card {
   width: min(94vw, 420px);
-  background: linear-gradient(165deg, var(--surface, #1b2733), color-mix(in srgb, var(--surface, #16202a) 82%, #000));
+  background: linear-gradient(
+    165deg,
+    var(--surface, #1b2733),
+    color-mix(in srgb, var(--surface, #16202a) 82%, #000)
+  );
   border: 1px solid var(--border, #2c3a48);
   border-radius: 22px;
   padding: 26px 22px 22px;
@@ -506,7 +519,9 @@
   font-size: 14.5px;
   cursor: pointer;
   border: none;
-  transition: transform 0.1s, filter 0.15s;
+  transition:
+    transform 0.1s,
+    filter 0.15s;
   &:active {
     transform: translateY(1px);
   }

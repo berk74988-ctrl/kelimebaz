@@ -59,7 +59,11 @@ export class AiHintService {
    * içindir (istemci zaten cevabı biliyor); modele cevap gönderilmez.
    * Hata durumunda throw eder → çağıran altını iade eder.
    */
-  async requestHint(input: { length: number; guesses: HintGuess[]; answer: string }): Promise<string> {
+  async requestHint(input: {
+    length: number;
+    guesses: HintGuess[];
+    answer: string;
+  }): Promise<string> {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), HINT_TIMEOUT);
     let res: Response;

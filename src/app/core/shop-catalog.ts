@@ -43,21 +43,95 @@ export interface ShopItem {
 
 export const SHOP_ITEMS: readonly ShopItem[] = [
   // ---- TEMALAR (vurgu paleti) ----
-  { id: 'theme.default', category: 'theme', name: 'Klasik', price: 0, preview: '#6c8cff', preview2: '#9d7bff' },
-  { id: 'theme.ocean', category: 'theme', name: 'Okyanus', price: 150, preview: '#22b8cf', preview2: '#3b82f6' },
-  { id: 'theme.sunset', category: 'theme', name: 'Gün Batımı', price: 150, preview: '#f97316', preview2: '#ec4899' },
-  { id: 'theme.forest', category: 'theme', name: 'Orman', price: 200, preview: '#22c55e', preview2: '#84cc16' },
-  { id: 'theme.grape', category: 'theme', name: 'Mor Gece', price: 250, preview: '#a855f7', preview2: '#6366f1' },
-  { id: 'theme.rose', category: 'theme', name: 'Gül', price: 250, preview: '#f43f5e', preview2: '#fb7185' },
+  {
+    id: 'theme.default',
+    category: 'theme',
+    name: 'Klasik',
+    price: 0,
+    preview: '#6c8cff',
+    preview2: '#9d7bff',
+  },
+  {
+    id: 'theme.ocean',
+    category: 'theme',
+    name: 'Okyanus',
+    price: 150,
+    preview: '#22b8cf',
+    preview2: '#3b82f6',
+  },
+  {
+    id: 'theme.sunset',
+    category: 'theme',
+    name: 'Gün Batımı',
+    price: 150,
+    preview: '#f97316',
+    preview2: '#ec4899',
+  },
+  {
+    id: 'theme.forest',
+    category: 'theme',
+    name: 'Orman',
+    price: 200,
+    preview: '#22c55e',
+    preview2: '#84cc16',
+  },
+  {
+    id: 'theme.grape',
+    category: 'theme',
+    name: 'Mor Gece',
+    price: 250,
+    preview: '#a855f7',
+    preview2: '#6366f1',
+  },
+  {
+    id: 'theme.rose',
+    category: 'theme',
+    name: 'Gül',
+    price: 250,
+    preview: '#f43f5e',
+    preview2: '#fb7185',
+  },
   // 🏆 Sezon ödülü — mağazada satılmaz, yalnız üst liglerde kazanılır
-  { id: 'theme.champion', category: 'theme', name: 'Şampiyon', price: 9999, preview: '#ffd75a', preview2: '#c084fc', seasonOnly: true },
+  {
+    id: 'theme.champion',
+    category: 'theme',
+    name: 'Şampiyon',
+    price: 9999,
+    preview: '#ffd75a',
+    preview2: '#c084fc',
+    seasonOnly: true,
+  },
 
   // ---- ÇERÇEVELER (profil fotoğrafı kenarı) ----
   { id: 'frame.none', category: 'frame', name: 'Çerçevesiz', price: 0, preview: 'transparent' },
-  { id: 'frame.gold', category: 'frame', name: 'Altın', price: 120, preview: 'linear-gradient(135deg, #f7d774, #d9a441)' },
-  { id: 'frame.neon', category: 'frame', name: 'Neon', price: 180, preview: 'linear-gradient(135deg, #22d3ee, #a855f7)' },
-  { id: 'frame.fire', category: 'frame', name: 'Ateş', price: 200, preview: 'linear-gradient(135deg, #fb923c, #ef4444)' },
-  { id: 'frame.rainbow', category: 'frame', name: 'Gökkuşağı', price: 350, preview: 'linear-gradient(135deg, #f43f5e, #eab308, #22c55e, #3b82f6, #a855f7)' },
+  {
+    id: 'frame.gold',
+    category: 'frame',
+    name: 'Altın',
+    price: 120,
+    preview: 'linear-gradient(135deg, #f7d774, #d9a441)',
+  },
+  {
+    id: 'frame.neon',
+    category: 'frame',
+    name: 'Neon',
+    price: 180,
+    preview: 'linear-gradient(135deg, #22d3ee, #a855f7)',
+  },
+  {
+    id: 'frame.fire',
+    category: 'frame',
+    name: 'Ateş',
+    price: 200,
+    preview: 'linear-gradient(135deg, #fb923c, #ef4444)',
+  },
+  {
+    id: 'frame.rainbow',
+    category: 'frame',
+    name: 'Gökkuşağı',
+    price: 350,
+    preview: 'linear-gradient(135deg, #f43f5e, #eab308, #22c55e, #3b82f6, #a855f7)',
+  },
 
   // ---- ROZETLER (isim yanında amblem) ----
   { id: 'badge.none', category: 'badge', name: 'Rozetsiz', price: 0, preview: '' },
@@ -67,7 +141,14 @@ export const SHOP_ITEMS: readonly ShopItem[] = [
   { id: 'badge.diamond', category: 'badge', name: 'Elmas', price: 250, preview: '💎' },
   { id: 'badge.trophy', category: 'badge', name: 'Kupa', price: 300, preview: '🏆' },
   // 🎖️ Sezon ödülü rozeti — mağazada satılmaz, lig performansıyla kazanılır
-  { id: 'badge.league', category: 'badge', name: 'Lig Madalyası', price: 9999, preview: '🎖️', seasonOnly: true },
+  {
+    id: 'badge.league',
+    category: 'badge',
+    name: 'Lig Madalyası',
+    price: 9999,
+    preview: '🎖️',
+    seasonOnly: true,
+  },
 
   // ---- AVATARLAR ----
   // Ücretsiz on iki emoji (eskiden ProfileService'teydi) + satın alınabilir özel avatarlar.
@@ -155,7 +236,9 @@ export const DEFAULT_ITEM: Record<ShopCategory, string> = {
 };
 
 /** Başlangıçta herkese ait ücretsiz ürünler (fiyatı 0 olanların hepsi). */
-export const FREE_ITEMS: readonly string[] = SHOP_ITEMS.filter((i) => i.price === 0).map((i) => i.id);
+export const FREE_ITEMS: readonly string[] = SHOP_ITEMS.filter((i) => i.price === 0).map(
+  (i) => i.id,
+);
 
 /** Kategori görüntü bilgisi — mağaza sekmelerini bundan çizer. */
 export const CATEGORY_META: Record<ShopCategory, { icon: string; label: string }> = {

@@ -10,12 +10,21 @@
     [attr.aria-label]="status() === 'won' ? i18n.t('result.ariaWon') : i18n.t('result.ariaLost')"
     (click)="$event.stopPropagation()"
   >
-    <button class="x" type="button" [attr.aria-label]="i18n.t('result.closeAria')" (click)="close.emit()">✕</button>
+    <button
+      class="x"
+      type="button"
+      [attr.aria-label]="i18n.t('result.closeAria')"
+      (click)="close.emit()"
+    >
+      ✕
+    </button>
 
     <!-- Başlık: sonuç + kaç tahminde -->
     <header class="hero">
       <span class="emoji" aria-hidden="true">{{ status() === 'won' ? '🎉' : '😔' }}</span>
-      <h2 class="head">{{ status() === 'won' ? i18n.t('result.titleWon') : i18n.t('result.titleLost') }}</h2>
+      <h2 class="head">
+        {{ status() === 'won' ? i18n.t('result.titleWon') : i18n.t('result.titleLost') }}
+      </h2>
       <p class="sub">
         @if (status() === 'won') {
           {{ i18n.t('result.wonSub', { n: attempts(), max: maxAttempts }) }}
@@ -28,7 +37,9 @@
     <!-- Cevap: oyunun kendi kutu diliyle -->
     <div class="answer" [attr.aria-label]="i18n.t('result.answerAria', { word: answer() })">
       @for (ch of answerLetters(); track $index) {
-        <span class="a-tile" aria-hidden="true" [style.animation-delay.ms]="$index * 60">{{ ch }}</span>
+        <span class="a-tile" aria-hidden="true" [style.animation-delay.ms]="$index * 60">{{
+          ch
+        }}</span>
       }
     </div>
 

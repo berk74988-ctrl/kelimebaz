@@ -5,7 +5,10 @@ const OUT = process.argv[3] ?? 'C:/Users/berk8/AppData/Local/Temp/claude/room_sh
 mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch();
 
-for (const s of [{ name: 'desktop', w: 1280, h: 860 }, { name: 'mobile', w: 390, h: 844 }]) {
+for (const s of [
+  { name: 'desktop', w: 1280, h: 860 },
+  { name: 'mobile', w: 390, h: 844 },
+]) {
   const ctx = await browser.newContext({ viewport: { width: s.w, height: s.h } });
   const page = await ctx.newPage();
   await page.goto(APP, { waitUntil: 'domcontentloaded' });
@@ -23,7 +26,9 @@ for (const s of [{ name: 'desktop', w: 1280, h: 860 }, { name: 'mobile', w: 390,
   await page.waitForSelector('.rc-code');
   await page.waitForTimeout(500);
   await page.screenshot({ path: `${OUT}/${s.name}-3-lobby.png` });
-  const scrolls = await page.evaluate(() => document.documentElement.scrollHeight > document.documentElement.clientHeight + 1);
+  const scrolls = await page.evaluate(
+    () => document.documentElement.scrollHeight > document.documentElement.clientHeight + 1,
+  );
   console.log(`[${s.name}] lobi kaydırıyor mu: ${scrolls ? 'EVET' : 'hayır'}`);
   await ctx.close();
 }

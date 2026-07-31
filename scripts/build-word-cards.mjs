@@ -112,9 +112,15 @@ async function build(lang) {
   const cfg = LANGS[lang];
   const words = JSON.parse(await readFile(cfg.words)).words;
   let out = {};
-  try { out = JSON.parse(await readFile(cfg.out)); } catch { out = {}; }
+  try {
+    out = JSON.parse(await readFile(cfg.out));
+  } catch {
+    out = {};
+  }
   const todo = words.filter((w) => !out[w] || !out[w].t || !out[w].e);
-  console.log(`[${lang}] Üretilecek: ${todo.length} kart (mevcut: ${words.length - todo.length}/${words.length})`);
+  console.log(
+    `[${lang}] Üretilecek: ${todo.length} kart (mevcut: ${words.length - todo.length}/${words.length})`,
+  );
   for (let i = 0; i < todo.length; i += BATCH) {
     const batch = todo.slice(i, i + BATCH);
     const map = await genBatch(cfg.system, batch);
@@ -124,7 +130,9 @@ async function build(lang) {
   }
   await writeFile(cfg.out, JSON.stringify(out));
   const miss = words.filter((w) => !out[w]);
-  console.log(`✅ [${lang}] ${Object.keys(out).length} kart · kapsam ${words.length - miss.length}/${words.length}`);
+  console.log(
+    `✅ [${lang}] ${Object.keys(out).length} kart · kapsam ${words.length - miss.length}/${words.length}`,
+  );
 }
 
 const only = process.argv[2];

@@ -303,7 +303,9 @@ export class GameService {
     const title =
       mode === 'daily'
         ? `Kelimebaz #${this.wordService.dayIndex()}`
-        : this.lang.t(mode === 'room' ? 'share.room' : mode === 'vsai' ? 'share.vsai' : 'share.practice');
+        : this.lang.t(
+            mode === 'room' ? 'share.room' : mode === 'vsai' ? 'share.vsai' : 'share.practice',
+          );
     return buildShareText({
       title,
       status: this._status(),

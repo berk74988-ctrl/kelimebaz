@@ -1,7 +1,9 @@
 @if (phase() === 'pick') {
   <main class="vs-pick">
     <header class="vs-head">
-      <button class="vs-x" type="button" [attr.aria-label]="i18n.t('common.back')" (click)="exit()">←</button>
+      <button class="vs-x" type="button" [attr.aria-label]="i18n.t('common.back')" (click)="exit()">
+        ←
+      </button>
       <h1>🤖 {{ i18n.t('vsai.title') }}</h1>
     </header>
     <p class="vs-sub">{{ i18n.t('vsai.pickSub') }}</p>
@@ -18,13 +20,23 @@
         <span class="vs-card-tx">
           <b>
             {{ i18n.t('vsai.adaptiveName') }}
-            <span class="vs-tier" [attr.data-d]="adaptivePersona().tier">{{ i18n.t('vsai.' + adaptivePersona().tier) }}</span>
+            <span class="vs-tier" [attr.data-d]="adaptivePersona().tier">{{
+              i18n.t('vsai.' + adaptivePersona().tier)
+            }}</span>
           </b>
           <span>{{ i18n.t('vsai.adaptiveDesc') }}</span>
           <span class="vs-card-meta">
             🎚️ {{ i18n.t('vsai.adaptiveLevel') }}: {{ i18n.t('vsai.' + adaptivePersona().tier) }}
             @if (record('adaptive').played > 0) {
-              <span class="vs-rec">· {{ i18n.t('vsai.record', { w: record('adaptive').won, l: record('adaptive').played - record('adaptive').won }) }}</span>
+              <span class="vs-rec"
+                >·
+                {{
+                  i18n.t('vsai.record', {
+                    w: record('adaptive').won,
+                    l: record('adaptive').played - record('adaptive').won,
+                  })
+                }}</span
+              >
             }
           </span>
         </span>
@@ -52,11 +64,21 @@
             <span class="vs-card-meta">
               📊 {{ i18n.t('vsai.avgGuesses', { n: p.avgGuesses }) }}
               @if (record(p.id).played > 0) {
-                <span class="vs-rec">· {{ i18n.t('vsai.record', { w: record(p.id).won, l: record(p.id).played - record(p.id).won }) }}</span>
+                <span class="vs-rec"
+                  >·
+                  {{
+                    i18n.t('vsai.record', {
+                      w: record(p.id).won,
+                      l: record(p.id).played - record(p.id).won,
+                    })
+                  }}</span
+                >
               }
             </span>
           </span>
-          <span class="vs-card-go">{{ p.locked ? i18n.t('vsai.locked') : i18n.t('vsai.play') + ' →' }}</span>
+          <span class="vs-card-go">{{
+            p.locked ? i18n.t('vsai.locked') : i18n.t('vsai.play') + ' →'
+          }}</span>
         </button>
       }
     </div>
@@ -73,10 +95,14 @@
       <div class="vs-hud-rows">
         @for (row of aiRows(); track $index) {
           <span class="vs-row">
-            @for (st of row.pattern; track $index) { <i class="vs-dot" [class]="st"></i> }
+            @for (st of row.pattern; track $index) {
+              <i class="vs-dot" [class]="st"></i>
+            }
           </span>
         }
-        @for (g of aiGhosts(); track g) { <span class="vs-row ghost"></span> }
+        @for (g of aiGhosts(); track g) {
+          <span class="vs-row ghost"></span>
+        }
       </div>
     </div>
     <div class="vs-hud-st">
@@ -99,7 +125,8 @@
   <!-- Sıra göstergesi — kimin sırası olduğu net görünür -->
   <div class="vs-turn" [class.ai]="botTurn()" aria-live="polite">
     @if (botTurn()) {
-      <span class="vs-turn-ic">{{ persona().avatar }}</span> {{ i18n.t('vsai.aiTurn') }}<i></i><i></i><i></i>
+      <span class="vs-turn-ic">{{ persona().avatar }}</span> {{ i18n.t('vsai.aiTurn') }}<i></i
+      ><i></i><i></i>
     } @else {
       <span class="vs-turn-ic">🧑</span> {{ i18n.t('vsai.yourTurn') }}
     }
@@ -115,11 +142,15 @@
 } @else {
   <main class="vs-result" [attr.data-o]="outcome()">
     <div class="vs-res-card">
-      <div class="vs-res-emoji">{{ outcome() === 'win' ? '🏆' : outcome() === 'lose' ? persona().avatar : '🤝' }}</div>
+      <div class="vs-res-emoji">
+        {{ outcome() === 'win' ? '🏆' : outcome() === 'lose' ? persona().avatar : '🤝' }}
+      </div>
       <h2 class="vs-res-title">{{ i18n.t('vsai.' + outcome()) }}</h2>
       <p class="vs-res-sub">{{ i18n.t('vsai.' + outcome() + 'Sub') }}</p>
 
-      <div class="vs-answer">{{ i18n.t('vsai.answer') }} <b>{{ word() }}</b></div>
+      <div class="vs-answer">
+        {{ i18n.t('vsai.answer') }} <b>{{ word() }}</b>
+      </div>
 
       <div class="vs-vs">
         <div class="vs-side me" [class.winner]="outcome() === 'win'">
@@ -140,7 +171,13 @@
       </div>
 
       <div class="vs-rec-line">
-        {{ i18n.t(persona().nameKey) }}: {{ i18n.t('vsai.record', { w: record(persona().id).won, l: record(persona().id).played - record(persona().id).won }) }}
+        {{ i18n.t(persona().nameKey) }}:
+        {{
+          i18n.t('vsai.record', {
+            w: record(persona().id).won,
+            l: record(persona().id).played - record(persona().id).won,
+          })
+        }}
       </div>
 
       @if (bonus() > 0) {
@@ -148,9 +185,15 @@
       }
 
       <div class="vs-actions">
-        <button class="vs-btn primary" type="button" (click)="again()">🔁 {{ i18n.t('vsai.again') }}</button>
-        <button class="vs-btn ghost" type="button" (click)="toPick()">🎭 {{ i18n.t('vsai.changeDiff') }}</button>
-        <button class="vs-btn ghost" type="button" (click)="exit()">🏠 {{ i18n.t('vsai.menu') }}</button>
+        <button class="vs-btn primary" type="button" (click)="again()">
+          🔁 {{ i18n.t('vsai.again') }}
+        </button>
+        <button class="vs-btn ghost" type="button" (click)="toPick()">
+          🎭 {{ i18n.t('vsai.changeDiff') }}
+        </button>
+        <button class="vs-btn ghost" type="button" (click)="exit()">
+          🏠 {{ i18n.t('vsai.menu') }}
+        </button>
       </div>
     </div>
   </main>

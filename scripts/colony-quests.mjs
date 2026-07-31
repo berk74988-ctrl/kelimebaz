@@ -5,7 +5,8 @@
 import { chromium } from 'playwright';
 import { mkdirSync } from 'fs';
 const URL = process.argv[4] || 'file:///C:/Users/berk8/Documents/GitHub/berk/index-2d.html';
-const W = +(process.argv[2] || 1366), H = +(process.argv[3] || 768);
+const W = +(process.argv[2] || 1366),
+  H = +(process.argv[3] || 768);
 const TAG = W > 700 ? `desktop-${H}` : `${W}x${H}`;
 const OUT = 'C:/Users/berk8/AppData/Local/Temp/claude/quests';
 mkdirSync(OUT, { recursive: true });
@@ -49,7 +50,7 @@ const out = await page.evaluate(() => {
     // 1. görevi tamamla → otomatik ödül
     const q0 = state.quests.list[0];
     const goldBefore = state.gold || 0;
-    const resBefore = q0.reward.k === 'res' ? (state.resources[q0.reward.res] || 0) : null;
+    const resBefore = q0.reward.k === 'res' ? state.resources[q0.reward.res] || 0 : null;
     if (q0.type === 'res') questAddRes(q0.res, q0.target);
     else questAdd(q0.type, q0.target);
     o.q0type = q0.type;
@@ -59,11 +60,17 @@ const out = await page.evaluate(() => {
     if (q0.reward.k === 'res') o.resDelta = (state.resources[q0.reward.res] || 0) - resBefore;
     o.badgeAfter = document.getElementById('questBadge').textContent;
     o.cardsDoneClass = document.querySelectorAll('#questBody .q-card.done').length;
-  } catch (e) { o.err = e.message; o.stack = String(e.stack || '').split('\n').slice(0, 3).join(' | '); }
+  } catch (e) {
+    o.err = e.message;
+    o.stack = String(e.stack || '')
+      .split('\n')
+      .slice(0, 3)
+      .join(' | ');
+  }
   return o;
 });
 await page.waitForTimeout(200);
-await page.screenshot({ path: `${OUT}/${TAG}-done.png` });   // tamamlanmış kart görünümü
+await page.screenshot({ path: `${OUT}/${TAG}-done.png` }); // tamamlanmış kart görünümü
 
 // --- 2) Gün yenileme: ertesi gün → yeni 3 görev, ilerleme sıfır ---
 const out2 = await page.evaluate(() => {
@@ -78,7 +85,9 @@ const out2 = await page.evaluate(() => {
     o.changed = state.quests.list.map((q) => q.id).join(',') !== prevIds || true;
     renderQuests();
     o.cardsAfterRefresh = document.querySelectorAll('#questBody .q-card').length;
-  } catch (e) { o.err = e.message; }
+  } catch (e) {
+    o.err = e.message;
+  }
   return o;
 });
 await page.waitForTimeout(150);
@@ -90,9 +99,19 @@ console.log(`[${TAG}] yenileme:`, JSON.stringify(out2));
 if (errors.length) console.log(`[${TAG}] ⚠️ konsol hataları:\n` + errors.join('\n'));
 
 const ok =
-  !out.err && !out2.err && out.count === 3 && out.distinct === 3 && out.targetsValid &&
-  out.stressBad === 0 && (out.q0rewardKind === 'gold' || out.q0rewardKind === 'res') &&
-  out.overlayShown && out.cards === 3 && out.q0done === true && out.cardsDoneClass === 1 &&
-  out2.refreshedCount === 3 && out2.refreshedProgZero && errors.length === 0;
+  !out.err &&
+  !out2.err &&
+  out.count === 3 &&
+  out.distinct === 3 &&
+  out.targetsValid &&
+  out.stressBad === 0 &&
+  (out.q0rewardKind === 'gold' || out.q0rewardKind === 'res') &&
+  out.overlayShown &&
+  out.cards === 3 &&
+  out.q0done === true &&
+  out.cardsDoneClass === 1 &&
+  out2.refreshedCount === 3 &&
+  out2.refreshedProgZero &&
+  errors.length === 0;
 console.log(ok ? `\n✅ [${TAG}] günlük görev sistemi çalışıyor` : `\n❌ [${TAG}] SORUN VAR`);
 process.exit(ok ? 0 : 1);

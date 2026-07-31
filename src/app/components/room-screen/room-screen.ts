@@ -86,7 +86,9 @@ export class RoomScreen {
   });
 
   /** Kazanan ben miyim? */
-  protected readonly iWon = computed(() => !!this.winner() && this.winner()!.id === this.rooms.myId);
+  protected readonly iWon = computed(
+    () => !!this.winner() && this.winner()!.id === this.rooms.myId,
+  );
 
   /**
    * Konfeti parçaları — SABİT liste (title-screen'deki gibi). Rastgele üretilseydi

@@ -79,7 +79,10 @@ async function genBatch(words, tries = 4) {
       const text = res.content.find((b) => b.type === 'text')?.text ?? '{}';
       const map = {};
       for (const it of JSON.parse(text).items ?? []) {
-        map[(it.w || '').toUpperCase()] = { c: String(it.c || '').trim(), h: String(it.h || '').trim() };
+        map[(it.w || '').toUpperCase()] = {
+          c: String(it.c || '').trim(),
+          h: String(it.h || '').trim(),
+        };
       }
       return map;
     } catch (e) {
@@ -91,11 +94,17 @@ async function genBatch(words, tries = 4) {
 
 const words = JSON.parse(await readFile(WORDS)).words;
 let out = {};
-try { out = JSON.parse(await readFile(OUT)); } catch { out = {}; }
+try {
+  out = JSON.parse(await readFile(OUT));
+} catch {
+  out = {};
+}
 
 // yalnızca eksik ya da sızıntılı olanları üret (resume)
 const todo = words.filter((w) => !out[w] || checkLeak(w, out[w].h));
-console.log(`Üretilecek: ${todo.length} ipucu (mevcut sağlam: ${words.length - todo.length} / toplam ${words.length})`);
+console.log(
+  `Üretilecek: ${todo.length} ipucu (mevcut sağlam: ${words.length - todo.length} / toplam ${words.length})`,
+);
 
 for (let i = 0; i < todo.length; i += BATCH) {
   const batch = todo.slice(i, i + BATCH);
@@ -119,5 +128,8 @@ for (let i = 0; i < todo.length; i += BATCH) {
 await writeFile(OUT, JSON.stringify(out));
 const leaks = words.filter((w) => out[w] && checkLeak(w, out[w].h));
 console.log(`\n✅ Bitti: ${Object.keys(out).length} ipucu → hints-tr-native.json`);
-console.log(`   Kapsam: ${words.filter((w) => out[w]).length}/${words.length} · Sızıntı: ${leaks.length}`);
-for (const w of ['KEDİ', 'ELMAS', 'DOKTOR', 'MERHABA']) if (out[w]) console.log(`   ${w}: [${out[w].c}] ${out[w].h}`);
+console.log(
+  `   Kapsam: ${words.filter((w) => out[w]).length}/${words.length} · Sızıntı: ${leaks.length}`,
+);
+for (const w of ['KEDİ', 'ELMAS', 'DOKTOR', 'MERHABA'])
+  if (out[w]) console.log(`   ${w}: [${out[w].c}] ${out[w].h}`);

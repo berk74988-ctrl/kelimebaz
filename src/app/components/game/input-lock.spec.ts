@@ -43,7 +43,7 @@ describe('Hızlı basma / çift onaylama', () => {
     vi.useRealTimers();
   });
 
-  it('ENTER\'a iki kez hızlı basınca ikinci basış YOK SAYILIR', () => {
+  it("ENTER'a iki kez hızlı basınca ikinci basış YOK SAYILIR", () => {
     type('kalem');
     press('Enter'); // geçerli tahmin gönderildi
     expect(game.rowIndex()).toBe(1);

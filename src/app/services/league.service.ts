@@ -181,7 +181,9 @@ export class LeagueService {
         losses: Math.max(0, num(p.losses)),
         peakLp: Math.max(0, num(p.peakLp)),
         history: Array.isArray(p.history)
-          ? p.history.filter((x): x is number => typeof x === 'number' && Number.isFinite(x)).slice(0, 12)
+          ? p.history
+              .filter((x): x is number => typeof x === 'number' && Number.isFinite(x))
+              .slice(0, 12)
           : [],
       };
     } catch {

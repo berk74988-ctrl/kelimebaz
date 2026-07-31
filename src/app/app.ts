@@ -21,7 +21,18 @@ type View = 'title' | 'game' | 'profile' | 'shop' | 'room' | 'league' | 'vsai';
 
 @Component({
   selector: 'app-root',
-  imports: [TitleScreen, Game, ProfileScreen, ShopScreen, RoomScreen, LeagueScreen, VsaiScreen, ErrorScreen, LoadingScreen, PwaPrompt],
+  imports: [
+    TitleScreen,
+    Game,
+    ProfileScreen,
+    ShopScreen,
+    RoomScreen,
+    LeagueScreen,
+    VsaiScreen,
+    ErrorScreen,
+    LoadingScreen,
+    PwaPrompt,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

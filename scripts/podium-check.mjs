@@ -18,13 +18,24 @@ const raw = JSON.parse(readFileSync(new URL('../src/app/data/words.json', import
 const allAnswers = raw.words.map((w) => w.toLocaleUpperCase('tr'));
 const LENGTHS = [4, 5, 6, 7];
 const byLen = { 4: [], 5: [], 6: [], 7: [] };
-for (const w of allAnswers) { const L = [...w].length; if (byLen[L]) byLen[L].push(w); }
+for (const w of allAnswers) {
+  const L = [...w].length;
+  if (byLen[L]) byLen[L].push(w);
+}
 const poolOf = (L) => (byLen[L]?.length ? byLen[L] : byLen[5]);
-const wordBySeed = (seed) => { const s = Math.floor(Math.abs(seed)); const L = LENGTHS[s % 4]; const p = poolOf(L); return p[Math.floor(s / 4) % p.length]; };
+const wordBySeed = (seed) => {
+  const s = Math.floor(Math.abs(seed));
+  const L = LENGTHS[s % 4];
+  const p = poolOf(L);
+  return p[Math.floor(s / 4) % p.length];
+};
 
 const browser = await chromium.launch();
 let fail = 0;
-const check = (n, ok, d = '') => { if (!ok) fail++; console.log(`${ok ? '✓' : '✗'} ${n}${d ? '  - ' + d : ''}`); };
+const check = (n, ok, d = '') => {
+  if (!ok) fail++;
+  console.log(`${ok ? '✓' : '✗'} ${n}${d ? '  - ' + d : ''}`);
+};
 
 async function join(name, create, code) {
   const ctx = await browser.newContext({ viewport: { width: 420, height: 880 } });
@@ -50,7 +61,10 @@ async function join(name, create, code) {
   }
   return { ctx, page };
 }
-const typeWord = async (page, w) => { for (const ch of w) await page.locator(`.key[aria-label="${ch}"]`).click(); await page.locator('.key[aria-label="ENTER"]').click(); };
+const typeWord = async (page, w) => {
+  for (const ch of w) await page.locator(`.key[aria-label="${ch}"]`).click();
+  await page.locator('.key[aria-label="ENTER"]').click();
+};
 
 // --- Kur ---
 const A = await join('Ayse', true);
@@ -76,28 +90,38 @@ const answer = wordBySeed(state.room.seed);
 const L = [...answer].length;
 const wrong = poolOf(L).filter((w) => w !== answer);
 
-await typeWord(A.page, answer);                         // A: 1 tahmin -> en yüksek
+await typeWord(A.page, answer); // A: 1 tahmin -> en yüksek
 await A.page.waitForTimeout(1100);
-await typeWord(B.page, wrong[0]); await B.page.waitForTimeout(1100);
-await typeWord(B.page, wrong[1]); await B.page.waitForTimeout(1100);
-await typeWord(B.page, answer);   await B.page.waitForTimeout(1100); // B: 3 tahmin
-for (let i = 0; i < 6; i++) { await typeWord(C.page, wrong[i % wrong.length]); await C.page.waitForTimeout(1050); } // C: bulamaz
+await typeWord(B.page, wrong[0]);
+await B.page.waitForTimeout(1100);
+await typeWord(B.page, wrong[1]);
+await B.page.waitForTimeout(1100);
+await typeWord(B.page, answer);
+await B.page.waitForTimeout(1100); // B: 3 tahmin
+for (let i = 0; i < 6; i++) {
+  await typeWord(C.page, wrong[i % wrong.length]);
+  await C.page.waitForTimeout(1050);
+} // C: bulamaz
 
 await A.page.waitForTimeout(2500);
 
 // --- Kürsü + kazanan (A ekranı) ---
 check('kazanan başlığı görünüyor', (await A.page.locator('.winner-head').count()) === 1);
-const wtext = (await A.page.locator('.winner-head h2').textContent() ?? '').trim();
+const wtext = ((await A.page.locator('.winner-head h2').textContent()) ?? '').trim();
 check('A kazanan ilan edildi (Kazandın)', /Kazandın/.test(wtext), wtext);
 const pods = await A.page.locator('.podium .pod:not(.pod-empty)').count();
 check('kürsü 3 basamak gösteriyor', pods === 3, `${pods}`);
-const firstPod = (await A.page.locator('.podium .pod-1 .pod-name').textContent() ?? '').trim();
+const firstPod = ((await A.page.locator('.podium .pod-1 .pod-name').textContent()) ?? '').trim();
 check('1. basamakta Ayse (en yüksek puan)', firstPod.includes('Ayse'), firstPod);
-const secondPod = (await A.page.locator('.podium .pod-2 .pod-name').textContent() ?? '').trim();
+const secondPod = ((await A.page.locator('.podium .pod-2 .pod-name').textContent()) ?? '').trim();
 check('2. basamakta Berk', secondPod.includes('Berk'), secondPod);
 
 await A.page.screenshot({ path: `${OUT}/podium-mobile.png` });
 
 await browser.close();
-console.log(fail === 0 ? '\n✅ Kürsü, kazanan kutlaması ve canlı tablo çalışıyor' : `\n❌ ${fail} kontrol başarısız`);
+console.log(
+  fail === 0
+    ? '\n✅ Kürsü, kazanan kutlaması ve canlı tablo çalışıyor'
+    : `\n❌ ${fail} kontrol başarısız`,
+);
 process.exit(fail === 0 ? 0 : 1);

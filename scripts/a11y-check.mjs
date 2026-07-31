@@ -108,16 +108,21 @@ const live = await page.evaluate(() => {
 });
 add(
   'aria-live bölgesi tahmin sonucunu duyuruyor',
-  live.text.includes('tahmin') && live.text.includes('doğru') === false ? true : live.text.length > 10,
+  live.text.includes('tahmin') && live.text.includes('doğru') === false
+    ? true
+    : live.text.length > 10,
   `"${live.text.slice(0, 60)}..."`,
 );
 
 // Kutular durumu SÖZCÜKLE söylüyor mu? (renk körü / görme engelli için şart)
 const tileLabels = await page.evaluate(() =>
-  [...document.querySelectorAll('app-tile.reveal')].slice(0, 5).map((t) => t.getAttribute('aria-label')),
+  [...document.querySelectorAll('app-tile.reveal')]
+    .slice(0, 5)
+    .map((t) => t.getAttribute('aria-label')),
 );
 const statesSpoken = tileLabels.every(
-  (l) => l && (l.includes('doğru yerde') || l.includes('kelimede var') || l.includes('kelimede yok')),
+  (l) =>
+    l && (l.includes('doğru yerde') || l.includes('kelimede var') || l.includes('kelimede yok')),
 );
 add('Kutular DURUMU sözcükle söylüyor (renk yeterli değil)', statesSpoken, tileLabels[0] ?? '');
 
@@ -125,7 +130,7 @@ add('Kutular DURUMU sözcükle söylüyor (renk yeterli değil)', statesSpoken, 
 const keysLabeled = await page.evaluate(() =>
   [...document.querySelectorAll('.key')].every((k) => !!k.getAttribute('aria-label')),
 );
-add('Tüm klavye tuşlarının aria-label\'ı var', keysLabeled);
+add("Tüm klavye tuşlarının aria-label'ı var", keysLabeled);
 
 console.log('\n4) OYUN SONU DUYURUSU');
 console.log('─'.repeat(70));
@@ -141,7 +146,9 @@ for (const w of WORDS) {
 }
 await page.waitForTimeout(1200);
 
-const endLive = await page.evaluate(() => document.querySelector('[aria-live]')?.textContent?.trim() ?? '');
+const endLive = await page.evaluate(
+  () => document.querySelector('[aria-live]')?.textContent?.trim() ?? '',
+);
 add(
   'Oyun sonucu ekran okuyucuya duyuruluyor',
   /Tebrikler|bulamadın/.test(endLive),

@@ -49,7 +49,9 @@ export class LetterTile {
   private readonly i18n = inject(LanguageService);
 
   /** Ekran okuyucu etiketi: "K, doğru yerde" / "K, correct spot" gibi. */
-  protected readonly label = computed(() => tileLabel(this.letter(), this.state(), this.i18n.lang()));
+  protected readonly label = computed(() =>
+    tileLabel(this.letter(), this.state(), this.i18n.lang()),
+  );
 
   /** Harf yazılmış ama henüz değerlendirilmemiş. */
   protected isFilled(): boolean {

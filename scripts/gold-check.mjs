@@ -33,7 +33,13 @@ async function seedGame(answer, guesses = []) {
     ({ a, g }) =>
       localStorage.setItem(
         'kelimebaz:game:practice',
-        JSON.stringify({ mode: 'practice', dayIndex: -1, answer: a, guesses: g, status: 'playing' }),
+        JSON.stringify({
+          mode: 'practice',
+          dayIndex: -1,
+          answer: a,
+          guesses: g,
+          status: 'playing',
+        }),
       ),
     { a: answer, g: guesses },
   );
@@ -98,7 +104,11 @@ await play('GÜNEŞ');
 
 const after3 = await purse();
 const delta3 = after3.balance - after2.balance;
-check('3. oyunda "3 oyun oyna" görevi ödedi', delta3 === 45 + 20, `+${delta3} (45 oyun + 20 görev)`);
+check(
+  '3. oyunda "3 oyun oyna" görevi ödedi',
+  delta3 === 45 + 20,
+  `+${delta3} (45 oyun + 20 görev)`,
+);
 
 console.log('\n4) GÖRÜNTÜLEME + KALICILIK');
 console.log('─'.repeat(72));
@@ -107,7 +117,11 @@ await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(700);
 
 const menuAfter = (await page.locator('.coin b').textContent())?.trim();
-check('ana menüde güncel altın', menuAfter === after3.balance.toLocaleString('tr'), `🪙 ${menuAfter}`);
+check(
+  'ana menüde güncel altın',
+  menuAfter === after3.balance.toLocaleString('tr'),
+  `🪙 ${menuAfter}`,
+);
 
 await page.getByRole('button', { name: 'Profil' }).first().click();
 await page.waitForTimeout(600);
@@ -117,7 +131,11 @@ const prof = await page.evaluate(() => ({
   quests: document.querySelectorAll('.quest').length,
   done: document.querySelectorAll('.quest.done').length,
 }));
-check('profil sayfasında altın', prof.balance === after3.balance.toLocaleString('tr'), `🪙 ${prof.balance}`);
+check(
+  'profil sayfasında altın',
+  prof.balance === after3.balance.toLocaleString('tr'),
+  `🪙 ${prof.balance}`,
+);
 check('günlük görevler listeleniyor', prof.quests === 5, `${prof.quests} görev`);
 check('tamamlananlar işaretli', prof.done === 4, `${prof.done} tamamlandı (daily hariç)`);
 

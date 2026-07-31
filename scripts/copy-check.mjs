@@ -9,10 +9,17 @@ import { chromium } from 'playwright';
 const APP = process.argv[2] ?? 'http://localhost:4200';
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 420, height: 880 } });
-try { await ctx.grantPermissions(['clipboard-read', 'clipboard-write']); } catch { /* yoksay */ }
+try {
+  await ctx.grantPermissions(['clipboard-read', 'clipboard-write']);
+} catch {
+  /* yoksay */
+}
 const page = await ctx.newPage();
 let fail = 0;
-const check = (n, ok, d = '') => { if (!ok) fail++; console.log(`${ok ? '✓' : '✗'} ${n}${d ? '  - ' + d : ''}`); };
+const check = (n, ok, d = '') => {
+  if (!ok) fail++;
+  console.log(`${ok ? '✓' : '✗'} ${n}${d ? '  - ' + d : ''}`);
+};
 
 await page.goto(APP, { waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(600);
@@ -27,22 +34,34 @@ const code = (await page.locator('.rc-code').textContent()).trim();
 
 // Tek buton, eski iki ikon buton yok
 check('tek "Kopyala" butonu var', (await page.locator('.copy-btn').count()) === 1);
-check('eski işlevsiz ikon butonları kaldırıldı (.rc-btn yok)', (await page.locator('.rc-btn').count()) === 0);
-check('buton metni "Kopyala"', (await page.locator('.copy-btn .cb-tx').textContent() ?? '').includes('Kopyala'));
+check(
+  'eski işlevsiz ikon butonları kaldırıldı (.rc-btn yok)',
+  (await page.locator('.rc-btn').count()) === 0,
+);
+check(
+  'buton metni "Kopyala"',
+  ((await page.locator('.copy-btn .cb-tx').textContent()) ?? '').includes('Kopyala'),
+);
 
 // Tıkla → toast + buton "Kopyalandı"
 await page.locator('.copy-btn').click();
 await page.waitForTimeout(250);
-const toast = await page.locator('.copy-toast').textContent().catch(() => '');
+const toast = await page
+  .locator('.copy-toast')
+  .textContent()
+  .catch(() => '');
 check('"Oda kodu kopyalandı" bildirimi çıktı', /kopyaland/i.test(toast || ''), toast);
-check('buton "Kopyalandı" durumuna geçti', (await page.locator('.copy-btn .cb-tx').textContent() ?? '').includes('Kopyalandı'));
+check(
+  'buton "Kopyalandı" durumuna geçti',
+  ((await page.locator('.copy-btn .cb-tx').textContent()) ?? '').includes('Kopyalandı'),
+);
 
 // Güvenli bağlamsa (localhost) panoyu oku ve kod ile karşılaştır
 try {
   const clip = await page.evaluate(() => navigator.clipboard.readText());
   check('pano gerçekten oda kodunu içeriyor', clip.trim() === code, `${clip} vs ${code}`);
 } catch {
-  console.log('… (pano okuma güvenli bağlam gerektirir; canlı HTTP\'de toast yeterli kanıt)');
+  console.log("… (pano okuma güvenli bağlam gerektirir; canlı HTTP'de toast yeterli kanıt)");
 }
 
 // Toast kısa süre sonra kaybolur

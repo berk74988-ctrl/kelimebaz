@@ -64,7 +64,14 @@ export const PERSONAS: readonly Persona[] = [
     avatar: '🔢',
     tier: 'medium',
     // Sık kullanılan harfleri önceliklendirir (tüm turlarda) → biraz daha zayıf.
-    config: { minMs: 2100, maxMs: 3100, topK: 3, bias: 'frequent', openerBias: true, biasWeight: 2.5 },
+    config: {
+      minMs: 2100,
+      maxMs: 3100,
+      topK: 3,
+      bias: 'frequent',
+      openerBias: true,
+      biasWeight: 2.5,
+    },
     avgGuesses: 3.32,
   },
   {

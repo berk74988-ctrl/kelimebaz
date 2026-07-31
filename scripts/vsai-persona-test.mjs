@@ -26,7 +26,8 @@ const PERSONAS = [
 ];
 
 function pattern(guess, answer) {
-  const g = [...guess], a = [...answer];
+  const g = [...guess],
+    a = [...answer];
   const res = new Array(g.length).fill('0');
   const pool = new Map();
   for (let i = 0; i < g.length; i++) {
@@ -36,7 +37,10 @@ function pattern(guess, answer) {
   for (let i = 0; i < g.length; i++) {
     if (res[i] === '2') continue;
     const left = pool.get(g[i]) || 0;
-    if (left > 0) { res[i] = '1'; pool.set(g[i], left - 1); }
+    if (left > 0) {
+      res[i] = '1';
+      pool.set(g[i], left - 1);
+    }
   }
   return res.join('');
 }
@@ -44,9 +48,15 @@ function entropy(guess, cands) {
   const n = cands.length;
   if (n <= 1) return 0;
   const b = new Map();
-  for (const c of cands) { const k = pattern(guess, c); b.set(k, (b.get(k) || 0) + 1); }
+  for (const c of cands) {
+    const k = pattern(guess, c);
+    b.set(k, (b.get(k) || 0) + 1);
+  }
   let h = 0;
-  for (const c of b.values()) { const p = c / n; h -= p * Math.log2(p); }
+  for (const c of b.values()) {
+    const p = c / n;
+    h -= p * Math.log2(p);
+  }
   return h;
 }
 
@@ -62,17 +72,35 @@ const FREQ = (() => {
 })();
 function letterScore(word, bias) {
   const chars = [...word];
-  if (bias === 'vowel') { let v = 0; for (const ch of chars) if (VOWELS.has(ch)) v++; return v / chars.length; }
-  if (bias === 'frequent') { let s = 0; for (const ch of chars) s += FREQ.get(ch) || 0; return s / chars.length; }
+  if (bias === 'vowel') {
+    let v = 0;
+    for (const ch of chars) if (VOWELS.has(ch)) v++;
+    return v / chars.length;
+  }
+  if (bias === 'frequent') {
+    let s = 0;
+    for (const ch of chars) s += FREQ.get(ch) || 0;
+    return s / chars.length;
+  }
   return 0;
 }
 
 let seed = 20260729;
-const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+const rnd = () => {
+  seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+  return seed / 0x7fffffff;
+};
 function sample(list, k) {
   if (list.length <= k) return list;
-  const out = [], seen = new Set();
-  while (out.length < k) { const i = Math.floor(rnd() * list.length); if (!seen.has(i)) { seen.add(i); out.push(list[i]); } }
+  const out = [],
+    seen = new Set();
+  while (out.length < k) {
+    const i = Math.floor(rnd() * list.length);
+    if (!seen.has(i)) {
+      seen.add(i);
+      out.push(list[i]);
+    }
+  }
   return out;
 }
 
@@ -85,7 +113,8 @@ const RANKED = (() => {
 
 function pickOpener(cfg) {
   let list = RANKED;
-  if (cfg.openerBias && cfg.bias) list = [...RANKED].sort((a, b) => letterScore(b, cfg.bias) - letterScore(a, cfg.bias));
+  if (cfg.openerBias && cfg.bias)
+    list = [...RANKED].sort((a, b) => letterScore(b, cfg.bias) - letterScore(a, cfg.bias));
   return list[Math.floor(rnd() * Math.min(cfg.topK, list.length))];
 }
 let worstTurnMs = 0;
@@ -94,18 +123,24 @@ function rankedGuess(cands, cfg) {
   const scoreSet = cands.length > SAMPLE_THRESHOLD ? sample(cands, SAMPLE_THRESHOLD) : cands;
   const bw = cfg.biasWeight || 0;
   const t0 = performance.now();
-  const scored = guesses.map((g) => ({ s: entropy(g, scoreSet) + (bw ? bw * letterScore(g, cfg.bias) : 0), g, inPool: POOLSET.has(g) }));
+  const scored = guesses.map((g) => ({
+    s: entropy(g, scoreSet) + (bw ? bw * letterScore(g, cfg.bias) : 0),
+    g,
+    inPool: POOLSET.has(g),
+  }));
   scored.sort((a, b) => b.s - a.s || Number(b.inPool) - Number(a.inPool));
   worstTurnMs = Math.max(worstTurnMs, performance.now() - t0);
   return scored[Math.floor(rnd() * Math.min(cfg.topK, scored.length))].g;
 }
 function solve(answer, cfg) {
-  let cands = [...POOL], attempts = 0;
+  let cands = [...POOL],
+    attempts = 0;
   while (attempts < 6) {
     let pick;
     if (cands.length <= 2) pick = cands[0];
     else if (attempts === 0) pick = pickOpener(cfg);
-    else if (cfg.gamble && cands.length > 8 && rnd() < cfg.gamble) pick = cands[Math.floor(rnd() * cands.length)];
+    else if (cfg.gamble && cands.length > 8 && rnd() < cfg.gamble)
+      pick = cands[Math.floor(rnd() * cands.length)];
     else pick = rankedGuess(cands, cfg);
     const fb = pattern(pick, answer);
     attempts++;
@@ -118,25 +153,40 @@ function solve(answer, cfg) {
 
 console.log(`Havuz: ${POOL.length} kelimelik 5 harfli TÜRKÇE · ${MATCHES} maç/karakter\n`);
 
-console.log('Karakter   | Ort. | Kazanma% | Dağılım (1..6 · X)          | Açılış (örnek kelime KALEM)');
-console.log('-----------|------|----------|-----------------------------|---------------------------');
+console.log(
+  'Karakter   | Ort. | Kazanma% | Dağılım (1..6 · X)          | Açılış (örnek kelime KALEM)',
+);
+console.log(
+  '-----------|------|----------|-----------------------------|---------------------------',
+);
 const results = {};
 for (const p of PERSONAS) {
   const dist = [0, 0, 0, 0, 0, 0, 0];
-  let tot = 0, solved = 0;
+  let tot = 0,
+    solved = 0;
   const s0 = seed;
   for (let i = 0; i < MATCHES; i++) {
     const answer = POOL[Math.floor(rnd() * POOL.length)];
     const att = solve(answer, p);
-    if (att <= 6) { solved++; tot += att; dist[att - 1]++; } else dist[6]++;
+    if (att <= 6) {
+      solved++;
+      tot += att;
+      dist[att - 1]++;
+    } else dist[6]++;
   }
   // aynı tohumdan açılış örneği (farklılığı göstermek için)
   seed = s0;
   const opener = pickOpener(p);
   const avg = +(tot / Math.max(1, solved)).toFixed(2);
-  results[p.id] = { avg, winPct: Math.round(solved / MATCHES * 100), opener };
-  const dz = dist.slice(0, 6).map((n) => String(n).padStart(3)).join(' ') + ` X:${dist[6]}`;
-  console.log(`${p.id.padEnd(10)} | ${String(avg).padEnd(4)} |   ${String(results[p.id].winPct).padStart(3)}%   | ${dz} | ${opener}`);
+  results[p.id] = { avg, winPct: Math.round((solved / MATCHES) * 100), opener };
+  const dz =
+    dist
+      .slice(0, 6)
+      .map((n) => String(n).padStart(3))
+      .join(' ') + ` X:${dist[6]}`;
+  console.log(
+    `${p.id.padEnd(10)} | ${String(avg).padEnd(4)} |   ${String(results[p.id].winPct).padStart(3)}%   | ${dz} | ${opener}`,
+  );
 }
 
 console.log(`\nEn kötü tek tur düşünme süresi: ${worstTurnMs.toFixed(2)} ms`);
@@ -144,7 +194,9 @@ console.log(`\nEn kötü tek tur düşünme süresi: ${worstTurnMs.toFixed(2)} m
 // Farklı oynuyorlar mı? (en az iki karakter farklı açılış)
 const openers = new Set(PERSONAS.map((p) => results[p.id].opener));
 const distinctOpeners = openers.size;
-console.log(`Farklı açılış sayısı: ${distinctOpeners}/${PERSONAS.length}  → ${[...openers].join(', ')}`);
+console.log(
+  `Farklı açılış sayısı: ${distinctOpeners}/${PERSONAS.length}  → ${[...openers].join(', ')}`,
+);
 
 const avgs = PERSONAS.map((p) => results[p.id].avg);
 const spread = +(Math.max(...avgs) - Math.min(...avgs)).toFixed(2);
@@ -152,8 +204,13 @@ console.log(`Ortalama tahmin yayılımı: ${spread}`);
 
 const ok =
   PERSONAS.every((p) => results[p.id].winPct >= 99) && // havuz içi kelimede çözerler
-  distinctOpeners >= 2 &&                              // gerçekten farklı açılış
-  worstTurnMs < 100;                                   // tur < 100 ms
-console.log(ok ? '\n✅ Karakterler farklı oynuyor, hepsi çözüyor, tur < 100 ms' : '\n❌ Kriter karşılanmadı');
-console.log('\nai-personas.ts avgGuesses için: ' + PERSONAS.map((p) => `${p.id}=${results[p.id].avg}`).join('  '));
+  distinctOpeners >= 2 && // gerçekten farklı açılış
+  worstTurnMs < 100; // tur < 100 ms
+console.log(
+  ok ? '\n✅ Karakterler farklı oynuyor, hepsi çözüyor, tur < 100 ms' : '\n❌ Kriter karşılanmadı',
+);
+console.log(
+  '\nai-personas.ts avgGuesses için: ' +
+    PERSONAS.map((p) => `${p.id}=${results[p.id].avg}`).join('  '),
+);
 process.exit(ok ? 0 : 1);

@@ -15,13 +15,24 @@ const raw = JSON.parse(readFileSync(new URL('../src/app/data/words.json', import
 const allAnswers = raw.words.map((w) => w.toLocaleUpperCase('tr'));
 const LENGTHS = [4, 5, 6, 7];
 const byLen = { 4: [], 5: [], 6: [], 7: [] };
-for (const w of allAnswers) { const L = [...w].length; if (byLen[L]) byLen[L].push(w); }
+for (const w of allAnswers) {
+  const L = [...w].length;
+  if (byLen[L]) byLen[L].push(w);
+}
 const poolOf = (L) => (byLen[L]?.length ? byLen[L] : byLen[5]);
-const wordBySeed = (seed) => { const s = Math.floor(Math.abs(seed)); const L = LENGTHS[s % 4]; const p = poolOf(L); return p[Math.floor(s / 4) % p.length]; };
+const wordBySeed = (seed) => {
+  const s = Math.floor(Math.abs(seed));
+  const L = LENGTHS[s % 4];
+  const p = poolOf(L);
+  return p[Math.floor(s / 4) % p.length];
+};
 
 const browser = await chromium.launch();
 let fail = 0;
-const check = (n, ok, d = '') => { if (!ok) fail++; console.log(`${ok ? '✓' : '✗'} ${n}${d ? '  - ' + d : ''}`); };
+const check = (n, ok, d = '') => {
+  if (!ok) fail++;
+  console.log(`${ok ? '✓' : '✗'} ${n}${d ? '  - ' + d : ''}`);
+};
 
 async function join(name, create, code) {
   const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
@@ -82,7 +93,10 @@ await A.page.waitForSelector('app-board');
 await B.page.waitForSelector('app-board');
 const state = await (await fetch(`${API}/state?code=${code}`)).json();
 const answer = wordBySeed(state.room.seed);
-for (const P of [A, B]) { for (const ch of answer) await P.page.locator(`.key[aria-label="${ch}"]`).click(); await P.page.locator('.key[aria-label="ENTER"]').click(); }
+for (const P of [A, B]) {
+  for (const ch of answer) await P.page.locator(`.key[aria-label="${ch}"]`).click();
+  await P.page.locator('.key[aria-label="ENTER"]').click();
+}
 await A.page.waitForTimeout(2500);
 
 check('sonuç ekranında sohbet var', (await A.page.locator('app-room-chat').count()) >= 1);
@@ -93,5 +107,9 @@ check('oyun sonrası mesaj da iletiliyor', (bAfter ?? '').includes('Iyi oyundu')
 await A.page.screenshot({ path: `${OUT}/results-chat.png` });
 
 await browser.close();
-console.log(fail === 0 ? '\n✅ Oda sohbeti çalışıyor (lobi + oyun sonrası)' : `\n❌ ${fail} kontrol başarısız`);
+console.log(
+  fail === 0
+    ? '\n✅ Oda sohbeti çalışıyor (lobi + oyun sonrası)'
+    : `\n❌ ${fail} kontrol başarısız`,
+);
 process.exit(fail === 0 ? 0 : 1);

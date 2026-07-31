@@ -11,7 +11,10 @@ import { chromium } from 'playwright';
 const TARGET = process.argv[2] ?? 'http://localhost:4200';
 const browser = await chromium.launch();
 let fail = 0;
-const check = (n, ok, d = '') => { if (!ok) fail++; console.log(`${ok ? '✓' : '✗'} ${n.padEnd(50)} ${d}`); };
+const check = (n, ok, d = '') => {
+  if (!ok) fail++;
+  console.log(`${ok ? '✓' : '✗'} ${n.padEnd(50)} ${d}`);
+};
 
 const ctx = await browser.newContext({ viewport: { width: 900, height: 820 } });
 const page = await ctx.newPage();
@@ -22,16 +25,32 @@ page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 /** Belirli PUAN (→ seviye) ve sıfır günlük-görev durumuyla oyunu kur. */
 async function seed(points) {
   await page.evaluate((pts) => {
-    localStorage.setItem('kelimebaz:stats', JSON.stringify({
-      played: 50, won: 40, currentStreak: 0, maxStreak: 5,
-      distribution: [0, 0, 0, 0, 0, 0], lastWinAttempts: null,
-      points: pts, guesses: 200,
-    }));
+    localStorage.setItem(
+      'kelimebaz:stats',
+      JSON.stringify({
+        played: 50,
+        won: 40,
+        currentStreak: 0,
+        maxStreak: 5,
+        distribution: [0, 0, 0, 0, 0, 0],
+        lastWinAttempts: null,
+        points: pts,
+        guesses: 200,
+      }),
+    );
     localStorage.setItem('kelimebaz:gold', JSON.stringify({ balance: 0, earned: 0, spent: 0 }));
     // günlük görevleri "bugün hepsi alınmış" yap → görev altını karışmasın
     localStorage.removeItem('kelimebaz:quests');
-    localStorage.setItem('kelimebaz:game:practice',
-      JSON.stringify({ mode: 'practice', dayIndex: -1, answer: 'KALEM', guesses: ['KİTAP', 'ÇORBA', 'GÜNEŞ'], status: 'playing' }));
+    localStorage.setItem(
+      'kelimebaz:game:practice',
+      JSON.stringify({
+        mode: 'practice',
+        dayIndex: -1,
+        answer: 'KALEM',
+        guesses: ['KİTAP', 'ÇORBA', 'GÜNEŞ'],
+        status: 'playing',
+      }),
+    );
   }, points);
   await page.reload({ waitUntil: 'networkidle' });
   await page.getByRole('button', { name: /Serbest Oyna/ }).click();
@@ -71,7 +90,11 @@ for (const c of cases) {
   await seed(c.pts);
   const gold = await winAndReadGold();
   const expected = BASE + c.bonus;
-  check(`Seviye ${String(c.level).padStart(2)} → ${gold} altın (beklenen ${expected})`, gold === expected, `bonus +${c.bonus}`);
+  check(
+    `Seviye ${String(c.level).padStart(2)} → ${gold} altın (beklenen ${expected})`,
+    gold === expected,
+    `bonus +${c.bonus}`,
+  );
   if (prev >= 0) check(`  seviye ${c.level} > önceki seviye kazancı`, gold > prev);
   prev = gold;
 }
@@ -79,9 +102,30 @@ for (const c of cases) {
 console.log('\nKAYBEDİNCE seviye bonusu YOK:');
 console.log('─'.repeat(66));
 await page.evaluate(() => {
-  localStorage.setItem('kelimebaz:stats', JSON.stringify({ played: 50, won: 40, currentStreak: 0, maxStreak: 5, distribution: [0, 0, 0, 0, 0, 0], lastWinAttempts: null, points: 6000, guesses: 200 }));
+  localStorage.setItem(
+    'kelimebaz:stats',
+    JSON.stringify({
+      played: 50,
+      won: 40,
+      currentStreak: 0,
+      maxStreak: 5,
+      distribution: [0, 0, 0, 0, 0, 0],
+      lastWinAttempts: null,
+      points: 6000,
+      guesses: 200,
+    }),
+  );
   localStorage.setItem('kelimebaz:gold', JSON.stringify({ balance: 0, earned: 0, spent: 0 }));
-  localStorage.setItem('kelimebaz:game:practice', JSON.stringify({ mode: 'practice', dayIndex: -1, answer: 'KALEM', guesses: ['KİTAP', 'ÇORBA', 'GÜNEŞ', 'ARABA', 'ŞEKER'], status: 'playing' }));
+  localStorage.setItem(
+    'kelimebaz:game:practice',
+    JSON.stringify({
+      mode: 'practice',
+      dayIndex: -1,
+      answer: 'KALEM',
+      guesses: ['KİTAP', 'ÇORBA', 'GÜNEŞ', 'ARABA', 'ŞEKER'],
+      status: 'playing',
+    }),
+  );
 });
 await page.reload({ waitUntil: 'networkidle' });
 await page.getByRole('button', { name: /Serbest Oyna/ }).click();
@@ -89,14 +133,22 @@ await page.waitForSelector('app-board');
 for (const ch of 'BEYİN') await page.locator(`.key[aria-label="${ch}"]`).click(); // yanlış → 6. tahmin, kaybet
 await page.locator('.key[aria-label="ENTER"]').click();
 await page.waitForTimeout(1600);
-const lostGold = await page.evaluate(() => JSON.parse(localStorage.getItem('kelimebaz:gold')).balance);
-check('seviye 11 oyuncusu kaybedince sadece 2 altın (bonus yok)', lostGold === 2, `${lostGold} altın`);
+const lostGold = await page.evaluate(
+  () => JSON.parse(localStorage.getItem('kelimebaz:gold')).balance,
+);
+check(
+  'seviye 11 oyuncusu kaybedince sadece 2 altın (bonus yok)',
+  lostGold === 2,
+  `${lostGold} altın`,
+);
 
 console.log('\nSONUÇ EKRANI seviye ödülünü gösteriyor mu:');
 console.log('─'.repeat(66));
 await seed(1000); // seviye 5, bonus 16
 await winAndReadGold();
-const shown = await page.evaluate(() => document.querySelector('.gc-tx span')?.textContent?.trim() ?? '');
+const shown = await page.evaluate(
+  () => document.querySelector('.gc-tx span')?.textContent?.trim() ?? '',
+);
 check('sonuç ekranında "seviye ödülü +16"', /seviye ödülü \+16/.test(shown), shown);
 
 check('konsol hatası yok', errors.length === 0, errors.slice(0, 2).join(' | '));
@@ -104,4 +156,7 @@ check('konsol hatası yok', errors.length === 0, errors.slice(0, 2).join(' | '))
 await browser.close();
 console.log('\n' + '─'.repeat(66));
 if (fail === 0) console.log('\n✅ SEVİYE ÖDÜL SİSTEMİ DOĞRU ÇALIŞIYOR\n');
-else { console.log(`\n❌ ${fail} kontrol başarısız\n`); process.exit(1); }
+else {
+  console.log(`\n❌ ${fail} kontrol başarısız\n`);
+  process.exit(1);
+}

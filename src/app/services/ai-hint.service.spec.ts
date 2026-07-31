@@ -37,19 +37,32 @@ describe('AiHintService', () => {
   });
 
   it('requestHint sunucudan ipucu döndürür', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ hint: 'K harfini dene' }) });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ hint: 'K harfini dene' }) });
     vi.stubGlobal('fetch', fetchMock);
     const svc = make();
-    const hint = await svc.requestHint({ length: 5, guesses: [{ word: 'ARABA', pattern: '00100' }], answer: 'KALEM' });
+    const hint = await svc.requestHint({
+      length: 5,
+      guesses: [{ word: 'ARABA', pattern: '00100' }],
+      answer: 'KALEM',
+    });
     expect(hint).toBe('K harfini dene');
     vi.unstubAllGlobals();
   });
 
   it('sunucu hatasında requestHint throw eder (altın iadesi için)', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 502, json: async () => ({}) }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 502, json: async () => ({}) }),
+    );
     const svc = make();
     await expect(
-      svc.requestHint({ length: 5, guesses: [{ word: 'ARABA', pattern: '00100' }], answer: 'KALEM' }),
+      svc.requestHint({
+        length: 5,
+        guesses: [{ word: 'ARABA', pattern: '00100' }],
+        answer: 'KALEM',
+      }),
     ).rejects.toThrow();
     vi.unstubAllGlobals();
   });

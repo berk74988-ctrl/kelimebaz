@@ -1,0 +1,11 @@
+# Üretilen / bağımlılık çıktıları — biçimlendirme kapsamı dışında
+dist/
+node_modules/
+.angular/
+coverage/
+
+# Büyük veri/üretilen dosyalar (elle düzenlenmez)
+src/app/data/
+src/i18n/
+public/
+audio-src/

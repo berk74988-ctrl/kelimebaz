@@ -21,7 +21,11 @@ for (const w of allAnswers) {
   if (answersByLen[L]) answersByLen[L].push(w);
 }
 const poolOf = (L) =>
-  answersByLen[L]?.length ? answersByLen[L] : answersByLen[5]?.length ? answersByLen[5] : allAnswers;
+  answersByLen[L]?.length
+    ? answersByLen[L]
+    : answersByLen[5]?.length
+      ? answersByLen[5]
+      : allAnswers;
 
 function wordBySeed(seed) {
   const s = Math.floor(Math.abs(seed));
@@ -32,7 +36,10 @@ function wordBySeed(seed) {
 
 const browser = await chromium.launch();
 let fail = 0;
-const check = (name, ok, d = '') => { if (!ok) fail++; console.log(`${ok ? '✓' : '✗'} ${name}${d ? '  - ' + d : ''}`); };
+const check = (name, ok, d = '') => {
+  if (!ok) fail++;
+  console.log(`${ok ? '✓' : '✗'} ${name}${d ? '  - ' + d : ''}`);
+};
 
 async function openRoomMenu() {
   const ctx = await browser.newContext({ viewport: { width: 900, height: 820 } });
@@ -72,8 +79,15 @@ await B.page.waitForTimeout(1000);
 // A lobisinde B görünüyor mu (polling ile)
 await A.page.waitForTimeout(2000);
 const namesInA = await A.page.locator('.pl-name').allTextContents();
-check("B, A'nın lobisinde görünüyor", namesInA.some((n) => n.includes('Berk')), namesInA.join(', '));
-check('A oda sahibi (başlat butonu var)', (await A.page.getByRole('button', { name: /Oyunu Başlat/ }).count()) > 0);
+check(
+  "B, A'nın lobisinde görünüyor",
+  namesInA.some((n) => n.includes('Berk')),
+  namesInA.join(', '),
+);
+check(
+  'A oda sahibi (başlat butonu var)',
+  (await A.page.getByRole('button', { name: /Oyunu Başlat/ }).count()) > 0,
+);
 check('B sahip değil (Hazır Ol butonu var)', (await B.page.locator('.ready-btn').count()) > 0);
 
 // --- Sahip başlatır ---
@@ -86,20 +100,35 @@ check('oyun ikisinde de başladı (tahta göründü)', true);
 const state = await (await fetch(`${API}/state?code=${code}`)).json();
 const answer = wordBySeed(state.room.seed);
 const answerLen = [...answer].length;
-check("oda kelimesi seed'den türetildi (4-7 harf)", answerLen >= 4 && answerLen <= 7, `${answer} (${answerLen}h)`);
+check(
+  "oda kelimesi seed'den türetildi (4-7 harf)",
+  answerLen >= 4 && answerLen <= 7,
+  `${answer} (${answerLen}h)`,
+);
 
 // A kazanır (cevabı ilk denemede), B kaybeder (aynı uzunlukta farklı geçerli kelime x6)
 const wrong = poolOf(answerLen).find((w) => w !== answer);
 await typeWord(A.page, answer);
-for (let i = 0; i < 6; i++) { await typeWord(B.page, wrong); await B.page.waitForTimeout(1050); }
+for (let i = 0; i < 6; i++) {
+  await typeWord(B.page, wrong);
+  await B.page.waitForTimeout(1050);
+}
 
 await B.page.waitForTimeout(2000);
 await A.page.waitForTimeout(2500);
 
-const finalHead = await A.page.locator('.winner-head h2').textContent().catch(() => '');
+const finalHead = await A.page
+  .locator('.winner-head h2')
+  .textContent()
+  .catch(() => '');
 check('A sonuç/kürsü ekranını görüyor', /Kazandın|kazandı|Sonuç/.test(finalHead || ''), finalHead);
 
-const firstName = (await A.page.locator('.podium .pod-1 .pod-name').textContent().catch(() => '') ?? '').trim();
+const firstName = (
+  (await A.page
+    .locator('.podium .pod-1 .pod-name')
+    .textContent()
+    .catch(() => '')) ?? ''
+).trim();
 check('1. basamakta kazanan (Ayse)', firstName.includes('Ayse'), firstName);
 
 // --- İkinci oda aynı anda ---
@@ -114,5 +143,7 @@ const health = await (await fetch(`${API}/health`)).json();
 check('sunucuda birden çok oda aktif', health.rooms >= 2, `${health.rooms} oda`);
 
 await browser.close();
-console.log(fail === 0 ? '\n✅ Çok oyunculu oda uçtan uca ÇALIŞIYOR' : `\n❌ ${fail} kontrol başarısız`);
+console.log(
+  fail === 0 ? '\n✅ Çok oyunculu oda uçtan uca ÇALIŞIYOR' : `\n❌ ${fail} kontrol başarısız`,
+);
 process.exit(fail === 0 ? 0 : 1);

@@ -4,7 +4,10 @@ const APP = process.argv[2] ?? 'http://localhost:4200';
 const OUT = 'C:/Users/berk8/AppData/Local/Temp/claude/copy';
 mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch();
-for (const [name, w, h] of [['mobile', 390, 844], ['desktop', 1280, 860]]) {
+for (const [name, w, h] of [
+  ['mobile', 390, 844],
+  ['desktop', 1280, 860],
+]) {
   const c = await b.newContext({ viewport: { width: w, height: h } });
   const p = await c.newPage();
   await p.goto(APP, { waitUntil: 'domcontentloaded' });

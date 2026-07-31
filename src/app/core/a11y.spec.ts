@@ -44,7 +44,10 @@ describe('Ekran okuyucu metinleri', () => {
     });
 
     it('kaçıncı tahmin olduğunu söyler', () => {
-      const text = guessAnnouncement(guess('KİTAP', ['absent', 'absent', 'absent', 'absent', 'absent']), 4);
+      const text = guessAnnouncement(
+        guess('KİTAP', ['absent', 'absent', 'absent', 'absent', 'absent']),
+        4,
+      );
       expect(text.startsWith('4. tahmin:')).toBe(true);
     });
   });

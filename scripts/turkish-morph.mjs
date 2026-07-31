@@ -49,10 +49,37 @@ const SOFTENED = { B: 'P', C: 'Ç', D: 'T', Ğ: ['K', 'G'], G: 'K' };
  * Liste dar tutuldu — geniş tutmak uyum denetimini zayıflatır ve çöp sızdırır.
  */
 const FRONT_HARMONY_EXCEPTIONS = new Set([
-  'HAL', 'SAAT', 'ROL', 'GOL', 'KALP', 'HARF', 'USUL', 'HAYAL', 'MİSAL',
-  'İHTİMAL', 'İSTİKLAL', 'ŞEFKAT', 'DİKKAT', 'HAKİKAT', 'KABUL', 'MEŞGUL',
-  'ALKOL', 'PETROL', 'FUTBOL', 'KONTROL', 'SUAL', 'EMSAL', 'MEŞAL', 'İDRAK',
-  'İTTİFAK', 'ZİRAAT', 'SANAT', 'İNŞAAT', 'CEVAP', 'HARAP', 'İTİBAR',
+  'HAL',
+  'SAAT',
+  'ROL',
+  'GOL',
+  'KALP',
+  'HARF',
+  'USUL',
+  'HAYAL',
+  'MİSAL',
+  'İHTİMAL',
+  'İSTİKLAL',
+  'ŞEFKAT',
+  'DİKKAT',
+  'HAKİKAT',
+  'KABUL',
+  'MEŞGUL',
+  'ALKOL',
+  'PETROL',
+  'FUTBOL',
+  'KONTROL',
+  'SUAL',
+  'EMSAL',
+  'MEŞAL',
+  'İDRAK',
+  'İTTİFAK',
+  'ZİRAAT',
+  'SANAT',
+  'İNŞAAT',
+  'CEVAP',
+  'HARAP',
+  'İTİBAR',
 ]);
 
 /**
@@ -64,10 +91,22 @@ const FRONT_HARMONY_EXCEPTIONS = new Set([
  * geçiyor; oyuncunun yazıp reddedilmesi kabul edilemez.)
  */
 export const PARTICLES = new Set([
-  'MIYIM', 'MİYİM', 'MUYUM', 'MÜYÜM',
-  'MISIN', 'MİSİN', 'MUSUN', 'MÜSÜN',
-  'MIYIZ', 'MİYİZ', 'MUYUZ', 'MÜYÜZ',
-  'MIYDI', 'MİYDİ', 'MUYDU', 'MÜYDÜ',
+  'MIYIM',
+  'MİYİM',
+  'MUYUM',
+  'MÜYÜM',
+  'MISIN',
+  'MİSİN',
+  'MUSUN',
+  'MÜSÜN',
+  'MIYIZ',
+  'MİYİZ',
+  'MUYUZ',
+  'MÜYÜZ',
+  'MIYDI',
+  'MİYDİ',
+  'MUYDU',
+  'MÜYDÜ',
 ]);
 
 const chars = (s) => [...s];

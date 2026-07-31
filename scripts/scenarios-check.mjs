@@ -57,7 +57,13 @@ for (const [engineName, engine] of ENGINES) {
       ({ key, ans }) => {
         localStorage.setItem(
           key,
-          JSON.stringify({ mode: 'practice', dayIndex: -1, answer: ans, guesses: [], status: 'playing' }),
+          JSON.stringify({
+            mode: 'practice',
+            dayIndex: -1,
+            answer: ans,
+            guesses: [],
+            status: 'playing',
+          }),
         );
       },
       { key: PRACTICE_KEY, ans: answer },
@@ -80,7 +86,13 @@ for (const [engineName, engine] of ENGINES) {
       const tiles = [...document.querySelectorAll('.row')][r].querySelectorAll('app-tile');
       return [...tiles]
         .map((t) =>
-          t.classList.contains('correct') ? '🟩' : t.classList.contains('present') ? '🟨' : t.classList.contains('absent') ? '⬜' : '·',
+          t.classList.contains('correct')
+            ? '🟩'
+            : t.classList.contains('present')
+              ? '🟨'
+              : t.classList.contains('absent')
+                ? '⬜'
+                : '·',
         )
         .join('');
     }, rowIndex);
@@ -204,11 +216,17 @@ for (const [engineName, engine] of ENGINES) {
     await page.waitForSelector('app-board');
     await page.waitForTimeout(400);
 
-    const revealed = await page.evaluate(() => document.querySelectorAll('app-tile.reveal').length / 5);
+    const revealed = await page.evaluate(
+      () => document.querySelectorAll('app-tile.reveal').length / 5,
+    );
     const firstRow = await page.evaluate(() =>
       [...document.querySelectorAll('.row')][0].textContent.replace(/\s/g, ''),
     );
-    check('Kalıcılık: yarım oyun sayfa yenilenince devam ediyor', revealed === 1 && firstRow === 'KİTAP', `${revealed} satır, "${firstRow}"`);
+    check(
+      'Kalıcılık: yarım oyun sayfa yenilenince devam ediyor',
+      revealed === 1 && firstRow === 'KİTAP',
+      `${revealed} satır, "${firstRow}"`,
+    );
     await page.context().close();
   }
 
@@ -243,14 +261,23 @@ for (const [engineName, engine] of ENGINES) {
     await page.getByRole('button', { name: /Başlık ekranına dön/ }).click();
     await page.waitForTimeout(300);
 
-    const daily = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? 'null'), DAILY_KEY);
-    check('Günlük: serbest oyun günlük kaydı EZMİYOR', daily?.status === 'won', `durum: ${daily?.status}`);
+    const daily = await page.evaluate(
+      (key) => JSON.parse(localStorage.getItem(key) ?? 'null'),
+      DAILY_KEY,
+    );
+    check(
+      'Günlük: serbest oyun günlük kaydı EZMİYOR',
+      daily?.status === 'won',
+      `durum: ${daily?.status}`,
+    );
 
     // 4) Günlüğe dön → yeni oyun başlamamalı, bitmiş tahta durmalı
     await page.getByRole('button', { name: /Sonucu Gör/ }).click();
     await page.waitForSelector('app-board');
     await page.waitForTimeout(400);
-    const stillOver = await page.evaluate(() => document.querySelectorAll('app-tile.reveal').length >= 5);
+    const stillOver = await page.evaluate(
+      () => document.querySelectorAll('app-tile.reveal').length >= 5,
+    );
     check('Günlük: tekrar oynanamıyor, bitmiş tahta duruyor', stillOver);
 
     await page.context().close();
@@ -270,10 +297,20 @@ for (const [engineName, engine] of ENGINES) {
 
     await page.reload({ waitUntil: 'networkidle' });
     const themeAfter = await page.evaluate(() => document.documentElement.dataset.theme);
-    check('Tema: sayfa yeninlense de korunuyor', themeBefore === themeAfter, `${themeBefore} → ${themeAfter}`);
+    check(
+      'Tema: sayfa yeninlense de korunuyor',
+      themeBefore === themeAfter,
+      `${themeBefore} → ${themeAfter}`,
+    );
 
-    const stats = await page.evaluate(() => JSON.parse(localStorage.getItem('kelimebaz:stats') ?? '{}'));
-    check('İstatistik: kazanma kaydedildi', stats.played === 1 && stats.won === 1, `oynanan ${stats.played}, kazanılan ${stats.won}`);
+    const stats = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('kelimebaz:stats') ?? '{}'),
+    );
+    check(
+      'İstatistik: kazanma kaydedildi',
+      stats.played === 1 && stats.won === 1,
+      `oynanan ${stats.played}, kazanılan ${stats.won}`,
+    );
     await page.context().close();
   }
 

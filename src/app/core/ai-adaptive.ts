@@ -72,7 +72,10 @@ export function smoothStep(prev: number, target: number): number {
 export function nextAdaptTopK(recent: readonly number[], prev: number): number {
   const avg = windowAvg(recent);
   if (avg == null) return clamp(Math.round(prev) || ADAPT_START_TOPK, MIN_TOPK, MAX_TOPK);
-  return smoothStep(clamp(Math.round(prev) || ADAPT_START_TOPK, MIN_TOPK, MAX_TOPK), targetTopK(avg));
+  return smoothStep(
+    clamp(Math.round(prev) || ADAPT_START_TOPK, MIN_TOPK, MAX_TOPK),
+    targetTopK(avg),
+  );
 }
 
 /** topK'yı oyuncuya gösterilecek kaba zorluk etiketine çevirir. */

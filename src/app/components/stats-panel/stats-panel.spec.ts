@@ -50,7 +50,9 @@ describe('StatsPanel — istatistik ekranı', () => {
       const el = render();
       // Adet artık çubuğun içinde değil, sağda ayrı sütunda (.c) —
       // kısa çubuklarda sayı dışarı taşıyordu, sıfır satırları okunmuyordu.
-      const counts = Array.from(el.querySelectorAll('.dist-row .c')).map((c) => c.textContent?.trim());
+      const counts = Array.from(el.querySelectorAll('.dist-row .c')).map((c) =>
+        c.textContent?.trim(),
+      );
 
       expect(el.querySelectorAll('.dist-row').length).toBe(6);
       expect(counts).toEqual(['0', '0', '2', '0', '1', '0']);

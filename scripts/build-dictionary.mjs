@@ -26,15 +26,39 @@ import { writeFile, readFile } from 'node:fs/promises';
 import { analyze, buildRoots } from './turkish-morph.mjs';
 
 const SOURCES = [
-  ['TDK tabanlı liste', 'https://raw.githubusercontent.com/mertemin/turkish-word-list/master/words.txt'],
-  ['Türkçe kelime listesi', 'https://raw.githubusercontent.com/CanNuhlar/Turkce-Kelime-Listesi/master/turkce_kelime_listesi.txt'],
-  ['Hunspell TR sözlüğü', 'https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/tr/index.dic'],
-  ['Zemberek ana sözlük', 'https://raw.githubusercontent.com/ahmetaa/zemberek-nlp/master/morphology/src/main/resources/tr/master-dictionary.dict'],
-  ['Zemberek ek sözlük', 'https://raw.githubusercontent.com/ahmetaa/zemberek-nlp/master/morphology/src/main/resources/tr/non-tdk.dict'],
-  ['Eş anlamlı sözlük', 'https://raw.githubusercontent.com/maidis/mythes-tr/master/th_tr_TR_v2.dat'],
+  [
+    'TDK tabanlı liste',
+    'https://raw.githubusercontent.com/mertemin/turkish-word-list/master/words.txt',
+  ],
+  [
+    'Türkçe kelime listesi',
+    'https://raw.githubusercontent.com/CanNuhlar/Turkce-Kelime-Listesi/master/turkce_kelime_listesi.txt',
+  ],
+  [
+    'Hunspell TR sözlüğü',
+    'https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/tr/index.dic',
+  ],
+  [
+    'Zemberek ana sözlük',
+    'https://raw.githubusercontent.com/ahmetaa/zemberek-nlp/master/morphology/src/main/resources/tr/master-dictionary.dict',
+  ],
+  [
+    'Zemberek ek sözlük',
+    'https://raw.githubusercontent.com/ahmetaa/zemberek-nlp/master/morphology/src/main/resources/tr/non-tdk.dict',
+  ],
+  [
+    'Eş anlamlı sözlük',
+    'https://raw.githubusercontent.com/maidis/mythes-tr/master/th_tr_TR_v2.dat',
+  ],
 ];
-const WIKTIONARY = ['Vikisözlük (Wiktionary)', 'https://kaikki.org/dictionary/Turkish/kaikki.org-dictionary-Turkish.jsonl'];
-const CORPUS = ['OpenSubtitles frekans', 'https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/tr/tr_full.txt'];
+const WIKTIONARY = [
+  'Vikisözlük (Wiktionary)',
+  'https://kaikki.org/dictionary/Turkish/kaikki.org-dictionary-Turkish.jsonl',
+];
+const CORPUS = [
+  'OpenSubtitles frekans',
+  'https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/tr/tr_full.txt',
+];
 
 const MIN_FREQ = 20;
 
@@ -112,7 +136,9 @@ for (const url of ZEM_DICTS) {
     answerLemmas.add(w);
   }
 }
-console.log(`  ${String(n(answerLemmas.size)).padStart(8)} isim/sıfat lemma  ←  Zemberek (cevap havuzu kaynağı)`);
+console.log(
+  `  ${String(n(answerLemmas.size)).padStart(8)} isim/sıfat lemma  ←  Zemberek (cevap havuzu kaynağı)`,
+);
 
 // ---------------------------------------------------------------------------
 // 2. KATMAN — Vikisözlük
@@ -138,7 +164,10 @@ for (const line of await lines(WIKTIONARY[1])) {
   }
 
   const head = trUpper(String(e.word ?? ''));
-  const forms = (e.forms ?? []).map((f) => ({ w: trUpper(String(f.form ?? '')), tags: f.tags ?? [] }));
+  const forms = (e.forms ?? []).map((f) => ({
+    w: trUpper(String(f.form ?? '')),
+    tags: f.tags ?? [],
+  }));
 
   if (e.pos === 'name') {
     wiktNames++;
@@ -182,10 +211,14 @@ for (const w of wiktFormCands) {
 }
 
 console.log(`  ${String(n(wiktHeads.size)).padStart(8)} madde başı (4-7 harf, koşulsuz)`);
-console.log(`  ${String(n(wiktForms.size)).padStart(8)} çekim biçimi biçimbilimden geçti · ${n(wiktFormFail)} şablon hatası elendi`);
+console.log(
+  `  ${String(n(wiktForms.size)).padStart(8)} çekim biçimi biçimbilimden geçti · ${n(wiktFormFail)} şablon hatası elendi`,
+);
 
 const dictInRange = dictWords.filter(inRange);
-const fromDict = new Set([...dictInRange, ...wiktHeads, ...wiktForms].filter((w) => !properNames.has(w)));
+const fromDict = new Set(
+  [...dictInRange, ...wiktHeads, ...wiktForms].filter((w) => !properNames.has(w)),
+);
 
 console.log(`\n🌳 Kök havuzu: ${n(roots.nouns.size)} isim/sıfat · ${n(roots.verbs.size)} fiil`);
 console.log(`📖 Sözlük katmanı toplam (4-7 harf): ${n(fromDict.size)}`);
@@ -207,7 +240,20 @@ const candidates = [...freq]
   .filter(([w, c]) => c >= MIN_FREQ && !fromDict.has(w) && !properNames.has(w))
   .map(([w]) => w);
 
-const CONFUSABLE = { S: 'Ş', Ş: 'S', C: 'Ç', Ç: 'C', G: 'Ğ', Ğ: 'G', I: 'İ', İ: 'I', O: 'Ö', Ö: 'O', U: 'Ü', Ü: 'U' };
+const CONFUSABLE = {
+  S: 'Ş',
+  Ş: 'S',
+  C: 'Ç',
+  Ç: 'C',
+  G: 'Ğ',
+  Ğ: 'G',
+  I: 'İ',
+  İ: 'I',
+  O: 'Ö',
+  Ö: 'O',
+  U: 'Ü',
+  Ü: 'U',
+};
 const TYPO_RATIO = 5;
 
 function typoOf(word) {
@@ -223,7 +269,9 @@ function typoOf(word) {
   return null;
 }
 
-console.log(`\n🔬 Biçimbilim süzgeci  (eşik ≥${MIN_FREQ}, sözlükte olmayan ${n(candidates.length)} aday)`);
+console.log(
+  `\n🔬 Biçimbilim süzgeci  (eşik ≥${MIN_FREQ}, sözlükte olmayan ${n(candidates.length)} aday)`,
+);
 
 const fromCorpus = new Set();
 let rejectedCount = 0;
@@ -242,7 +290,9 @@ for (const w of candidates) {
 
 const pct = ((fromCorpus.size / Math.max(1, candidates.length)) * 100).toFixed(0);
 console.log(`  ✅ ${String(n(fromCorpus.size)).padStart(6)} kabul  (%${pct})`);
-console.log(`  ❌ ${String(n(rejectedCount)).padStart(6)} çözümlenemedi · ✂️  ${n(typoCount)} yazım hatası`);
+console.log(
+  `  ❌ ${String(n(rejectedCount)).padStart(6)} çözümlenemedi · ✂️  ${n(typoCount)} yazım hatası`,
+);
 
 // ---------------------------------------------------------------------------
 // BİRLEŞTİR — geçerli tahmin sözlüğü
@@ -264,14 +314,18 @@ const curatedFive = existingList.filter((w) => len(w) === 5);
 
 // Güvenlik ağı: Zemberek'te etiketsiz kalabilen dolgu/işaret sözcükleri cevap olmasın
 const STOPLIST = new Set(
-  ('ACABA HANİ HADİ İŞTE YANİ PEKİ TABİ TABİİ AMAN EYVAH HAYDİ ÖYLE BÖYLE ŞÖYLE NASIL NİYE NEDEN HANGİ KENDİ BÜTÜN HERKES HİÇBİR BİRÇOK BİRKAÇ BÖYLECE AYRICA ANCAK FAKAT LAKİN ÇÜNKÜ ÜSTELİK YİNE GENE ARTIK SADECE YALNIZ BELKİ SANKİ GALİBA HEMEN DAHA ÇOK GİBİ KADAR SONRA ÖNCE ŞİMDİ BURADA ŞURADA ORADA NEREDE NEREYE BURAYA ORAYA ' +
+  (
+    'ACABA HANİ HADİ İŞTE YANİ PEKİ TABİ TABİİ AMAN EYVAH HAYDİ ÖYLE BÖYLE ŞÖYLE NASIL NİYE NEDEN HANGİ KENDİ BÜTÜN HERKES HİÇBİR BİRÇOK BİRKAÇ BÖYLECE AYRICA ANCAK FAKAT LAKİN ÇÜNKÜ ÜSTELİK YİNE GENE ARTIK SADECE YALNIZ BELKİ SANKİ GALİBA HEMEN DAHA ÇOK GİBİ KADAR SONRA ÖNCE ŞİMDİ BURADA ŞURADA ORADA NEREDE NEREYE BURAYA ORAYA ' +
     // informal/birleşik yazım ve zayıf cevaplar
-    'BİRŞEY HERŞEY OLUR EDER BAZI AYNI BERİ GÜNÜ ŞEYİ İŞİN YOLU ONUN BUNU ŞUNU').split(' '),
+    'BİRŞEY HERŞEY OLUR EDER BAZI AYNI BERİ GÜNÜ ŞEYİ İŞİN YOLU ONUN BUNU ŞUNU'
+  ).split(' '),
 );
 
 // Aile dostu: argo/müstehcen/hassas kelimeler CEVAP OLMAZ (tahmin olarak kalabilir)
 const BLOCKLIST = new Set(
-  'SEKS OROSPU KAHPE PUŞT PEZEVENK GAVAT YARAK YARRAK SİKİK SİKİŞ AMCIK GÖT GÖTÜ TAŞAK MEME MEMESİ ORGAZM PORNO ESRAR EROİN KOKAİN İNTİHAR TECAVÜZ FUHUŞ VAJİNA PENİS'.split(' '),
+  'SEKS OROSPU KAHPE PUŞT PEZEVENK GAVAT YARAK YARRAK SİKİK SİKİŞ AMCIK GÖT GÖTÜ TAŞAK MEME MEMESİ ORGAZM PORNO ESRAR EROİN KOKAİN İNTİHAR TECAVÜZ FUHUŞ VAJİNA PENİS'.split(
+    ' ',
+  ),
 );
 
 // Bir uzunluktaki isim/sıfat lemma adayları — korpus frekansına göre (sık = bilinen)
@@ -279,7 +333,11 @@ const lemmaCands = (L) =>
   [...answerLemmas]
     .filter(
       (w) =>
-        len(w) === L && words.has(w) && !properNames.has(w) && !STOPLIST.has(w) && !BLOCKLIST.has(w),
+        len(w) === L &&
+        words.has(w) &&
+        !properNames.has(w) &&
+        !STOPLIST.has(w) &&
+        !BLOCKLIST.has(w),
     )
     .sort((a, b) => (freq.get(b) ?? 0) - (freq.get(a) ?? 0));
 
@@ -317,7 +375,9 @@ if (gaps.length) {
 console.log('\n📊 Uzunluk dağılımı (geçerli tahmin / cevap):');
 for (const L of LENGTHS) {
   const v = final.filter((w) => len(w) === L).length;
-  console.log(`  ${L} harf:  ${String(n(v)).padStart(7)} tahmin  ·  ${n(answersByLen[L].length)} cevap`);
+  console.log(
+    `  ${L} harf:  ${String(n(v)).padStart(7)} tahmin  ·  ${n(answersByLen[L].length)} cevap`,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -341,4 +401,6 @@ await writeFile('src/app/data/words.json', JSON.stringify(answersOut, null, 0) +
 
 const kb = (Buffer.byteLength(JSON.stringify(validOut)) / 1024).toFixed(0);
 console.log(`\n💾 valid-words.json — ${n(final.length)} kelime, ${kb} KB`);
-console.log(`💾 words.json — ${n(allAnswers.length)} cevap (${LENGTHS.map((L) => `${L}h:${answersByLen[L].length}`).join(' ')})\n`);
+console.log(
+  `💾 words.json — ${n(allAnswers.length)} cevap (${LENGTHS.map((L) => `${L}h:${answersByLen[L].length}`).join(' ')})\n`,
+);

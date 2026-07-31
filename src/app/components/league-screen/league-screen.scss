@@ -93,7 +93,11 @@
   padding: 14px 16px;
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--tier) 40%, var(--border));
-  background: radial-gradient(130% 180% at 0% 0%, color-mix(in srgb, var(--tier) 24%, var(--surface)) 0%, var(--surface) 68%);
+  background: radial-gradient(
+    130% 180% at 0% 0%,
+    color-mix(in srgb, var(--tier) 24%, var(--surface)) 0%,
+    var(--surface) 68%
+  );
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
@@ -106,7 +110,11 @@
   font-size: 36px;
   line-height: 1;
   border-radius: 20px;
-  background: radial-gradient(circle at 50% 35%, var(--tier), color-mix(in srgb, var(--tier) 28%, var(--surface-2)));
+  background: radial-gradient(
+    circle at 50% 35%,
+    var(--tier),
+    color-mix(in srgb, var(--tier) 28%, var(--surface-2))
+  );
   box-shadow:
     0 6px 18px color-mix(in srgb, var(--tier) 45%, transparent),
     inset 0 0 0 2px color-mix(in srgb, var(--tier) 55%, transparent);

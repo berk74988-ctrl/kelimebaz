@@ -286,10 +286,16 @@ app-board {
   padding: 5px 15px;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    transform 0.1s;
 }
-.hint-btn:hover { background: color-mix(in srgb, var(--accent) 24%, var(--surface)); }
-.hint-btn:active { transform: scale(0.97); }
+.hint-btn:hover {
+  background: color-mix(in srgb, var(--accent) 24%, var(--surface));
+}
+.hint-btn:active {
+  transform: scale(0.97);
+}
 .hint-card {
   display: block;
   text-align: left;
@@ -307,14 +313,22 @@ app-board {
   color: var(--text);
   white-space: nowrap;
 }
-.hint-cat b { color: var(--present); }
+.hint-cat b {
+  color: var(--present);
+}
 .hint-desc {
   font-size: 12px;
   color: var(--text-muted);
 }
 @keyframes hintIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 🆘 Takıldım — çalışma zamanı YZ ipucu */
@@ -361,16 +375,26 @@ app-board {
   font-weight: 700;
   cursor: pointer;
 }
-.stuck-btn:hover:not(:disabled) { filter: brightness(1.05); }
-.stuck-btn:active:not(:disabled) { transform: scale(0.97); }
-.stuck-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.stuck-btn:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+.stuck-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.stuck-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .stuck-cost {
   font-size: 12px;
   padding: 2px 7px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.18);
 }
-.stuck-note { font-size: 12px; color: var(--text-muted); }
+.stuck-note {
+  font-size: 12px;
+  color: var(--text-muted);
+}
 .stuck-spin {
   width: 14px;
   height: 14px;
@@ -379,8 +403,16 @@ app-board {
   border-radius: 50%;
   animation: stuckSpin 0.7s linear infinite;
 }
-@keyframes stuckSpin { to { transform: rotate(360deg); } }
+@keyframes stuckSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .stuck-hint { animation: none; }
-  .stuck-spin { animation-duration: 1.4s; }
+  .stuck-hint {
+    animation: none;
+  }
+  .stuck-spin {
+    animation-duration: 1.4s;
+  }
 }

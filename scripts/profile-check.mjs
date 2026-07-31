@@ -72,7 +72,11 @@ const want = {
 };
 for (const [key, val] of Object.entries(want)) {
   const card = cards.find((c) => c.key === key);
-  check(`${(card?.label ?? key).padEnd(16)} kartı`, card?.value === val, `${card?.value ?? 'YOK'} (beklenen ${val})`);
+  check(
+    `${(card?.label ?? key).padEnd(16)} kartı`,
+    card?.value === val,
+    `${card?.value ?? 'YOK'} (beklenen ${val})`,
+  );
 }
 check('kayıt defteri tüm kartları çizdi', cards.length === 7, `${cards.length} kart`);
 
@@ -173,7 +177,11 @@ for (const [w, h, ad] of [
     sw: document.documentElement.scrollWidth,
     cw: document.documentElement.clientWidth,
   }));
-  check(`${ad.padEnd(14)} ${w}×${h} — yatay kaydırma yok`, !scroll.over, `${scroll.sw} / ${scroll.cw}`);
+  check(
+    `${ad.padEnd(14)} ${w}×${h} — yatay kaydırma yok`,
+    !scroll.over,
+    `${scroll.sw} / ${scroll.cw}`,
+  );
 }
 
 console.log('\n6) KONSOL');

@@ -83,9 +83,19 @@ export interface SeasonReward {
 export function seasonReward(tierId: TierId): SeasonReward {
   switch (tierId) {
     case 'usta':
-      return { gold: 750, themeId: 'theme.champion', badgeId: 'badge.league', label: '750 altın · Şampiyon teması · Lig rozeti' };
+      return {
+        gold: 750,
+        themeId: 'theme.champion',
+        badgeId: 'badge.league',
+        label: '750 altın · Şampiyon teması · Lig rozeti',
+      };
     case 'elmas':
-      return { gold: 480, themeId: 'theme.champion', badgeId: 'badge.league', label: '480 altın · Şampiyon teması · Lig rozeti' };
+      return {
+        gold: 480,
+        themeId: 'theme.champion',
+        badgeId: 'badge.league',
+        label: '480 altın · Şampiyon teması · Lig rozeti',
+      };
     case 'platin':
       return { gold: 320, badgeId: 'badge.league', label: '320 altın · Lig rozeti' };
     case 'altin':

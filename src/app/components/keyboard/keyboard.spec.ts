@@ -82,8 +82,7 @@ describe('Keyboard — Türkçe ekran klavyesi', () => {
 
   describe('renklendirme', () => {
     it('tuşlar tahmin sonucuna göre renk sınıfı alır', () => {
-      const el = render({ K: 'correct', A: 'present', Z: 'absent' })
-        .nativeElement as HTMLElement;
+      const el = render({ K: 'correct', A: 'present', Z: 'absent' }).nativeElement as HTMLElement;
 
       expect(keyByText(el, 'K').classList.contains('correct')).toBe(true);
       expect(keyByText(el, 'A').classList.contains('present')).toBe(true);

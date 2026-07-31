@@ -40,16 +40,25 @@ for (const [lang, d] of Object.entries(dicts)) {
   const empty = empties(d);
   if (missing.length || extra.length || empty.length) {
     problems++;
-    console.error(`[${lang}] EKSİK ${missing.length} · FAZLA ${extra.length} · BOŞ ${empty.length}`);
-    if (missing.length) console.error(`  EKSİK: ${missing.slice(0, 30).join(', ')}${missing.length > 30 ? ' …' : ''}`);
-    if (extra.length) console.error(`  FAZLA: ${extra.slice(0, 30).join(', ')}${extra.length > 30 ? ' …' : ''}`);
-    if (empty.length) console.error(`  BOŞ:   ${empty.slice(0, 30).join(', ')}${empty.length > 30 ? ' …' : ''}`);
+    console.error(
+      `[${lang}] EKSİK ${missing.length} · FAZLA ${extra.length} · BOŞ ${empty.length}`,
+    );
+    if (missing.length)
+      console.error(
+        `  EKSİK: ${missing.slice(0, 30).join(', ')}${missing.length > 30 ? ' …' : ''}`,
+      );
+    if (extra.length)
+      console.error(`  FAZLA: ${extra.slice(0, 30).join(', ')}${extra.length > 30 ? ' …' : ''}`);
+    if (empty.length)
+      console.error(`  BOŞ:   ${empty.slice(0, 30).join(', ')}${empty.length > 30 ? ' …' : ''}`);
   } else {
     console.log(`[${lang}] ✓ ${keys.size} anahtar — ${REF} ile tam uyumlu`);
   }
 }
 
-console.log(`\nDiller: ${files.map((f) => f.replace('.json', '')).join(', ')} · referans: ${REF} (${refKeys.length} anahtar)`);
+console.log(
+  `\nDiller: ${files.map((f) => f.replace('.json', '')).join(', ')} · referans: ${REF} (${refKeys.length} anahtar)`,
+);
 if (problems) {
   console.error('\n❌ Çeviri tutarsızlığı bulundu — düzeltilmeden birleştirme yapılmamalı.');
   process.exit(1);

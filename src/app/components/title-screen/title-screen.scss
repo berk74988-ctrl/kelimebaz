@@ -66,18 +66,33 @@
 }
 
 @keyframes drift-a {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50%      { transform: translate(60px, 40px) scale(1.12); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(60px, 40px) scale(1.12);
+  }
 }
 
 @keyframes drift-b {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50%      { transform: translate(-50px, -40px) scale(1.15); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-50px, -40px) scale(1.15);
+  }
 }
 
 @keyframes drift-c {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50%      { transform: translate(-70px, 50px) scale(0.9); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-70px, 50px) scale(0.9);
+  }
 }
 
 .floaters {
@@ -105,7 +120,8 @@
     transform: translate(0, 0) rotate(0deg);
     opacity: 0;
   }
-  10%, 85% {
+  10%,
+  85% {
     opacity: 0.06;
   }
   100% {
@@ -298,10 +314,18 @@
 }
 
 // Açılışta kademeli yükselme
-.hero  { animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s both; }
-.modes { animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.20s both; }
-.stats { animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.34s both; }
-.foot  { animation: fade-in 0.7s ease 0.5s both; }
+.hero {
+  animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s both;
+}
+.modes {
+  animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s both;
+}
+.stats {
+  animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.34s both;
+}
+.foot {
+  animation: fade-in 0.7s ease 0.5s both;
+}
 
 @keyframes rise {
   from {
@@ -311,7 +335,9 @@
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
+  from {
+    opacity: 0;
+  }
 }
 
 /* ---------- Kahraman bölüm ---------- */
@@ -414,9 +440,15 @@
     border-radius: 3px;
   }
 
-  &.correct .sw { background: var(--correct); }
-  &.present .sw { background: var(--present); }
-  &.absent  .sw { background: var(--absent); }
+  &.correct .sw {
+    background: var(--correct);
+  }
+  &.present .sw {
+    background: var(--present);
+  }
+  &.absent .sw {
+    background: var(--absent);
+  }
 }
 
 /* ---------- Mod kartları ---------- */
@@ -451,7 +483,12 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.13) 50%, transparent 65%);
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      rgba(255, 255, 255, 0.13) 50%,
+      transparent 65%
+    );
     transform: translateX(-120%);
     transition: transform 0.6s ease;
     pointer-events: none;
@@ -462,7 +499,9 @@
     border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
     box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3);
 
-    &::before { transform: translateX(120%); }
+    &::before {
+      transform: translateX(120%);
+    }
 
     .m-arw {
       transform: translateX(4px);
@@ -478,7 +517,11 @@
   // Birincil kart — günün kelimesi. Görsel ağırlığı en yüksek olan öğe.
   &.primary {
     padding: 17px 16px;
-    background: linear-gradient(135deg, var(--correct), color-mix(in srgb, var(--correct) 68%, #000));
+    background: linear-gradient(
+      135deg,
+      var(--correct),
+      color-mix(in srgb, var(--correct) 68%, #000)
+    );
     border-color: transparent;
     color: var(--on-correct);
     box-shadow: 0 10px 26px color-mix(in srgb, var(--correct) 28%, transparent);
@@ -488,8 +531,12 @@
       box-shadow: 0 16px 38px color-mix(in srgb, var(--correct) 36%, transparent);
     }
 
-    .m-tx span { opacity: 0.82; }
-    .m-ico { background: rgba(255, 255, 255, 0.16); }
+    .m-tx span {
+      opacity: 0.82;
+    }
+    .m-ico {
+      background: rgba(255, 255, 255, 0.16);
+    }
   }
 
   &.ghost .m-ico {
@@ -507,9 +554,13 @@
       border-color: var(--border);
       box-shadow: none;
 
-      &::before { transform: translateX(-120%); }
+      &::before {
+        transform: translateX(-120%);
+      }
     }
-    &:active { transform: none; }
+    &:active {
+      transform: none;
+    }
   }
 
   // Bugün oynandı kartının içine gömülü "Sonucu Gör"
@@ -719,11 +770,21 @@
     opacity: 0.4;
   }
 
-  .b1 { width: 300px; height: 300px; }
-  .b2 { width: 280px; height: 280px; }
-  .b3 { display: none; } // mobilde daha az katman → daha akıcı
+  .b1 {
+    width: 300px;
+    height: 300px;
+  }
+  .b2 {
+    width: 280px;
+    height: 280px;
+  }
+  .b3 {
+    display: none;
+  } // mobilde daha az katman → daha akıcı
 
-  .who-tx span { display: none; } // dar ekranda ad yeter, alt satır taşar
+  .who-tx span {
+    display: none;
+  } // dar ekranda ad yeter, alt satır taşar
 
   .mode {
     padding: 13px 14px;
@@ -743,7 +804,9 @@
   .stat {
     padding: 11px 6px;
 
-    b { font-size: 17px; }
+    b {
+      font-size: 17px;
+    }
   }
 }
 

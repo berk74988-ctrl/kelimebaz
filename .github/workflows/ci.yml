@@ -6,26 +6,110 @@ on:
   pull_request:
     branches: [main]
 
+# Aynı dal/PR için yeni push gelince önceki koşuyu iptal et (kaynak israfı olmasın).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # ── HARD GATE: her push/PR'de derleme + birim testler + biçim + i18n ──
   build:
+    name: Derleme + birim testler
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .nvmrc # doğru Node sürümü (engines ile uyumlu)
           cache: npm
 
       - name: Bağımlılıkları kur
         run: npm ci
 
-      # Eksik/fazla/boş çeviri anahtarı varsa burada KIRILIR → birleştirme engellenir.
+      - name: Biçim kontrolü (prettier)
+        run: npm run format:check
+
       - name: Çeviri tutarlılığı (i18n)
         run: npm run check:i18n
 
-      - name: Birim testleri
+      - name: Birim testleri (vitest)
         run: npm test -- --watch=false
 
       - name: Üretim derlemesi
         run: npm run build
+
+      - name: YZ çözücü + karakter mantığı (tarayıcısız)
+        run: |
+          npm run check:vsai
+          npm run check:persona
+
+      - name: Derleme çıktısını yükle (artefakt)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ── Playwright uçtan uca kontroller (ayrı iş — tarayıcı kurulumu gerekir) ──
+  e2e:
+    name: Playwright uçtan uca kontroller
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Bağımlılıkları kur
+        run: npm ci
+
+      - name: Playwright tarayıcısı (chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Geliştirme sunucusunu başlat (localhost:4200)
+        run: |
+          npm start > ngserve.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:4200/ >/dev/null; then echo "ng serve hazır (${i}x2sn)"; break; fi
+            sleep 2
+          done
+          curl -sf http://localhost:4200/ >/dev/null || (echo "ng serve başlamadı"; cat ngserve.log; exit 1)
+
+      # Yerelde doğrulanmış, kararlı kontroller → başarısızsa CI KIRMIZI.
+      - name: Kararlı kontroller (engelleyici)
+        run: |
+          set -eo pipefail
+          mkdir -p e2e-logs
+          for c in a11y contrast scenarios dictionary shop audio; do
+            echo "::group::check:$c"
+            npm run check:$c 2>&1 | tee "e2e-logs/$c.log"
+            echo "::endgroup::"
+          done
+
+      # Bilinmeyen/pre-existing sorunları olan kontroller → görünür ama ENGELLEMEZ.
+      # (responsive: yatay/kısa ekran taşması · share: zamanlama · profile/gold: quest)
+      - name: Bilinen sorunlu kontroller (engellemez — düzeltilecek)
+        continue-on-error: true
+        run: |
+          mkdir -p e2e-logs
+          for c in responsive share profile gold; do
+            echo "::group::check:$c (non-blocking)"
+            npm run check:$c 2>&1 | tee "e2e-logs/$c.log" || echo "check:$c başarısız (bilinen sorun)"
+            echo "::endgroup::"
+          done
+
+      - name: Kontrol loglarını yükle (artefakt — hata nedeni burada)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs
+          path: |
+            e2e-logs/
+            ngserve.log
+          retention-days: 7
+          if-no-files-found: ignore

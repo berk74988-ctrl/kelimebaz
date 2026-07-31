@@ -1,7 +1,9 @@
 @if (pwa.updateReady()) {
   <div class="pwa-bar update" role="status">
     <span class="pwa-ico" aria-hidden="true">✨</span>
-    <span class="pwa-tx"><b>{{ i18n.t('pwa.updateTitle') }}</b></span>
+    <span class="pwa-tx"
+      ><b>{{ i18n.t('pwa.updateTitle') }}</b></span
+    >
     <button class="pwa-btn primary" type="button" (click)="pwa.applyUpdate()">
       {{ i18n.t('pwa.updateBtn') }}
     </button>

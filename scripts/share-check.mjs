@@ -23,13 +23,17 @@ const context = await browser.newContext({
 const page = await context.newPage();
 
 console.log(`\nHedef: ${TARGET}`);
-console.log(`Protokol: ${new URL(TARGET).protocol}  ${new URL(TARGET).protocol === 'http:' ? '(güvensiz bağlam — navigator.clipboard YOK)' : ''}\n`);
+console.log(
+  `Protokol: ${new URL(TARGET).protocol}  ${new URL(TARGET).protocol === 'http:' ? '(güvensiz bağlam — navigator.clipboard YOK)' : ''}\n`,
+);
 
 await page.goto(TARGET, { waitUntil: 'networkidle' });
 
 // navigator.clipboard gerçekten var mı?
 const hasModern = await page.evaluate(() => !!navigator.clipboard?.writeText);
-console.log(`navigator.clipboard mevcut mu : ${hasModern ? 'EVET' : 'HAYIR → yedek yöntem devrede'}`);
+console.log(
+  `navigator.clipboard mevcut mu : ${hasModern ? 'EVET' : 'HAYIR → yedek yöntem devrede'}`,
+);
 
 // Serbest oyuna gir ve 6 tahmin yaparak oyunu bitir
 await page.getByRole('button', { name: /Serbest Oyna/ }).click();
@@ -103,7 +107,10 @@ const checks = [
   ['Panoya bir şey yazıldı', clip.length > 0],
   ['Geri bildirim "Kopyalandı"', feedback.includes('Kopyalandı')],
   ['Başlık doğru biçimde', /^Kelimebaz .* [\dX]\/6$/.test(header)],
-  ['Izgarada HİÇ harf yok (spoiler yok)', gridLines.length > 0 && !gridLines.some((l) => HAS_LETTER.test(l))],
+  [
+    'Izgarada HİÇ harf yok (spoiler yok)',
+    gridLines.length > 0 && !gridLines.some((l) => HAS_LETTER.test(l)),
+  ],
   ['Izgara ekrandakiyle birebir aynı', gridLines.join('\n') === onScreen],
 ];
 

@@ -25,7 +25,9 @@ describe('YZ yarışı — kazanan kuralı (raceOutcome)', () => {
   });
 
   it('ikisi de çözemezse berabere', () => {
-    expect(raceOutcome({ solved: false, attempts: 6 }, { solved: false, attempts: 6 })).toBe('draw');
+    expect(raceOutcome({ solved: false, attempts: 6 }, { solved: false, attempts: 6 })).toBe(
+      'draw',
+    );
   });
 
   it('hız/süre kazananı DEĞİŞTİRMEZ — yalnız tahmin sayısı belirler', () => {

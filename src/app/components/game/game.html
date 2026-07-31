@@ -1,6 +1,13 @@
 <div class="game" [style.--cols]="game.wordLength()">
   <header class="bar">
-    <button class="icon" type="button" [attr.aria-label]="i18n.t('game.backToTitle')" (click)="exit.emit()">←</button>
+    <button
+      class="icon"
+      type="button"
+      [attr.aria-label]="i18n.t('game.backToTitle')"
+      (click)="exit.emit()"
+    >
+      ←
+    </button>
 
     <div class="titles">
       <h1>KELİMEBAZ</h1>
@@ -18,7 +25,12 @@
 
     <!-- Oda süre sayacı -->
     @if (isRoom() && roomTimeLimit() > 0) {
-      <div class="clock" [class.low]="remaining() <= 10" role="timer" [attr.aria-label]="i18n.t('game.timeLeft')">
+      <div
+        class="clock"
+        [class.low]="remaining() <= 10"
+        role="timer"
+        [attr.aria-label]="i18n.t('game.timeLeft')"
+      >
         ⏱ {{ clock() }}
       </div>
     }
@@ -34,14 +46,21 @@
       👁
     </button>
 
-    <button class="icon" type="button" [attr.aria-label]="i18n.t('game.showStats')" (click)="statsOpen.set(true)">
+    <button
+      class="icon"
+      type="button"
+      [attr.aria-label]="i18n.t('game.showStats')"
+      (click)="statsOpen.set(true)"
+    >
       📊
     </button>
 
     <button
       class="icon"
       type="button"
-      [attr.aria-label]="theme.theme() === 'dark' ? i18n.t('game.lightMode') : i18n.t('game.darkMode')"
+      [attr.aria-label]="
+        theme.theme() === 'dark' ? i18n.t('game.lightMode') : i18n.t('game.darkMode')
+      "
       (click)="theme.toggle()"
     >
       {{ theme.theme() === 'dark' ? '☀️' : '🌙' }}
@@ -65,10 +84,17 @@
       <div class="hint-bar">
         @if (hintShown()) {
           <div class="hint-card">
-            <span class="hint-cat">🏷️ <b>{{ h.c }}</b></span>@if (h.h) {<span class="hint-desc"> — {{ h.h }}</span>}
+            <span class="hint-cat"
+              >🏷️ <b>{{ h.c }}</b></span
+            >
+            @if (h.h) {
+              <span class="hint-desc"> — {{ h.h }}</span>
+            }
           </div>
         } @else {
-          <button class="hint-btn" type="button" (click)="hintShown.set(true)">💡 {{ i18n.t('hint.show') }}</button>
+          <button class="hint-btn" type="button" (click)="hintShown.set(true)">
+            💡 {{ i18n.t('hint.show') }}
+          </button>
         }
       </div>
     }
@@ -130,7 +156,9 @@
   }
 
   @if (game.isOver() && !resultOpen() && !isRoom()) {
-    <button class="reopen" type="button" (click)="resultOpen.set(true)">{{ i18n.t('game.showResult') }}</button>
+    <button class="reopen" type="button" (click)="resultOpen.set(true)">
+      {{ i18n.t('game.showResult') }}
+    </button>
   }
 
   @if (statsOpen()) {

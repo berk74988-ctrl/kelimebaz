@@ -12,7 +12,9 @@
       <span>{{ i18n.t('statspanel.played') }}</span>
     </div>
     <div class="stat">
-      <b>{{ i18n.lang() === 'en' ? statsService.winRate() + '%' : '%' + statsService.winRate() }}</b>
+      <b>{{
+        i18n.lang() === 'en' ? statsService.winRate() + '%' : '%' + statsService.winRate()
+      }}</b>
       <span>{{ i18n.t('statspanel.winRate') }}</span>
     </div>
     <div class="stat">

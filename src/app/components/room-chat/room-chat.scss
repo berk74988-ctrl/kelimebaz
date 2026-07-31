@@ -111,7 +111,9 @@
   border: 1px solid var(--border);
   border-radius: 999px;
 
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 
   &::placeholder {
     color: var(--text-muted);
@@ -136,7 +138,9 @@
   background: var(--correct);
   border-radius: 50%;
 
-  transition: transform 0.14s ease, filter 0.14s ease;
+  transition:
+    transform 0.14s ease,
+    filter 0.14s ease;
 
   &:hover:not(:disabled) {
     filter: brightness(1.08);

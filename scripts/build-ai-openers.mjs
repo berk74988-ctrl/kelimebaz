@@ -112,7 +112,9 @@ for (const lang of LANGS) {
     const rnd = makeRng(2026_07 + L); // uzunluğa göre sabit seed
     const list = rankedOpeners(pool, rnd);
     openers[lang][L] = list;
-    report.push(`  ${lang} ${L} harf: ${list[0] || '(boş)'} … (${list.length} sıralı) [${pool.length} aday]`);
+    report.push(
+      `  ${lang} ${L} harf: ${list[0] || '(boş)'} … (${list.length} sıralı) [${pool.length} aday]`,
+    );
   }
 }
 

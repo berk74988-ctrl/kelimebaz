@@ -6,9 +6,16 @@ const OUT = 'C:/Users/berk8/AppData/Local/Temp/claude/lobby';
 mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch();
 let fail = 0;
-const check = (n, ok, d = '') => { if (!ok) fail++; console.log(`${ok ? '✓' : '✗'} ${n}${d ? '  - ' + d : ''}`); };
+const check = (n, ok, d = '') => {
+  if (!ok) fail++;
+  console.log(`${ok ? '✓' : '✗'} ${n}${d ? '  - ' + d : ''}`);
+};
 
-for (const s of [{ n: 'mobil', w: 390, h: 844 }, { n: 'masaustu', w: 1280, h: 860 }, { n: 'kisa', w: 390, h: 680 }]) {
+for (const s of [
+  { n: 'mobil', w: 390, h: 844 },
+  { n: 'masaustu', w: 1280, h: 860 },
+  { n: 'kisa', w: 390, h: 680 },
+]) {
   const c = await b.newContext({ viewport: { width: s.w, height: s.h } });
   const p = await c.newPage();
   await p.goto(APP, { waitUntil: 'domcontentloaded' });
@@ -26,7 +33,9 @@ for (const s of [{ n: 'mobil', w: 390, h: 844 }, { n: 'masaustu', w: 1280, h: 86
     await p.waitForTimeout(300);
   }
   await p.waitForTimeout(300);
-  const scrolls = await p.evaluate(() => document.documentElement.scrollHeight > document.documentElement.clientHeight + 1);
+  const scrolls = await p.evaluate(
+    () => document.documentElement.scrollHeight > document.documentElement.clientHeight + 1,
+  );
   check(`[${s.n}] lobi+sohbet sayfa KAYDIRMIYOR`, !scrolls, scrolls ? 'kayıyor' : 'tek ekran');
   const chatVisible = await p.locator('app-room-chat .c-inp').isVisible();
   check(`[${s.n}] sohbet giriş kutusu görünür`, chatVisible);
@@ -34,5 +43,7 @@ for (const s of [{ n: 'mobil', w: 390, h: 844 }, { n: 'masaustu', w: 1280, h: 86
   await c.close();
 }
 await b.close();
-console.log(fail === 0 ? '\n✅ Lobi + sohbet tek ekrana sığıyor' : `\n❌ ${fail} kontrol başarısız`);
+console.log(
+  fail === 0 ? '\n✅ Lobi + sohbet tek ekrana sığıyor' : `\n❌ ${fail} kontrol başarısız`,
+);
 process.exit(fail === 0 ? 0 : 1);

@@ -37,9 +37,7 @@ export class WordCardService {
   private load(lang: Lang): Promise<CardMap> {
     if (!this.cache[lang]) {
       const p =
-        lang === 'tr'
-          ? import('../data/word-cards-tr.json')
-          : import('../data/word-cards-en.json');
+        lang === 'tr' ? import('../data/word-cards-tr.json') : import('../data/word-cards-en.json');
       this.cache[lang] = p.then((m) => (m.default ?? m) as CardMap).catch(() => ({}) as CardMap);
     }
     return this.cache[lang]!;

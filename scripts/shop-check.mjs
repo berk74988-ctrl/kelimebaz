@@ -28,12 +28,19 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
 
-const gold = () => page.evaluate(() => JSON.parse(localStorage.getItem('kelimebaz:gold') ?? '{"balance":0}').balance);
+const gold = () =>
+  page.evaluate(
+    () => JSON.parse(localStorage.getItem('kelimebaz:gold') ?? '{"balance":0}').balance,
+  );
 const skin = () => page.evaluate(() => document.documentElement.dataset.skin ?? '(yok)');
-const owned = () => page.evaluate(() => JSON.parse(localStorage.getItem('kelimebaz:inv:owned') ?? '[]'));
+const owned = () =>
+  page.evaluate(() => JSON.parse(localStorage.getItem('kelimebaz:inv:owned') ?? '[]'));
 
 async function openShop() {
-  await page.getByRole('button', { name: /Mağaza/ }).first().click();
+  await page
+    .getByRole('button', { name: /Mağaza/ })
+    .first()
+    .click();
   await page.waitForSelector('app-shop-screen');
   await page.waitForTimeout(300);
 }
@@ -56,7 +63,10 @@ const tabs = await page.locator('.tab').count();
 check('dört kategori sekmesi var', tabs === 4, `${tabs} sekme`);
 const items = await page.locator('.item').count();
 check('temalar sekmesinde ürünler var', items > 0, `${items} ürün`);
-check('mağazada altın gösteriliyor', (await page.locator('.coin b').textContent())?.trim() === '400');
+check(
+  'mağazada altın gösteriliyor',
+  (await page.locator('.coin b').textContent())?.trim() === '400',
+);
 
 console.log('\n2) SATIN ALMA — yeterli altın');
 console.log('─'.repeat(72));
@@ -107,7 +117,11 @@ console.log('─'.repeat(72));
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForTimeout(600);
 
-check('okyanus teması yenilemeden sonra HÂLÂ uygulanıyor', (await skin()) === 'ocean', await skin());
+check(
+  'okyanus teması yenilemeden sonra HÂLÂ uygulanıyor',
+  (await skin()) === 'ocean',
+  await skin(),
+);
 check('sahiplik korundu', (await owned()).includes('theme.ocean'));
 
 // Bir avatar al ve profilde göründüğünü doğrula
@@ -123,7 +137,9 @@ await page.waitForTimeout(400);
 await page.getByRole('button', { name: 'Profil' }).first().click();
 await page.waitForTimeout(500);
 
-const profileAvatar = await page.evaluate(() => document.querySelector('.ph-emoji')?.textContent?.trim());
+const profileAvatar = await page.evaluate(() =>
+  document.querySelector('.ph-emoji')?.textContent?.trim(),
+);
 check('satın alınan avatar profilde görünüyor', profileAvatar === '🐉', profileAvatar);
 
 console.log('\n6) RESPONSIVE');

@@ -46,7 +46,8 @@ export interface ShareInfo {
  * serbest/oda/YZ: çevrili kip metni). Bu dosya çeviriyi hiç bilmez.
  */
 export function buildShareText(info: ShareInfo): string {
-  const score = info.status === 'won' ? `${info.attempts}/${info.maxAttempts}` : `X/${info.maxAttempts}`;
+  const score =
+    info.status === 'won' ? `${info.attempts}/${info.maxAttempts}` : `X/${info.maxAttempts}`;
   const grid = buildShareGrid(info.guesses);
 
   return `${info.title} ${score}\n\n${grid}`;

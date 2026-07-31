@@ -96,22 +96,41 @@ for (let i = 0; i < words.length; i += BATCH) {
   const map = await judge(lang, batch);
   for (const w of batch) {
     const v = map[w.toUpperCase()];
-    if (!v || v.ok) keep.push(w); // yargı gelmezse GÜVENDE tut (elenmesin)
+    if (!v || v.ok)
+      keep.push(w); // yargı gelmezse GÜVENDE tut (elenmesin)
     else drop.push(`${w} — ${v.why || 'uygun değil'}`);
   }
-  process.stdout.write(`\r  ${Math.min(i + BATCH, words.length)}/${words.length} denetlendi · elenen ${drop.length}`);
+  process.stdout.write(
+    `\r  ${Math.min(i + BATCH, words.length)}/${words.length} denetlendi · elenen ${drop.length}`,
+  );
 }
 console.log('');
 
 console.log(`\n[${lang}] Toplam ${words.length} · kalan ${keep.length} · elenen ${drop.length}`);
-if (drop.length) { console.log('ELENENLER (örnek):'); for (const d of drop.slice(0, 40)) console.log('  ✂️ ', d); }
+if (drop.length) {
+  console.log('ELENENLER (örnek):');
+  for (const d of drop.slice(0, 40)) console.log('  ✂️ ', d);
+}
 
 if (apply) {
   const byLen = {};
-  for (const w of keep) { const L = [...w].length; (byLen[L] = byLen[L] || []).push(w); }
-  const out = { ...data, counts: Object.fromEntries(Object.keys(byLen).sort().map((L) => [L, byLen[L].length])), words: keep };
+  for (const w of keep) {
+    const L = [...w].length;
+    (byLen[L] = byLen[L] || []).push(w);
+  }
+  const out = {
+    ...data,
+    counts: Object.fromEntries(
+      Object.keys(byLen)
+        .sort()
+        .map((L) => [L, byLen[L].length]),
+    ),
+    words: keep,
+  };
   await writeFile(FILES[lang], JSON.stringify(out, null, 0) + '\n');
-  console.log(`\n✅ Uygulandı: ${keep.length} cevap → ${lang === 'tr' ? 'words.json' : 'words-en.json'}`);
+  console.log(
+    `\n✅ Uygulandı: ${keep.length} cevap → ${lang === 'tr' ? 'words.json' : 'words-en.json'}`,
+  );
 } else {
   console.log('\n(Rapor modu — words.json değişmedi. Uygulamak için --apply ekleyin.)');
 }

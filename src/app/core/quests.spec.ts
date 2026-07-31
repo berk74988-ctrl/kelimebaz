@@ -44,7 +44,12 @@ describe('Günlük görevler', () => {
       p = gameEnded(p, true, 6, false);
 
       expect(p.bestAttempts).toBe(3);
-      expect(isComplete(QUESTS.find((q) => q.id === 'fast')!, p)).toBe(true);
+      expect(
+        isComplete(
+          QUESTS.find((q) => q.id === 'fast')!,
+          p,
+        ),
+      ).toBe(true);
     });
 
     it('günlük kelimeyi çözmek "günün kelimesi" görevini bitirir', () => {

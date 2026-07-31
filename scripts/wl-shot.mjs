@@ -11,7 +11,20 @@ for (const [name, w, h, word, guesses] of [
   const c = await b.newContext({ viewport: { width: w, height: h } });
   const p = await c.newPage();
   await p.goto('http://localhost:4200', { waitUntil: 'domcontentloaded' });
-  await p.evaluate((word) => localStorage.setItem('kelimebaz:game:practice', JSON.stringify({ mode: 'practice', dayIndex: -1, answer: word, guesses: [], status: 'playing' })), word);
+  await p.evaluate(
+    (word) =>
+      localStorage.setItem(
+        'kelimebaz:game:practice',
+        JSON.stringify({
+          mode: 'practice',
+          dayIndex: -1,
+          answer: word,
+          guesses: [],
+          status: 'playing',
+        }),
+      ),
+    word,
+  );
   await p.reload({ waitUntil: 'domcontentloaded' });
   await p.getByRole('button', { name: /Serbest Oyna/ }).click();
   await p.waitForSelector('app-board');

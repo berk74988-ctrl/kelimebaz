@@ -84,7 +84,11 @@ function patternKey(guess: string, answer: string, lang: Lang = 'tr'): string {
  * Yüksek entropi = tahmin adayları daha eşit/çok parçaya ayırıyor = ortalamada
  * daha çok eliyor. Çözücü her tur en yüksek entropili tahmini seçer. Saf fonksiyon.
  */
-export function guessEntropy(guess: string, candidates: readonly string[], lang: Lang = 'tr'): number {
+export function guessEntropy(
+  guess: string,
+  candidates: readonly string[],
+  lang: Lang = 'tr',
+): number {
   const n = candidates.length;
   if (n <= 1) return 0;
   const buckets = new Map<string, number>();
@@ -155,14 +159,17 @@ export class AiSolver {
       return;
     }
     // İpucuna göre adayları ele — aday-dışı (kötü) tahmin bile bilgi verir.
-    this.candidates = this.candidates.filter((c) => samePattern(evaluateGuess(pick, c, this.lang), pattern));
+    this.candidates = this.candidates.filter((c) =>
+      samePattern(evaluateGuess(pick, c, this.lang), pattern),
+    );
     if (!this.candidates.length) this.candidates = [...this.pool]; // güvenlik: hiç kalmazsa sıfırla
   }
 
   private pickGuess(): string {
     const c = this.candidates;
     // Son düzlük: 1-2 aday kaldıysa doğrudan dene (biri cevaptır).
-    if (c.length <= 2) return c.length ? c[0] : this.pool[Math.floor(this.rnd() * this.pool.length)];
+    if (c.length <= 2)
+      return c.length ? c[0] : this.pool[Math.floor(this.rnd() * this.pool.length)];
     // İlk tur: açılış derleme zamanında SIRALI hesaplandı → hesap yok, gecikme yok.
     if (this.attempts === 0 && this.openers.length) return this.pickOpener();
     // 🎲 Kumarbaz: erken/orta turda (çok aday) doğrudan bir cevabı dene.

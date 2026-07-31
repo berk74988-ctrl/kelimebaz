@@ -1,7 +1,20 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  output,
+  signal,
+} from '@angular/core';
 import { AiSolver, aiOpeners } from '../../core/ai-opponent';
 import { adaptTierLabel } from '../../core/ai-adaptive';
-import { Persona, PERSONAS, PERSONA_BONUS, persona as personaById, PersonaId } from '../../core/ai-personas';
+import {
+  Persona,
+  PERSONAS,
+  PERSONA_BONUS,
+  persona as personaById,
+  PersonaId,
+} from '../../core/ai-personas';
 import { raceOutcome } from '../../core/vsai-race';
 import { LetterState, MAX_ATTEMPTS } from '../../models/game.model';
 import { AudioService } from '../../services/audio.service';

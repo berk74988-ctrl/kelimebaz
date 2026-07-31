@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  output,
+  signal,
+} from '@angular/core';
 import { GameMode } from '../../models/game.model';
 import { GameService } from '../../services/game.service';
 import { GoldService } from '../../services/gold.service';

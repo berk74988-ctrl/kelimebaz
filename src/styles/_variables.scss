@@ -36,7 +36,13 @@ $space-4: 24px;
 $space-5: 40px;
 
 // --- Tipografi ---
-$font: 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', sans-serif;
+$font:
+  'Segoe UI',
+  system-ui,
+  -apple-system,
+  Roboto,
+  'Helvetica Neue',
+  sans-serif;
 $font-mono: 'JetBrains Mono', 'Consolas', ui-monospace, monospace;
 
 // --- Kırılma noktaları ---

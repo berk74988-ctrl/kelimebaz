@@ -17,7 +17,10 @@ async function run(name, { width, height, tab }) {
   const page = await ctx.newPage();
   await page.goto(TARGET, { waitUntil: 'networkidle' });
   await page.evaluate(() => {
-    localStorage.setItem('kelimebaz:gold', JSON.stringify({ balance: 320, earned: 700, spent: 380 }));
+    localStorage.setItem(
+      'kelimebaz:gold',
+      JSON.stringify({ balance: 320, earned: 700, spent: 380 }),
+    );
     // Birkaç ürün satın alınmış görünsün
     localStorage.setItem(
       'kelimebaz:inv:owned',
@@ -27,7 +30,10 @@ async function run(name, { width, height, tab }) {
   });
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
-  await page.getByRole('button', { name: /Mağaza/ }).first().click();
+  await page
+    .getByRole('button', { name: /Mağaza/ })
+    .first()
+    .click();
   await page.waitForTimeout(400);
   if (tab) {
     await page.locator('.tab', { hasText: tab }).click();
