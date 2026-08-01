@@ -349,20 +349,63 @@ tekil kazanma oranı, tahmin dağılımı, kelime uzunluğu performansı (7 harf
 YZ modu zorluk (tier) dağılımı + oyuncu kazanma oranı. Tarih aralığı:
 **Bugün / 7 gün / 30 gün / Tümü**. Veri yokken düzgün boş durum gösterir.
 
-**Kimlik doğrulama (şart):** HTTP Basic Auth. `ADMIN_PASS` **tanımlı değilse
-panel tamamen KAPALIDIR** (`/admin` → 503) — yani kimlik doğrulaması olmadan
-asla erişilemez. Etkinleştirmek için servis ortamına parola ver:
+**Performans:** özet sorgusu 30 gün / 40k olayda ~50 ms (indeksli; <1 sn şartı).
+
+### Yönetim güvenliği (kimlik doğrulama)
+
+Panel telemetri + kelime havuzu + (ileride) ekonomi ayarlarına eriştiği için
+**yalnızca yetkili kişi** açabilir. Tek kullanıcılı (yönetici) — oyunun kendisinde
+hesap yok, panelde de karmaşık kullanıcı yönetimine gerek yok.
+
+**⚠️ HTTPS ÖN KOŞULDUR.** Site hâlâ HTTP'de; HTTP üzerinden yönetim parolası
+göndermek parolayı ağda açık gönderir → kabul edilemez. Bu yüzden panel
+**kod düzeyinde** HTTP'yi reddeder: `X-Forwarded-Proto: https` yoksa (ve host
+localhost değilse) her yönetim ucu **400 `https_required`** döner. Yani HTTPS
+kurulmadan panel **hiçbir şekilde** yayına giremez.
+
+HTTPS kurulumu (Berk — alan adı gerektirir, otonom yapılamaz):
 
 ```bash
-# /etc/systemd/system/berk-rooms.service içine:
-#   Environment=ADMIN_PASS=güçlü-bir-parola
-sudo systemctl daemon-reload && sudo systemctl restart berk-rooms
-# Panel: http://34.158.136.9/berk/rooms/admin  (kullanıcı: admin)
+# 1) Bir alan adını sunucunun IP'sine yönlendir (A kaydı).
+# 2) Let's Encrypt (nginx eklentisiyle otomatik sertifika + yönlendirme):
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d alanadi.com          # sertifika + 80→443 yönlendirme
+# (alternatif: Caddy — otomatik HTTPS). Sonra site https:// olur.
 ```
 
-Kaba-kuvvete karşı IP hız sınırı + sabit-zamanlı parola karşılaştırması var.
-Bu, tam bir auth paketi gelene kadar tek-yönetici için yeterli, gerçek bir kapı.
-**Performans:** özet sorgusu 30 gün / 40k olayda ~50 ms (indeksli; <1 sn şartı).
+**Kimlik doğrulama** (kod hazır, HTTPS'i bekler):
+
+- **Parola karması** env'de — düz metin **hiçbir yerde** durmaz. Karma
+  **scrypt** (bellek-sert; bcrypt/argon2 muadili, ama Node'a gömülü → bağımsız).
+  `ADMIN_PASS_HASH` yoksa panel **KAPALI** (503).
+- **Oturum:** giriş başarılıysa **HMAC imzalı** çerez (`HttpOnly`, `Secure`,
+  `SameSite=Strict`), **8 saat** sonra dolar. Kurcalanırsa geçersiz.
+- **Giriş hız sınırı:** IP başına dakikada 8 deneme → sonrası 429 (kaba kuvvet).
+- **Tüm yönetim uçları korumalı:** `/admin`, `/admin/summary`, `/admin/words`,
+  `/admin/login`, `/admin/logout` — oturumsuz veri ucu 401, `/admin` giriş sayfası.
+- **Güvenlik başlıkları:** CSP (`frame-ancestors 'none'`), `X-Frame-Options: DENY`,
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy`, HSTS (HTTPS'te),
+  `X-Robots-Tag: noindex` + sayfada `<meta noindex>` (arama motorlarına kapalı).
+- **Denetim kaydı:** her yönetim işlemi (`login` başarı/başarısızlık, `logout`,
+  `summary`, `words`, `export_csv`) — zaman, IP, işlem, sonuç →
+  `rooms-server/admin-audit.log`.
+
+**Parola belirleme / değiştirme:**
+
+```bash
+# 1) Karma üret (düz metin parola diske yazılmaz, yalnız karma):
+node rooms-server/admin-hash.mjs 'yeni-güçlü-parola'    # → scrypt$...
+# 2) Servise ver (+ isteğe bağlı sabit oturum anahtarı):
+#   /etc/systemd/system/berk-rooms.service içine:
+#     Environment=ADMIN_PASS_HASH=scrypt$...
+#     Environment=ADMIN_SESSION_SECRET=<rastgele-uzun-dizi>   # yoksa her restart oturumları düşürür
+sudo systemctl daemon-reload && sudo systemctl restart berk-rooms
+# Panel (HTTPS kurulduktan SONRA): https://alanadi.com/berk/rooms/admin
+```
+
+Parola değiştirmek = yeni karma üretip env'i güncelleyip servisi yeniden başlatmak.
+Doğrulama: `node rooms-server/admin-auth.test.mjs` (karma + token) ·
+uçtan uca güvenlik (401/400/429/başlıklar/denetim) el ile doğrulandı.
 
 ### Kelime raporu — havuzu veriyle yönet (`/admin` → "Kelimeler")
 

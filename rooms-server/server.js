@@ -61,58 +61,107 @@ function difficultyMaps() {
 const rlEvents = rateLimiter(Number(process.env.RL_EVENTS || 60), 60_000);
 const EVENTS_MAX_BATCH = 200; // tek istekte kabul edilen en çok olay
 
-// --- YÖNETİM PANOSU kimlik doğrulaması (HTTP Basic) ---
-// ADMIN_PASS TANIMSIZSA panel KAPALIDIR (503) → asla kimlik doğrulamasız açılmaz.
-// (Bu, tam bir auth paketi gelene kadar tek-yönetici için yeterli, gerçek bir kapı.)
-const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-const ADMIN_PASS = process.env.ADMIN_PASS || '';
-const ADMIN_ENABLED = !!ADMIN_PASS;
-const rlAdmin = rateLimiter(Number(process.env.RL_ADMIN || 30), 60_000); // kaba-kuvvete karşı
+// --- YÖNETİM PANOSU kimlik doğrulaması (tek kullanıcı, oturum tabanlı) ---
+// Parola KARMASI env'de (düz metin yok). ADMIN_PASS_HASH yoksa panel KAPALI
+// (503) → asla kimlik doğrulamasız açılmaz. HTTPS ŞART (aşağıda httpsOk).
+const adminAuth = require('./admin-auth');
+const ADMIN_PASS_HASH = process.env.ADMIN_PASS_HASH || '';
+const ADMIN_ENABLED = adminAuth.isValidHash(ADMIN_PASS_HASH);
+// Oturum imza anahtarı: env yoksa süreç başına rastgele (restart'ta oturumlar düşer).
+const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+const SESSION_TTL_MS = Number(process.env.ADMIN_SESSION_TTL_MS || 8 * 60 * 60 * 1000); // 8 saat
+const COOKIE = 'kbadmin';
+// HTTP üzerinden parola gönderimi kabul edilemez → yerelde/açık izinle geçilir.
+const ALLOW_INSECURE = process.env.ADMIN_ALLOW_INSECURE === '1';
+// Giriş denemesi hız sınırı (kaba kuvvete karşı, IP başına dakikada).
+const rlLogin = rateLimiter(Number(process.env.RL_LOGIN || 8), 60_000);
+const rlAdmin = rateLimiter(Number(process.env.RL_ADMIN || 120), 60_000); // genel panel
 
-function safeEq(a, b) {
-  const ba = Buffer.from(String(a));
-  const bb = Buffer.from(String(b));
-  return ba.length === bb.length && crypto.timingSafeEqual(ba, bb);
+if (ADMIN_ENABLED) {
+  console.log('[yönetim] panel etkin (parola karması yüklü, HTTPS zorunlu)');
+} else if (ADMIN_PASS_HASH) {
+  console.warn('[yönetim] ADMIN_PASS_HASH geçersiz biçim → panel KAPALI');
 }
 
-function basicAuthOk(req) {
-  const m = /^Basic (.+)$/.exec(req.headers.authorization || '');
-  if (!m) return false;
-  let dec = '';
-  try {
-    dec = Buffer.from(m[1], 'base64').toString('utf8');
-  } catch {
-    return false;
+/** İstek HTTPS mi? (nginx X-Forwarded-Proto). Yerel/izin → geçer. HTTP → panel yok. */
+function httpsOk(req) {
+  if (ALLOW_INSECURE) return true;
+  const host = String(req.headers.host || '').split(':')[0];
+  if (host === 'localhost' || host === '127.0.0.1') return true;
+  return String(req.headers['x-forwarded-proto'] || '').toLowerCase() === 'https';
+}
+function isSecureReq(req) {
+  return String(req.headers['x-forwarded-proto'] || '').toLowerCase() === 'https';
+}
+
+function parseCookies(req) {
+  const out = {};
+  for (const part of String(req.headers.cookie || '').split(';')) {
+    const i = part.indexOf('=');
+    if (i > 0) out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
   }
-  const i = dec.indexOf(':');
-  if (i < 0) return false;
-  // İki karşılaştırma da her zaman yapılır (zamanlama sızıntısını azalt).
-  const okUser = safeEq(dec.slice(0, i), ADMIN_USER);
-  const okPass = safeEq(dec.slice(i + 1), ADMIN_PASS);
-  return okUser && okPass;
+  return out;
 }
 
-/** Panel kapısı: kapalıysa 503, kimlik yoksa 401 (tarayıcı giriş penceresi). */
-function adminGate(req, res) {
+/** Güvenlik başlıkları — panele özel (clickjacking, sniff, CSP, HSTS, no-index). */
+function adminHeaders(req, extra) {
+  return {
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'no-referrer',
+    'X-Robots-Tag': 'noindex, nofollow',
+    'Cache-Control': 'no-store',
+    // Kendi kaynağı + gömülü stil/script (bağımsız tek sayfa). Çerçeveleme yok.
+    'Content-Security-Policy':
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+    ...(isSecureReq(req)
+      ? { 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains' }
+      : {}),
+    ...extra,
+  };
+}
+
+/** Yönetim işlemi denetim kaydı: ne zaman, kim (IP), ne, sonuç. */
+const AUDIT_FILE = process.env.ADMIN_AUDIT_LOG || path.join(__dirname, 'admin-audit.log');
+function audit(req, action, ok, extra) {
+  const line =
+    JSON.stringify({
+      t: new Date().toISOString(),
+      ip: clientIp(req),
+      action,
+      ok: !!ok,
+      ...(extra ? { info: extra } : {}),
+    }) + '\n';
+  fs.appendFile(AUDIT_FILE, line, () => {}); // ateşle-unut; denetim oyunu etkilemez
+}
+
+/** Ön koşullar: panel açık mı + HTTPS mı? Değilse yanıtı yazar, false döner. */
+function adminPrecheck(req, res) {
   if (!ADMIN_ENABLED) {
-    send(res, 503, { error: 'admin_disabled' });
+    res.writeHead(503, adminHeaders(req, { 'Content-Type': 'application/json; charset=utf-8' }));
+    res.end(JSON.stringify({ error: 'admin_disabled' }));
     return false;
   }
-  if (!rlAdmin(clientIp(req))) {
-    stats.rateLimited++;
-    send(res, 429, { error: 'rate_limited' });
-    return false;
-  }
-  if (!basicAuthOk(req)) {
-    res.writeHead(401, {
-      'WWW-Authenticate': 'Basic realm="Kelimebaz Yönetim", charset="UTF-8"',
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-    });
-    res.end(JSON.stringify({ error: 'auth_required' }));
+  if (!httpsOk(req)) {
+    // HTTP üzerinden parola/oturum kabul edilemez → panel yayına alınmaz.
+    res.writeHead(400, adminHeaders(req, { 'Content-Type': 'application/json; charset=utf-8' }));
+    res.end(JSON.stringify({ error: 'https_required' }));
     return false;
   }
   return true;
+}
+
+/** Geçerli oturum var mı? Yoksa 401 yazar, null döner. (ön koşullar geçilmiş olmalı) */
+function requireSession(req, res, action) {
+  if (!adminPrecheck(req, res)) return null;
+  const payload = adminAuth.verifyToken(parseCookies(req)[COOKIE], SESSION_SECRET);
+  if (!payload) {
+    audit(req, action || 'access', false, 'no_session');
+    res.writeHead(401, adminHeaders(req, { 'Content-Type': 'application/json; charset=utf-8' }));
+    res.end(JSON.stringify({ error: 'auth_required' }));
+    return null;
+  }
+  return payload;
 }
 
 /** ?range=today|7d|30d|all → [from, to) zaman aralığı. */
@@ -412,6 +461,7 @@ function send(res, status, body) {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
   });
   res.end(data);
 }
@@ -702,31 +752,86 @@ const routes = {
     send(res, 200, { ok: true, written });
   },
 
-  // --- YÖNETİM PANOSU (kimlik doğrulamalı; ADMIN_PASS yoksa 503) ---
+  // --- YÖNETİM PANOSU (oturum tabanlı; ADMIN_PASS_HASH yoksa 503, HTTPS şart) ---
+  // Oturum varsa pano, yoksa GİRİŞ sayfası. (İkisi de kimlik doğrulama arkasında:
+  // veri yalnız /summary,/words'te ve onlar oturum ister.)
   'GET /admin': async (req, res) => {
-    if (!adminGate(req, res)) return;
+    if (!adminPrecheck(req, res)) return;
+    const authed = !!adminAuth.verifyToken(parseCookies(req)[COOKIE], SESSION_SECRET);
+    const file = authed ? 'admin.html' : 'login.html';
     let html;
     try {
-      html = fs.readFileSync(path.join(__dirname, 'admin.html'), 'utf8');
+      html = fs.readFileSync(path.join(__dirname, file), 'utf8');
     } catch {
-      return send(res, 500, { error: 'no_page' });
+      res.writeHead(500, adminHeaders(req, { 'Content-Type': 'application/json' }));
+      return res.end(JSON.stringify({ error: 'no_page' }));
     }
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.writeHead(200, adminHeaders(req, { 'Content-Type': 'text/html; charset=utf-8' }));
     res.end(html);
   },
 
-  // Özet metrikler (tarih aralığı parametreli). Yalnız kimlik doğrulanmışsa.
+  // Giriş: parola karmayla doğrulanır → imzalı oturum çerezi. Hız sınırlı.
+  'POST /admin/login': async (req, res) => {
+    if (!adminPrecheck(req, res)) return;
+    if (!rlLogin(clientIp(req))) {
+      stats.rateLimited++;
+      audit(req, 'login', false, 'rate_limited');
+      res.writeHead(429, adminHeaders(req, { 'Content-Type': 'application/json' }));
+      return res.end(JSON.stringify({ error: 'rate_limited' }));
+    }
+    const body = await readJson(req);
+    const okPw = adminAuth.verifyPassword(body.password || '', ADMIN_PASS_HASH);
+    if (!okPw) {
+      audit(req, 'login', false, 'bad_password');
+      res.writeHead(401, adminHeaders(req, { 'Content-Type': 'application/json' }));
+      return res.end(JSON.stringify({ error: 'bad_credentials' }));
+    }
+    const token = adminAuth.signToken(
+      { sub: 'admin', exp: Date.now() + SESSION_TTL_MS },
+      SESSION_SECRET,
+    );
+    const attrs = [
+      `${COOKIE}=${token}`,
+      'HttpOnly',
+      'SameSite=Strict',
+      'Path=/',
+      `Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}`,
+    ];
+    if (isSecureReq(req)) attrs.push('Secure'); // HTTPS'te Secure (HTTP yerel dev'de takılmasın)
+    audit(req, 'login', true);
+    res.writeHead(
+      200,
+      adminHeaders(req, { 'Content-Type': 'application/json', 'Set-Cookie': attrs.join('; ') }),
+    );
+    res.end(JSON.stringify({ ok: true }));
+  },
+
+  // Çıkış: çerezi sıfırla.
+  'POST /admin/logout': async (req, res) => {
+    audit(req, 'logout', true);
+    res.writeHead(
+      200,
+      adminHeaders(req, {
+        'Content-Type': 'application/json',
+        'Set-Cookie': `${COOKIE}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0`,
+      }),
+    );
+    res.end(JSON.stringify({ ok: true }));
+  },
+
+  // Özet metrikler (tarih aralığı parametreli). Yalnız geçerli oturumla.
   'GET /admin/summary': async (req, res, url) => {
-    if (!adminGate(req, res)) return;
+    if (!requireSession(req, res, 'summary')) return;
     if (!telemetry) return send(res, 503, { error: 'no_telemetry' });
     const { from, to } = rangeFromParam(url.searchParams.get('range'));
+    audit(req, 'summary', true, url.searchParams.get('range') || 'all');
     send(res, 200, telemetry.summary(from, to, now()));
   },
 
   // Kelime bazlı istatistik + havuz önerileri. Filtre: lang, len, min (örneklem).
   // format=csv → CSV indir. LLM zorluk puanıyla karşılaştırmalı.
   'GET /admin/words': async (req, res, url) => {
-    if (!adminGate(req, res)) return;
+    if (!requireSession(req, res, 'words')) return;
     if (!telemetry) return send(res, 503, { error: 'no_telemetry' });
     const { from, to } = rangeFromParam(url.searchParams.get('range'));
     // min yoksa/boşsa varsayılan 30 (Number(null)=0 tuzağına düşme).
@@ -741,13 +846,17 @@ const routes = {
     const recommendations = telemetryMod.wordRecommendations(rows, minSample);
 
     if (url.searchParams.get('format') === 'csv') {
-      res.writeHead(200, {
-        'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': 'attachment; filename="kelime-istatistik.csv"',
-        'Cache-Control': 'no-store',
-      });
+      audit(req, 'export_csv', true, `n=${rows.length}`);
+      res.writeHead(
+        200,
+        adminHeaders(req, {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': 'attachment; filename="kelime-istatistik.csv"',
+        }),
+      );
       return res.end(telemetryMod.wordsToCsv(rows));
     }
+    audit(req, 'words', true, `n=${rows.length}`);
     send(res, 200, { minSample, count: rows.length, rows, recommendations });
   },
 };

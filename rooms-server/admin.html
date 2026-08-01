@@ -275,6 +275,20 @@
         <button data-r="30d">30 gün</button>
         <button data-r="all">Tümü</button>
       </div>
+      <button
+        id="logout"
+        title="Çıkış"
+        style="
+          border: 1px solid var(--line);
+          background: var(--card);
+          color: var(--text);
+          border-radius: 8px;
+          padding: 7px 12px;
+          cursor: pointer;
+        "
+      >
+        🔓 Çıkış
+      </button>
     </header>
     <main id="main"><p class="empty">Yükleniyor…</p></main>
 
@@ -303,8 +317,8 @@
             (e) =>
               `<div class="bar"><div class="lbl">${esc(e.label)}</div>
                <div class="track"><div class="fill" style="width:${(e.value / max) * 100}%${
-                e.color ? ';background:' + e.color : ''
-              }"></div></div>
+                 e.color ? ';background:' + e.color : ''
+               }"></div></div>
                <div class="val">${opts.fmt ? opts.fmt(e) : e.value}</div></div>`,
           )
           .join('')}</div>`;
@@ -420,6 +434,7 @@
         qs.set('min', wfilters.min);
         try {
           const r = await fetch(base + '/words?' + qs, { headers: { accept: 'application/json' } });
+          if (!checkAuth(r)) return;
           if (!r.ok) throw new Error('http ' + r.status);
           wdata = await r.json();
           renderWords();
@@ -444,7 +459,13 @@
         const csvUrl =
           base +
           '/words?' +
-          new URLSearchParams({ range, min: wfilters.min, format: 'csv', ...(wfilters.lang ? { lang: wfilters.lang } : {}), ...(wfilters.len ? { len: wfilters.len } : {}) });
+          new URLSearchParams({
+            range,
+            min: wfilters.min,
+            format: 'csv',
+            ...(wfilters.lang ? { lang: wfilters.lang } : {}),
+            ...(wfilters.len ? { len: wfilters.len } : {}),
+          });
 
         const filters = `
           <div class="filters">
@@ -579,7 +600,10 @@
       async function loadSummary() {
         const base = location.pathname.replace(/\/$/, '');
         try {
-          const r = await fetch(base + '/summary?range=' + range, { headers: { accept: 'application/json' } });
+          const r = await fetch(base + '/summary?range=' + range, {
+            headers: { accept: 'application/json' },
+          });
+          if (!checkAuth(r)) return;
           if (!r.ok) throw new Error('http ' + r.status);
           render(await r.json());
         } catch (e) {
@@ -592,6 +616,25 @@
         $('#main').innerHTML = '<p class="empty">Yükleniyor…</p>';
         return tab === 'words' ? loadWords() : loadSummary();
       }
+
+      // Oturum dolduysa (401) girişe dön.
+      function checkAuth(r) {
+        if (r.status === 401) {
+          location.reload();
+          return false;
+        }
+        return true;
+      }
+
+      $('#logout').addEventListener('click', async () => {
+        const base = location.pathname.replace(/\/$/, '');
+        try {
+          await fetch(base + '/logout', { method: 'POST' });
+        } catch {
+          /* yoksay */
+        }
+        location.reload();
+      });
 
       $('#tabs').addEventListener('click', (e) => {
         const b = e.target.closest('button');
