@@ -11,24 +11,28 @@
     }
   </div>
 
-  <form class="compose" (submit)="$event.preventDefault(); submit()">
-    <input
-      class="c-inp"
-      type="text"
-      maxlength="200"
-      [placeholder]="i18n.t('roomchat.placeholder')"
-      autocomplete="off"
-      [attr.aria-label]="i18n.t('roomchat.inputLabel')"
-      [value]="draft()"
-      (input)="onInput($event)"
-    />
-    <button
-      class="c-send"
-      type="submit"
-      [disabled]="!draft().trim()"
-      [attr.aria-label]="i18n.t('roomchat.send')"
-    >
-      ➤
-    </button>
-  </form>
+  @if (locked()) {
+    <p class="chat-locked" role="status">🔒 {{ i18n.t('roomchat.locked') }}</p>
+  } @else {
+    <form class="compose" (submit)="$event.preventDefault(); submit()">
+      <input
+        class="c-inp"
+        type="text"
+        maxlength="200"
+        [placeholder]="i18n.t('roomchat.placeholder')"
+        autocomplete="off"
+        [attr.aria-label]="i18n.t('roomchat.inputLabel')"
+        [value]="draft()"
+        (input)="onInput($event)"
+      />
+      <button
+        class="c-send"
+        type="submit"
+        [disabled]="!draft().trim()"
+        [attr.aria-label]="i18n.t('roomchat.send')"
+      >
+        ➤
+      </button>
+    </form>
+  }
 </section>

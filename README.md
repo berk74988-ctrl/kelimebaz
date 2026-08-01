@@ -407,6 +407,33 @@ Parola değiştirmek = yeni karma üretip env'i güncelleyip servisi yeniden ba�
 Doğrulama: `node rooms-server/admin-auth.test.mjs` (karma + token) ·
 uçtan uca güvenlik (401/400/429/başlıklar/denetim) el ile doğrulandı.
 
+### Oda denetimi (moderasyon) — (`/admin` → "Odalar")
+
+Çok oyunculu odalarda kötüye kullanımı görmek ve müdahale etmek için insan denetimi
+katmanı (otomatik küfür filtresinin üstüne). Canlı, ~4 sn'de bir yenilenir.
+
+- **Canlı oda listesi + sunucu sağlığı:** açık oda sayısı, `MAX_ROOMS` doluluk %'si
+  (≥80 kırmızı), bellek (RSS/heap), uptime.
+- **Oda detayı:** oyuncular + **canlı sohbet**. Otomatik filtrenin (OYUN-204)
+  yakaladığı mesajlar **⚠ işaretli** → filtre kalitesi ölçülebilir.
+- **Eylemler:** odayı **kapat** (nedenle), sohbeti **kilitle/aç**, tek **mesaj sil**.
+- **Oda kapatma:** oyunculara anlamlı mesaj gösterilir (istemci "Bu oda yönetici
+  tarafından kapatıldı: …" der) — **sessizce atma yok**. Oda kısa süre (grace)
+  tutulup silinir.
+- **Sınır:** kalıcı oyuncu kimliği yok → "banla" **yok**; en fazla oda kapatılır /
+  oturum sonlandırılır. Kalıcı yasak ancak hesap sistemiyle mümkün (epic dışı).
+- **Denetim:** tüm eylemler (kapat/kilitle/sil + liste/detay görüntüleme)
+  `admin-audit.log`'a yazılır.
+
+**🔒 Mahremiyet ilkesi (kod + belge):** Sohbet denetimi mahremiyete dokunur. Bu
+yüzden **yalnızca AKTİF odaların** sohbeti görülebilir; **geçmiş ARŞİVLENMEZ.**
+Mesajlar yalnız canlı odanın belleğinde (son N, `MAX_MESSAGES`) tutulur; oda
+kapanınca/temizlenince sohbet **tamamen silinir**. Filtre işareti için bile
+**orijinal (maskelenmemiş) metin saklanmaz** — sadece maskeli hâli + bir bayrak.
+Bu ilke `server.js`'te (roomView/sanitizeText yorumları) ve burada yazılıdır.
+Doğrulama: uçtan uca 10 kontrol (filtre işareti, kapatma→/state, kilit→403,
+mesaj sil, orijinal küfür saklanmıyor) el ile geçti.
+
 ### Kelime raporu — havuzu veriyle yönet (`/admin` → "Kelimeler")
 
 Telemetrinin en değerli çıktısı: her kelime için gerçek oyun verisi

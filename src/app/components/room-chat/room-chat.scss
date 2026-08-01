@@ -159,3 +159,12 @@
     height: 110px;
   }
 }
+
+.chat-locked {
+  margin: 0;
+  padding: 10px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}

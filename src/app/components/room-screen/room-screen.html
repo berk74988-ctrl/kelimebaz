@@ -304,6 +304,7 @@
           <!-- 💬 Sohbet — kalan alanı doldurur (sayfa kaymaz) -->
           <app-room-chat
             [fill]="true"
+            [locked]="room()?.chatLocked === true"
             [messages]="messages()"
             [myId]="rooms.myId"
             (send)="sendChat($event)"
@@ -478,7 +479,12 @@
         }
 
         <!-- 💬 Oyun sonrası sohbet devam eder -->
-        <app-room-chat [messages]="messages()" [myId]="rooms.myId" (send)="sendChat($event)" />
+        <app-room-chat
+          [locked]="room()?.chatLocked === true"
+          [messages]="messages()"
+          [myId]="rooms.myId"
+          (send)="sendChat($event)"
+        />
 
         <div class="lb-actions">
           @if (isOwner() && isFinal()) {

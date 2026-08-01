@@ -35,7 +35,11 @@ export interface RoomSettings {
 /** Sunucudan gelen oda anlık görüntüsü. */
 export interface RoomView {
   code: string;
-  status: 'lobby' | 'playing' | 'finished';
+  status: 'lobby' | 'playing' | 'finished' | 'closed';
+  /** Oda yönetici tarafından kapatıldıysa oyuncuya gösterilecek anlamlı mesaj. */
+  closedReason?: string;
+  /** Sohbet yönetici tarafından kilitli mi? (istemci girişi kapatır) */
+  chatLocked?: boolean;
   settings: RoomSettings;
   ownerId: string;
   seed: number | null;
@@ -59,6 +63,7 @@ const ERRORS: Record<string, string> = {
   forbidden: 'roomerr.forbidden',
   empty: 'roomerr.empty',
   not_playing: 'roomerr.notPlaying',
+  chat_locked: 'roomerr.chatLocked',
   busy: 'roomerr.busy',
   rate_limited: 'roomerr.rateLimited',
   server_error: 'roomerr.serverError',
@@ -307,6 +312,14 @@ export class RoomService {
       const r = await this.call<{ room: RoomView }>(
         `/state?code=${encodeURIComponent(this.code)}&playerId=${encodeURIComponent(this.playerId)}`,
       );
+      // Oda yönetici tarafından kapatıldı → anlamlı mesaj göster, sessizce atma.
+      if (r.room.status === 'closed') {
+        this.stopPolling();
+        this._room.set(null);
+        this.clearCreds();
+        this._error.set(r.room.closedReason || this.i18n.t('roomerr.closed'));
+        return;
+      }
       this._room.set(r.room);
     } catch (e) {
       // Oda silinmişse (herkes çıkmış / süresi dolmuş) temizle

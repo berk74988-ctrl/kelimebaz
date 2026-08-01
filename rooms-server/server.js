@@ -350,8 +350,11 @@ function sanitizeText(raw) {
     .trim()
     .slice(0, MAX_MSG_LEN);
   const masked = badWords.mask(clean);
-  if (masked !== clean) stats.masked++;
-  return masked;
+  const filtered = masked !== clean; // OYUN-204 otomatik filtre devreye girdi mi?
+  if (filtered) stats.masked++;
+  // filtered → panelde işaretlenir (filtre kalitesi ölçülebilsin). ORİJİNAL metin
+  // SAKLANMAZ (yalnız maskeli hali + bayrak) — mahremiyet.
+  return { text: masked, filtered };
 }
 
 function clampInt(v, min, max, dflt) {
@@ -407,7 +410,10 @@ function roomView(room, viewerId) {
 
   return {
     code: room.code,
-    status: room.status, // 'lobby' | 'playing' | 'finished'
+    status: room.status, // 'lobby' | 'playing' | 'finished' | 'closed'
+    // Oda yönetici tarafından kapatıldıysa oyunculara anlamlı mesaj (sessiz atma yok).
+    closedReason: room.status === 'closed' ? room.closedReason || '' : undefined,
+    chatLocked: !!room.chatLocked, // sohbet kilitliyse istemci girişi kapatır
     settings: room.settings,
     ownerId: room.ownerId,
     seed: room.status === 'lobby' ? null : room.seed, // kelime ancak başlayınca
@@ -419,7 +425,8 @@ function roomView(room, viewerId) {
     finishedCount: players.filter((p) => p.finished).length,
     playerCount: players.length,
     readyCount: players.filter((p) => p.ready).length,
-    // Son N sohbet mesajı (oyun öncesi/sonrası iletişim)
+    // Son N sohbet mesajı (oyun öncesi/sonrası iletişim). GEÇMİŞ ARŞİVLENMEZ —
+    // yalnız CANLI odanın bellekteki son mesajları; oda kapanınca hepsi silinir.
     messages: room.messages.slice(-CHAT_VIEW),
   };
 }
@@ -437,16 +444,18 @@ function maybeFinish(room) {
   }
 }
 
-// --- Süresi dolan odaları temizle ---
-setInterval(
-  () => {
-    const cutoff = now() - ROOM_TTL_MS;
-    for (const [code, room] of rooms) {
-      if (room.updatedAt < cutoff) rooms.delete(code);
-    }
-  },
-  5 * 60 * 1000,
-).unref?.();
+// --- Süresi dolan / kapatılan odaları temizle ---
+// Kapatılan odalar KISA bir süre (grace) tutulur ki polling yapan istemciler
+// "kapatıldı" mesajını görsün; sonra silinir (sohbet geçmişi arşivlenmez).
+const CLOSED_GRACE_MS = Number(process.env.CLOSED_GRACE_MS || 120_000);
+setInterval(() => {
+  const t = now();
+  for (const [code, room] of rooms) {
+    const expired = room.updatedAt < t - ROOM_TTL_MS;
+    const closedDone = room.status === 'closed' && (room.closedAt || 0) < t - CLOSED_GRACE_MS;
+    if (expired || closedDone) rooms.delete(code);
+  }
+}, 60 * 1000).unref?.();
 
 // --- HTTP yardımcıları ---
 
@@ -666,9 +675,13 @@ const routes = {
       stats.rateLimited++;
       return send(res, 429, { error: 'rate_limited' });
     }
-    const text = sanitizeText(body.text);
+    // Yönetici sohbeti kilitlediyse mesaj kabul edilmez.
+    if (room.chatLocked) return send(res, 403, { error: 'chat_locked' });
+    const { text, filtered } = sanitizeText(body.text);
     if (!text) return send(res, 200, { room: roomView(room, player.id) }); // boş → no-op
-    room.messages.push({ id: makeId(8), playerId: player.id, name: player.name, text, ts: now() });
+    const msg = { id: makeId(8), playerId: player.id, name: player.name, text, ts: now() };
+    if (filtered) msg.filtered = true; // OYUN-204 filtre işareti (panelde görünür)
+    room.messages.push(msg);
     if (room.messages.length > MAX_MESSAGES) {
       room.messages.splice(0, room.messages.length - MAX_MESSAGES);
     }
@@ -858,6 +871,112 @@ const routes = {
     }
     audit(req, 'words', true, `n=${rows.length}`);
     send(res, 200, { minSample, count: rows.length, rows, recommendations });
+  },
+
+  // --- ODA DENETİMİ (moderasyon) ---
+  // MAHREMİYET: yalnız CANLI odalar/sohbet görülür; geçmiş arşivlenmez. Kalıcı
+  // oyuncu kimliği yok → "banla" yok; en fazla odayı kapatmak/oturumu bitirmek.
+
+  // Canlı oda listesi + sunucu sağlığı.
+  'GET /admin/rooms': async (req, res) => {
+    if (!requireSession(req, res, 'rooms')) return;
+    const t = now();
+    const list = [...rooms.values()].map((room) => ({
+      code: room.code,
+      status: room.status,
+      playerCount: room.players.size,
+      chatLocked: !!room.chatLocked,
+      ageMs: t - (room.createdAt || t),
+      idleMs: t - (room.updatedAt || t),
+      messageCount: room.messages.length,
+      flaggedCount: room.messages.filter((m) => m.filtered).length,
+    }));
+    list.sort((a, b) => a.ageMs - b.ageMs); // en yeni üstte
+    audit(req, 'rooms', true, `${rooms.size} oda`);
+    const mem = process.memoryUsage();
+    const health = {
+      rooms: rooms.size,
+      maxRooms: MAX_ROOMS,
+      fillPct: Math.round((rooms.size / MAX_ROOMS) * 100),
+      memory: {
+        rssMB: Math.round(mem.rss / 1048576),
+        heapUsedMB: Math.round(mem.heapUsed / 1048576),
+      },
+      uptimeSec: Math.round(process.uptime()),
+    };
+    send(res, 200, { health, rooms: list });
+  },
+
+  // Oda detayı: oyuncular + CANLI sohbet (filtre işaretli). Yalnız aktif oda.
+  'GET /admin/rooms/detail': async (req, res, url) => {
+    if (!requireSession(req, res, 'room_detail')) return;
+    const code = String(url.searchParams.get('code') || '').toUpperCase();
+    const room = rooms.get(code);
+    if (!room) return send(res, 404, { error: 'not_found' });
+    audit(req, 'room_detail', true, code); // sohbet görüntüleme (mahremiyet-hassas) kayda geçer
+    send(res, 200, {
+      code: room.code,
+      status: room.status,
+      chatLocked: !!room.chatLocked,
+      closedReason: room.closedReason || null,
+      settings: room.settings,
+      ageMs: now() - (room.createdAt || now()),
+      players: [...room.players.values()].map((p) => ({
+        name: p.name,
+        isOwner: p.id === room.ownerId,
+        finished: p.finished,
+        solved: p.solved,
+        attempts: p.attempts,
+      })),
+      messages: room.messages.map((m) => ({
+        id: m.id,
+        name: m.name,
+        text: m.text,
+        ts: m.ts,
+        filtered: !!m.filtered,
+      })),
+      flaggedCount: room.messages.filter((m) => m.filtered).length,
+    });
+  },
+
+  // Odayı kapat: oyunculara anlamlı mesaj (sessiz atma YOK). Kısa süre sonra silinir.
+  'POST /admin/rooms/close': async (req, res) => {
+    if (!requireSession(req, res, 'room_close')) return;
+    const body = await readJson(req);
+    const code = String(body.code || '').toUpperCase();
+    const room = rooms.get(code);
+    if (!room) return send(res, 404, { error: 'not_found' });
+    const reason = sanitizeText(body.reason).text || 'Bu oda yönetici tarafından kapatıldı.';
+    room.status = 'closed';
+    room.closedReason = reason;
+    room.closedAt = now();
+    audit(req, 'room_close', true, `${code} · ${room.players.size} oyuncu · ${reason}`);
+    send(res, 200, { ok: true });
+  },
+
+  // Sohbeti kilitle/aç.
+  'POST /admin/rooms/lock': async (req, res) => {
+    if (!requireSession(req, res, 'room_lock')) return;
+    const body = await readJson(req);
+    const room = rooms.get(String(body.code || '').toUpperCase());
+    if (!room) return send(res, 404, { error: 'not_found' });
+    room.chatLocked = !!body.locked;
+    audit(req, 'room_lock', true, `${room.code} · ${room.chatLocked ? 'kilitli' : 'açık'}`);
+    send(res, 200, { ok: true, chatLocked: room.chatLocked });
+  },
+
+  // Tek mesaj sil (canlı odadan).
+  'POST /admin/rooms/message-delete': async (req, res) => {
+    if (!requireSession(req, res, 'room_msg_delete')) return;
+    const body = await readJson(req);
+    const room = rooms.get(String(body.code || '').toUpperCase());
+    if (!room) return send(res, 404, { error: 'not_found' });
+    const id = String(body.id || '');
+    const before = room.messages.length;
+    room.messages = room.messages.filter((m) => m.id !== id);
+    const removed = before - room.messages.length;
+    audit(req, 'room_msg_delete', removed > 0, `${room.code} · ${id}`);
+    send(res, 200, { ok: true, removed });
   },
 };
 

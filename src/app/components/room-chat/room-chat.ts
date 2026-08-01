@@ -32,6 +32,8 @@ export class RoomChat {
   readonly myId = input.required<string>();
   /** true: kalan alanı doldur (lobi); false: sabit yükseklik (sonuç ekranı). */
   readonly fill = input(false);
+  /** Yönetici sohbeti kilitlediyse giriş kapalı olur. */
+  readonly locked = input(false);
   readonly send = output<string>();
 
   protected readonly i18n = inject(LanguageService);

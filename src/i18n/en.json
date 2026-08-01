@@ -484,6 +484,7 @@
   "roomchat.chatLabel": "Room chat",
   "roomchat.empty": "No messages yet — be the first to write 💬",
   "roomchat.placeholder": "Write a message…",
+  "roomchat.locked": "Chat was closed by an admin.",
   "roomchat.inputLabel": "Chat message",
   "roomchat.send": "Send",
   "roomerr.notFound": "Room not found. Check the code.",
@@ -496,6 +497,8 @@
   "roomerr.busy": "Server is busy, try again shortly.",
   "roomerr.rateLimited": "You're going too fast — wait a few seconds and try again.",
   "roomerr.serverError": "Server error, please try again.",
+  "roomerr.closed": "This room was closed by an admin.",
+  "roomerr.chatLocked": "Chat was closed by an admin.",
   "roomerr.timeout": "Server didn't respond. Try again.",
   "roomerr.network": "Couldn't reach the server. Check your connection and try again."
 }

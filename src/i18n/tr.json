@@ -484,6 +484,7 @@
   "roomchat.chatLabel": "Oda sohbeti",
   "roomchat.empty": "Henüz mesaj yok — ilk yazan sen ol 💬",
   "roomchat.placeholder": "Mesaj yaz…",
+  "roomchat.locked": "Sohbet yönetici tarafından kapatıldı.",
   "roomchat.inputLabel": "Sohbet mesajı",
   "roomchat.send": "Gönder",
   "roomerr.notFound": "Oda bulunamadı. Kodu kontrol et.",
@@ -496,6 +497,8 @@
   "roomerr.busy": "Sunucu şu an yoğun, biraz sonra tekrar dene.",
   "roomerr.rateLimited": "Çok hızlı gidiyorsun — birkaç saniye bekleyip tekrar dene.",
   "roomerr.serverError": "Sunucu hatası, tekrar dene.",
+  "roomerr.closed": "Bu oda yönetici tarafından kapatıldı.",
+  "roomerr.chatLocked": "Sohbet yönetici tarafından kapatıldı.",
   "roomerr.timeout": "Sunucu yanıt vermedi. Tekrar dene.",
   "roomerr.network": "Sunucuya bağlanılamadı. İnternetini kontrol edip tekrar dene."
 }

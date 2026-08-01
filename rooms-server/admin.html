@@ -260,6 +260,104 @@
         background: #17361a;
         color: #7ee787;
       }
+      .rlist {
+        display: grid;
+        gap: 8px;
+      }
+      .room {
+        display: grid;
+        grid-template-columns: 70px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 12px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .room:hover {
+        border-color: var(--accent);
+      }
+      .room .code {
+        font-weight: 800;
+        font-size: 17px;
+        letter-spacing: 1px;
+      }
+      .room .meta {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .badge {
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #0f1114;
+        color: var(--muted);
+      }
+      .badge.flag {
+        background: #4a1d1d;
+        color: #ffb4b4;
+      }
+      .badge.lock {
+        background: #3a2d16;
+        color: #e8c98a;
+      }
+      .chatbox {
+        max-height: 320px;
+        overflow-y: auto;
+        display: grid;
+        gap: 6px;
+        margin: 8px 0;
+      }
+      .cmsg {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+        padding: 6px 8px;
+        border-radius: 8px;
+        background: #0f1114;
+        font-size: 14px;
+      }
+      .cmsg.flagged {
+        border: 1px solid #7a2b2b;
+      }
+      .cmsg .who {
+        color: var(--muted);
+        font-size: 12px;
+        min-width: 70px;
+      }
+      .cmsg .t {
+        flex: 1;
+        word-break: break-word;
+      }
+      .cmsg button {
+        background: transparent;
+        border: 1px solid var(--line);
+        color: var(--bad);
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        padding: 1px 7px;
+      }
+      .modact {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .modact button {
+        font: inherit;
+        border-radius: 8px;
+        padding: 8px 14px;
+        cursor: pointer;
+        border: 1px solid var(--line);
+        background: var(--card);
+        color: var(--text);
+      }
+      .modact .danger {
+        border-color: var(--bad);
+        color: var(--bad);
+      }
     </style>
   </head>
   <body>
@@ -268,6 +366,7 @@
       <div class="ranges" id="tabs">
         <button data-t="summary" class="on">Özet</button>
         <button data-t="words">Kelimeler</button>
+        <button data-t="rooms">Odalar</button>
       </div>
       <div class="ranges" id="ranges">
         <button data-r="today">Bugün</button>
@@ -596,6 +695,161 @@
         });
       }
 
+      // --- Oda denetimi (moderasyon) ---
+      let roomsTimer = null,
+        openRoom = null; // açık detay oda kodu
+
+      function stopRoomsTimer() {
+        if (roomsTimer) {
+          clearInterval(roomsTimer);
+          roomsTimer = null;
+        }
+      }
+
+      async function api(path, opts) {
+        const base = location.pathname.replace(/\/$/, '');
+        const r = await fetch(base + path, opts);
+        if (!checkAuth(r)) throw new Error('auth');
+        return r;
+      }
+
+      const ageStr = (ms) => {
+        const s = Math.round(ms / 1000);
+        if (s < 60) return s + 's';
+        if (s < 3600) return Math.floor(s / 60) + 'dk';
+        return Math.floor(s / 3600) + 'sa';
+      };
+      const STATUS = { lobby: 'lobi', playing: 'oyunda', finished: 'bitti', closed: 'kapalı' };
+
+      async function loadRooms() {
+        try {
+          const d = await (await api('/rooms')).json();
+          renderRooms(d);
+        } catch (e) {
+          if (e.message !== 'auth')
+            $('#main').innerHTML = `<div class="empty">Alınamadı: ${esc(e.message)}</div>`;
+        }
+      }
+
+      function renderRooms(d) {
+        const h = d.health;
+        const fillCls = h.fillPct >= 80 ? 'wr-bad' : h.fillPct >= 50 ? 'wr-mid' : 'wr-good';
+        const tiles = `
+          <div class="tiles">
+            <div class="tile"><div class="n">${h.rooms}<span style="font-size:15px;color:var(--muted)">/${h.maxRooms}</span></div><div class="l">Açık oda</div></div>
+            <div class="tile"><div class="n ${fillCls}">${h.fillPct}%</div><div class="l">MAX_ROOMS doluluk</div></div>
+            <div class="tile"><div class="n">${h.memory.rssMB}<span style="font-size:15px;color:var(--muted)"> MB</span></div><div class="l">Bellek (RSS) · heap ${h.memory.heapUsedMB} MB</div></div>
+            <div class="tile"><div class="n">${ageStr(h.uptimeSec * 1000)}</div><div class="l">Sunucu ayakta</div></div>
+          </div>`;
+
+        if (!d.rooms.length) {
+          $('#main').innerHTML = tiles + `<div class="empty">Şu an açık oda yok.</div>`;
+          return;
+        }
+        const list = d.rooms
+          .map(
+            (r) => `<div class="room" data-code="${esc(r.code)}">
+              <div class="code">${esc(r.code)}</div>
+              <div><span class="badge">${STATUS[r.status] || r.status}</span>
+                <span class="meta">👥 ${r.playerCount} · 💬 ${r.messageCount} · açık ${ageStr(r.ageMs)} · boş ${ageStr(r.idleMs)}</span>
+                ${r.flaggedCount ? `<span class="badge flag">⚠ ${r.flaggedCount} filtreli</span>` : ''}
+                ${r.chatLocked ? '<span class="badge lock">🔒 kilitli</span>' : ''}
+              </div>
+              <div class="meta">detay →</div>
+            </div>`,
+          )
+          .join('');
+        $('#main').innerHTML =
+          tiles + `<section><h2>Açık odalar (canlı)</h2><div class="rlist">${list}</div></section>`;
+        document
+          .querySelectorAll('.room')
+          .forEach((el) => (el.onclick = () => showRoom(el.dataset.code)));
+      }
+
+      async function showRoom(code) {
+        stopRoomsTimer(); // detaydayken listeyi yenileme
+        openRoom = code;
+        try {
+          const r = await api('/rooms/detail?code=' + encodeURIComponent(code));
+          if (r.status === 404) {
+            openRoom = null;
+            return loadRooms();
+          }
+          const d = await r.json();
+          const chat = d.messages.length
+            ? d.messages
+                .map(
+                  (m) => `<div class="cmsg ${m.filtered ? 'flagged' : ''}">
+                    <span class="who">${esc(m.name)}</span>
+                    <span class="t">${esc(m.text)}${m.filtered ? ' <span class="badge flag">filtre</span>' : ''}</span>
+                    <button data-id="${esc(m.id)}">sil</button></div>`,
+                )
+                .join('')
+            : '<p class="pill">Mesaj yok</p>';
+          const players = d.players
+            .map((p) => `${esc(p.name)}${p.isOwner ? ' 👑' : ''}`)
+            .join(', ');
+          $('#main').innerHTML = `
+            <button class="modact" style="margin-bottom:12px" onclick="backToRooms()">← Odalar</button>
+            <section>
+              <h2>Oda ${esc(d.code)} — ${STATUS[d.status] || d.status}${d.chatLocked ? ' 🔒' : ''}</h2>
+              <p class="meta">👥 ${d.players.length}: ${players || '—'} · açık ${ageStr(d.ageMs)} · ⚠ ${d.flaggedCount} filtreli mesaj</p>
+              <div class="chatbox">${chat}</div>
+              <div class="modact">
+                <button class="danger" id="close">Odayı kapat</button>
+                <button id="lock">${d.chatLocked ? 'Sohbeti aç' : 'Sohbeti kilitle'}</button>
+              </div>
+              <p class="foot" style="text-align:left">Yalnız CANLI oda sohbeti gösterilir; geçmiş arşivlenmez. Kalıcı oyuncu kimliği yok → "banla" yok, en fazla oda kapatılır.</p>
+            </section>`;
+          document
+            .querySelectorAll('.cmsg button')
+            .forEach((b) => (b.onclick = () => delMsg(code, b.dataset.id)));
+          $('#close').onclick = () => closeRoom(code);
+          $('#lock').onclick = () => lockRoom(code, !d.chatLocked);
+        } catch (e) {
+          if (e.message !== 'auth') backToRooms();
+        }
+      }
+
+      function backToRooms() {
+        openRoom = null;
+        loadRooms();
+        startRoomsTimer();
+      }
+      window.backToRooms = backToRooms;
+
+      async function post(path, body) {
+        return api(path, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      }
+      async function delMsg(code, id) {
+        await post('/rooms/message-delete', { code, id });
+        showRoom(code);
+      }
+      async function lockRoom(code, locked) {
+        await post('/rooms/lock', { code, locked });
+        showRoom(code);
+      }
+      async function closeRoom(code) {
+        const reason = prompt(
+          'Kapatma nedeni (oyunculara gösterilir):',
+          'Bu oda yönetici tarafından kapatıldı.',
+        );
+        if (reason == null) return;
+        await post('/rooms/close', { code, reason });
+        backToRooms();
+      }
+
+      function startRoomsTimer() {
+        stopRoomsTimer();
+        roomsTimer = setInterval(() => {
+          if (tab === 'rooms' && !openRoom) loadRooms();
+        }, 4000);
+      }
+
       // --- Ortak yükleme / sekme ---
       async function loadSummary() {
         const base = location.pathname.replace(/\/$/, '');
@@ -614,6 +868,12 @@
       let tab = 'summary';
       function load() {
         $('#main').innerHTML = '<p class="empty">Yükleniyor…</p>';
+        stopRoomsTimer();
+        openRoom = null;
+        if (tab === 'rooms') {
+          startRoomsTimer();
+          return loadRooms();
+        }
         return tab === 'words' ? loadWords() : loadSummary();
       }
 
