@@ -16,9 +16,7 @@ const TR_LETTERS = /[^A-ZÇĞİÖŞÜ]/g;
 
 /** Renk deseni ('2'=yeşil,'1'=sarı,'0'=gri) → okunur emoji dizisi. */
 function patternToEmoji(pattern) {
-  return [...String(pattern)]
-    .map((c) => (c === '2' ? '🟩' : c === '1' ? '🟨' : '⬜'))
-    .join('');
+  return [...String(pattern)].map((c) => (c === '2' ? '🟩' : c === '1' ? '🟨' : '⬜')).join('');
 }
 
 /** Girdi doğrulama — bozuk/kötü niyetli istekleri erken ele. */
@@ -63,9 +61,15 @@ harflerden ve konumlardan bahset. XML etiketi kullanma. Türkçe, tek cümleyle 
 
 /** Kullanıcı mesajı — uzunluk + tahminler + desenler (cevap YOK). */
 function userPrompt(length, guesses, lang) {
-  const head = lang === 'en' ? `Word length: ${length}. My guesses so far:` : `Kelime uzunluğu: ${length}. Şu ana kadarki tahminlerim:`;
+  const head =
+    lang === 'en'
+      ? `Word length: ${length}. My guesses so far:`
+      : `Kelime uzunluğu: ${length}. Şu ana kadarki tahminlerim:`;
   const lines = guesses.map((g) => `${[...g.word].join(' ')}  ${patternToEmoji(g.pattern)}`);
-  const tail = lang === 'en' ? 'Give me one hint for my next guess.' : 'Bir sonraki tahminim için bana tek bir ipucu ver.';
+  const tail =
+    lang === 'en'
+      ? 'Give me one hint for my next guess.'
+      : 'Bir sonraki tahminim için bana tek bir ipucu ver.';
   return `${head}\n${lines.join('\n')}\n${tail}`;
 }
 

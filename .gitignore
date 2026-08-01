@@ -54,3 +54,4 @@ src/app/data/.audit-*.json
 
 # Telemetri verisi (yerel/sunucu — repoya girmez)
 rooms-server/telemetry/
+rooms-server/word-difficulty-*.json

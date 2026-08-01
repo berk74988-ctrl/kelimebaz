@@ -364,6 +364,35 @@ Kaba-kuvvete karşı IP hız sınırı + sabit-zamanlı parola karşılaştırma
 Bu, tam bir auth paketi gelene kadar tek-yönetici için yeterli, gerçek bir kapı.
 **Performans:** özet sorgusu 30 gün / 40k olayda ~50 ms (indeksli; <1 sn şartı).
 
+### Kelime raporu — havuzu veriyle yönet (`/admin` → "Kelimeler")
+
+Telemetrinin en değerli çıktısı: her kelime için gerçek oyun verisi
+(`GET /admin/words`). Kazanma oranı, ortalama tahmin, **terk oranı**
+(başlangıç–bitiş / başlangıç), oynanma/tamamlanma sayısı.
+
+- **Asgari örneklem:** varsayılan **30 tamamlanmış oyun**. Altındaki kelimeler
+  "az veri" işaretlenir ve **karar için kullanılmaz** (soluk satır). Az oynanmış
+  kelime yanıltıcıdır.
+- **Sıralanabilir tablo** (en zor / en kolay / en çok oynanan) + **uç değer
+  vurgusu** (kazanma çok düşük → kırmızı, çok yüksek → yeşil).
+- **LLM ↔ gerçek karşılaştırması:** kelime zorluk etiketleme paketinin puanı
+  (★ 1–5) yanında gerçek kazanma oranı. Uyuşmazlık işaretlenir (LLM "kolay" demiş
+  ama oyuncular bulamıyorsa küratörlük yanılmış → OYUN-193 doğrulaması).
+- **Havuz önerileri** (yalnız yeterli örneklem): çok zor (≤%25 → çıkar/yüksek
+  seviye), çok kolay (≥%95 & ort≤2.3 → günlük olmasın), LLM uyuşmazlığı, yüksek
+  terk (≥%50 oynanmaya dayalı).
+- **Dışa aktarma:** JSON + CSV (havuzdan çıkarma / zorluk güncelleme için).
+- Filtre: dil + kelime uzunluğu + asgari örneklem.
+
+LLM zorluk karşılaştırması için `word-difficulty-{tr,en}.json` deploy'da
+rooms-server'a kopyalanır (yoksa ★ sütunu boş kalır; rapor yine çalışır).
+
+**Gerçek veri notu:** Öneri motoru kuruldu ve sentetik veriyle doğrulandı
+(ör. %20 kazanılan bir kelime → "çok zor" + LLM=kolay ise "hafife almış").
+**Somut öneri listesi gerçek veri biriktikçe panoda kendiliğinden oluşur** —
+telemetri toplama sunucu restart'ıyla başlar; o ana kadar rapor "veri yok"
+gösterir (bozulmaz).
+
 ---
 
 ## Test

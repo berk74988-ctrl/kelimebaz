@@ -27,15 +27,35 @@ const PORT = process.env.PORT || 4243;
 
 // --- ANONİM TELEMETRİ (isteğe bağlı, oyunu ASLA etkilemez) ---
 // Başlatılamazsa telemetry=null → /events 503 döner, odalar/ipucu etkilenmez.
+const telemetryMod = require('./telemetry');
 let telemetry = null;
 try {
-  telemetry = require('./telemetry').open({
+  telemetry = telemetryMod.open({
     dir: process.env.TELEMETRY_DIR || path.join(__dirname, 'telemetry'),
     retentionDays: Number(process.env.TELEMETRY_RETENTION_DAYS || 90),
   });
   console.log(`[telemetri] arka uç=${telemetry.backend} · saklama=${telemetry.retentionDays} gün`);
 } catch (e) {
   console.error('[telemetri] başlatılamadı (oyun etkilenmez):', e.message);
+}
+
+// LLM zorluk puanları (word-difficulty-{lang}.json) — küratörlük karşılaştırması
+// için. rooms-server'a kopyalanırsa yüklenir; yoksa karşılaştırma boş kalır.
+let _difficulty = null;
+function difficultyMaps() {
+  if (_difficulty) return _difficulty;
+  _difficulty = {};
+  for (const lang of ['tr', 'en']) {
+    try {
+      const d = JSON.parse(
+        fs.readFileSync(path.join(__dirname, `word-difficulty-${lang}.json`), 'utf8'),
+      );
+      _difficulty[lang] = d.scores || d;
+    } catch {
+      /* dosya yoksa o dil için karşılaştırma yapılmaz */
+    }
+  }
+  return _difficulty;
 }
 // Olay gönderimi için IP başına hız sınırı (toplu geldiği için geniş).
 const rlEvents = rateLimiter(Number(process.env.RL_EVENTS || 60), 60_000);
@@ -109,14 +129,17 @@ function rangeFromParam(r) {
 // Herkese açık uç nokta: kötüye kullanımı sınırla. Aşınca 429 döner.
 function rateLimiter(limit, windowMs) {
   const hits = new Map(); // anahtar -> zaman damgaları
-  setInterval(() => {
-    const t = Date.now();
-    for (const [k, arr] of hits) {
-      const keep = arr.filter((x) => t - x < windowMs);
-      if (keep.length) hits.set(k, keep);
-      else hits.delete(k);
-    }
-  }, Math.max(windowMs, 60_000)).unref?.();
+  setInterval(
+    () => {
+      const t = Date.now();
+      for (const [k, arr] of hits) {
+        const keep = arr.filter((x) => t - x < windowMs);
+        if (keep.length) hits.set(k, keep);
+        else hits.delete(k);
+      }
+    },
+    Math.max(windowMs, 60_000),
+  ).unref?.();
   return function ok(key) {
     const t = Date.now();
     const arr = (hits.get(key) || []).filter((x) => t - x < windowMs);
@@ -141,8 +164,7 @@ const rlChatPlayer = rateLimiter(Number(process.env.RL_CHAT_PLAYER || 5), 10_000
 // '*' YERİNE beyaz liste: yalnızca oyunun yayınlandığı köken ve geliştirme
 // sunucusu API'yi tarayıcıdan çağırabilir.
 const ALLOWED_ORIGINS = (
-  process.env.ALLOWED_ORIGINS ||
-  'http://34.158.136.9,http://localhost:4200,http://127.0.0.1:4200'
+  process.env.ALLOWED_ORIGINS || 'http://34.158.136.9,http://localhost:4200,http://127.0.0.1:4200'
 )
   .split(',')
   .map((s) => s.trim())
@@ -157,13 +179,16 @@ function pickOrigin(req) {
 
 // --- Basit erişim/kötüye kullanım günlüğü ---
 const stats = { requests: 0, errors: 0, rateLimited: 0, masked: 0, startedAt: Date.now() };
-setInterval(() => {
-  const errPct = stats.requests ? Math.round((stats.errors / stats.requests) * 100) : 0;
-  console.log(
-    `[stat] istek=${stats.requests} hata=${stats.errors} (%${errPct}) 429=${stats.rateLimited} ` +
-      `filtre=${stats.masked} oda=${rooms.size}`,
-  );
-}, 5 * 60 * 1000).unref?.();
+setInterval(
+  () => {
+    const errPct = stats.requests ? Math.round((stats.errors / stats.requests) * 100) : 0;
+    console.log(
+      `[stat] istek=${stats.requests} hata=${stats.errors} (%${errPct}) 429=${stats.rateLimited} ` +
+        `filtre=${stats.masked} oda=${rooms.size}`,
+    );
+  },
+  5 * 60 * 1000,
+).unref?.();
 
 // --- YZ İPUCU (çalışma zamanı, maliyetli) yapılandırması ---
 // API anahtarı YALNIZCA sunucuda env'de durur; istemciye asla gönderilmez.
@@ -178,7 +203,12 @@ const rlHint = rateLimiter(HINT_RL_PER_MIN, 60_000);
 
 /** Anthropic Messages API'yi çağır (bağımlılıksız fetch — Node 18+). */
 async function callAnthropic(system, user) {
-  const body = { model: HINT_MODEL, max_tokens: 400, system, messages: [{ role: 'user', content: user }] };
+  const body = {
+    model: HINT_MODEL,
+    max_tokens: 400,
+    system,
+    messages: [{ role: 'user', content: user }],
+  };
   // opus/sonnet/fable ailesinde düşünmeyi kapat → hızlı ve ucuz (tek cümlelik iş).
   // haiku bu parametreleri almaz; onda gönderme.
   if (!/haiku/.test(HINT_MODEL)) {
@@ -197,7 +227,10 @@ async function callAnthropic(system, user) {
   });
   if (!r.ok) throw new Error('api_' + r.status);
   const data = await r.json();
-  return (data.content || []).filter((b) => b.type === 'text').map((b) => b.text).join(' ');
+  return (data.content || [])
+    .filter((b) => b.type === 'text')
+    .map((b) => b.text)
+    .join(' ');
 }
 // Varsayılan 127.0.0.1: servis YALNIZCA yerelde dinler, internete kapalı.
 // Dışarıya nginx /berk/rooms/ yolu üzerinden (aynı köken) açılır — böylece
@@ -239,7 +272,9 @@ function makeCode() {
 }
 
 function sanitizeName(raw) {
-  const trimmed = String(raw || '').trim().slice(0, 16);
+  const trimmed = String(raw || '')
+    .trim()
+    .slice(0, 16);
   const masked = badWords.mask(trimmed);
   if (masked !== trimmed) stats.masked++;
   // Boşsa ya da küfür yüzünden tamamı maskelendiyse varsayılana düş.
@@ -318,10 +353,7 @@ function roomView(room, viewerId) {
     // Sıralama: önce bitmişler; sonra PUAN (yüksek üstte); BERABERLİKTE en hızlı
     // (küçük timeMs) üstte; bekleyenler en altta.
     .sort(
-      (a, b) =>
-        Number(b.finished) - Number(a.finished) ||
-        b.score - a.score ||
-        a.timeMs - b.timeMs,
+      (a, b) => Number(b.finished) - Number(a.finished) || b.score - a.score || a.timeMs - b.timeMs,
     );
 
   return {
@@ -357,12 +389,15 @@ function maybeFinish(room) {
 }
 
 // --- Süresi dolan odaları temizle ---
-setInterval(() => {
-  const cutoff = now() - ROOM_TTL_MS;
-  for (const [code, room] of rooms) {
-    if (room.updatedAt < cutoff) rooms.delete(code);
-  }
-}, 5 * 60 * 1000).unref?.();
+setInterval(
+  () => {
+    const cutoff = now() - ROOM_TTL_MS;
+    for (const [code, room] of rooms) {
+      if (room.updatedAt < cutoff) rooms.delete(code);
+    }
+  },
+  5 * 60 * 1000,
+).unref?.();
 
 // --- HTTP yardımcıları ---
 
@@ -373,7 +408,7 @@ function send(res, status, body) {
     // '*' değil: yalnızca izinli köken (yayın + geliştirme). Ana işleyici her
     // istekte res.corsOrigin'i ayarlar.
     'Access-Control-Allow-Origin': res.corsOrigin || ALLOWED_ORIGINS[0],
-    'Vary': 'Origin',
+    Vary: 'Origin',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Cache-Control': 'no-store',
@@ -406,7 +441,9 @@ function readJson(req, maxBytes = 8192) {
 
 /** İstemci IP'si (nginx arkasında X-Forwarded-For; yerelde soket adresi). */
 function clientIp(req) {
-  const xff = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  const xff = String(req.headers['x-forwarded-for'] || '')
+    .split(',')[0]
+    .trim();
   return xff || req.socket.remoteAddress || 'unknown';
 }
 
@@ -475,8 +512,7 @@ const routes = {
     const room = rooms.get(code);
     if (!room) return send(res, 404, { error: 'not_found' });
     if (room.status !== 'lobby') return send(res, 409, { error: 'already_started' });
-    if (room.players.size >= room.settings.maxPlayers)
-      return send(res, 409, { error: 'full' });
+    if (room.players.size >= room.settings.maxPlayers) return send(res, 409, { error: 'full' });
 
     const playerId = makeId();
     const token = makeId(16);
@@ -686,6 +722,34 @@ const routes = {
     const { from, to } = rangeFromParam(url.searchParams.get('range'));
     send(res, 200, telemetry.summary(from, to, now()));
   },
+
+  // Kelime bazlı istatistik + havuz önerileri. Filtre: lang, len, min (örneklem).
+  // format=csv → CSV indir. LLM zorluk puanıyla karşılaştırmalı.
+  'GET /admin/words': async (req, res, url) => {
+    if (!adminGate(req, res)) return;
+    if (!telemetry) return send(res, 503, { error: 'no_telemetry' });
+    const { from, to } = rangeFromParam(url.searchParams.get('range'));
+    // min yoksa/boşsa varsayılan 30 (Number(null)=0 tuzağına düşme).
+    const minRaw = url.searchParams.get('min');
+    const minSample = minRaw == null || minRaw === '' ? 30 : clampInt(minRaw, 1, 100000, 30);
+    const lang = url.searchParams.get('lang');
+    const len = Number(url.searchParams.get('len')) || 0;
+
+    let { rows } = telemetry.wordStats(from, to, difficultyMaps(), minSample);
+    if (lang === 'tr' || lang === 'en') rows = rows.filter((r) => r.lang === lang);
+    if (len >= 4 && len <= 7) rows = rows.filter((r) => r.wlen === len);
+    const recommendations = telemetryMod.wordRecommendations(rows, minSample);
+
+    if (url.searchParams.get('format') === 'csv') {
+      res.writeHead(200, {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': 'attachment; filename="kelime-istatistik.csv"',
+        'Cache-Control': 'no-store',
+      });
+      return res.end(telemetryMod.wordsToCsv(rows));
+    }
+    send(res, 200, { minSample, count: rows.length, rows, recommendations });
+  },
 };
 
 // --- Telemetri bakımı: açılışta + günde bir kez (eski kayıt temizliği + yedek) ---
@@ -699,13 +763,16 @@ if (telemetry) {
   } catch {
     /* bakım hatası kritik değil */
   }
-  setInterval(() => {
-    try {
-      maintain();
-    } catch {
-      /* yoksay */
-    }
-  }, 24 * 60 * 60 * 1000).unref?.();
+  setInterval(
+    () => {
+      try {
+        maintain();
+      } catch {
+        /* yoksay */
+      }
+    },
+    24 * 60 * 60 * 1000,
+  ).unref?.();
 }
 
 // --- Kalıcılık: zarif kapanmada odaları diske yaz, açılışta geri oku ---

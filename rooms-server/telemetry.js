@@ -58,7 +58,18 @@ function normalizeEvent(e, nowMs) {
   };
 }
 
-const COLUMNS = ['type', 'ts', 'mode', 'lang', 'wlen', 'word', 'result', 'attempts', 'duration_ms', 'code'];
+const COLUMNS = [
+  'type',
+  'ts',
+  'mode',
+  'lang',
+  'wlen',
+  'word',
+  'result',
+  'attempts',
+  'duration_ms',
+  'code',
+];
 
 // --- SQLite arka ucu (node:sqlite, Node 22.5+) ---
 function sqliteStore(dir) {
@@ -282,6 +293,16 @@ function open(opts = {}) {
       return aggregate(store.readRange(from, to), from, to, at);
     },
 
+    /** Kelime bazlı istatistik + havuz önerileri (LLM zorluğuyla karşılaştırmalı). */
+    wordStats(from, to, difficulty, minSample) {
+      const rows = aggregateWords(store.readRange(from, to), difficulty, minSample);
+      return {
+        minSample: minSample || 30,
+        rows,
+        recommendations: wordRecommendations(rows, minSample),
+      };
+    },
+
     /** Günlük bakım: eski kayıtları temizle + yedek al + eski yedekleri buda. */
     runMaintenance(nowMs) {
       let pruned = 0;
@@ -315,4 +336,144 @@ function open(opts = {}) {
   };
 }
 
-module.exports = { open, normalizeEvent, aggregate };
+// --- Kelime bazlı istatistik: havuzu veriyle yönetmek için (en değerli çıktı) ---
+// Her (kelime,dil) için: oynanma (başlangıç), tamamlanma, kazanma oranı, ort.
+// tahmin, TERK oranı. vsai HARİÇ (yarış — havuz zorluğunu yansıtmaz).
+// difficulty: { tr:{KELİME:1..5}, en:{...} } (LLM zorluk puanı; karşılaştırma için).
+function aggregateWords(rows, difficulty, minSample) {
+  difficulty = difficulty || {};
+  minSample = minSample || 30;
+  const map = new Map();
+  for (const r of rows) {
+    if (r.mode === 'vsai' || !r.word) continue;
+    if (r.type !== 'game_start' && r.type !== 'game_end') continue;
+    const lang = r.lang || '';
+    const k = r.word + ' ' + lang;
+    let m = map.get(k);
+    if (!m) {
+      m = {
+        word: r.word,
+        lang: r.lang || null,
+        wlen: r.wlen || [...r.word].length,
+        starts: 0,
+        ends: 0,
+        wins: 0,
+        attSum: 0,
+        attN: 0,
+      };
+      map.set(k, m);
+    }
+    if (r.type === 'game_start') m.starts++;
+    else {
+      m.ends++;
+      if (r.result === 'won') m.wins++;
+      if (r.attempts) {
+        m.attSum += r.attempts;
+        m.attN++;
+      }
+    }
+  }
+  const out = [];
+  for (const m of map.values()) {
+    out.push({
+      word: m.word,
+      lang: m.lang,
+      wlen: m.wlen,
+      plays: m.starts,
+      completed: m.ends,
+      winRate: m.ends ? m.wins / m.ends : 0,
+      avgAttempts: m.attN ? m.attSum / m.attN : 0,
+      abandonRate: m.starts ? Math.max(0, (m.starts - m.ends) / m.starts) : 0,
+      difficulty: (difficulty[m.lang] || {})[m.word] ?? null,
+      sample: m.ends,
+      enough: m.ends >= minSample, // asgari örneklem → karar için güvenilir mi
+    });
+  }
+  return out;
+}
+
+/**
+ * Havuz iyileştirme önerileri — YALNIZ yeterli örneklemli kelimelerden.
+ * Eşikler: çok zor (≤%25), çok kolay (≥%95 & ort≤2.3), LLM↔gerçek uyuşmazlığı,
+ * yüksek terk (≥%50). Somut, eyleme dönük kararlar.
+ */
+function wordRecommendations(wordRows, minSample) {
+  minSample = minSample || 30;
+  const recs = [];
+  const base = (r, kind, msg) => ({
+    word: r.word,
+    lang: r.lang,
+    kind,
+    msg,
+    winRate: r.winRate,
+    avgAttempts: r.avgAttempts,
+    abandonRate: r.abandonRate,
+    difficulty: r.difficulty,
+    sample: r.sample,
+  });
+  for (const r of wordRows) {
+    // Kazanma-oranı temelli kurallar: yeterli TAMAMLANMA (n≥min) gerektirir.
+    if (r.enough) {
+      if (r.winRate <= 0.25)
+        recs.push(base(r, 'too_hard', 'Çok zor — havuzdan çıkar veya yalnız yüksek seviyeye ver'));
+      else if (r.winRate >= 0.95 && r.avgAttempts <= 2.3)
+        recs.push(base(r, 'too_easy', 'Çok kolay — günlük kelime olarak kullanma'));
+      if (r.difficulty != null) {
+        if (r.difficulty <= 2 && r.winRate < 0.4)
+          recs.push(
+            base(r, 'llm_underrated', 'LLM "kolay" demiş ama gerçekte zor (küratörlük yanılmış)'),
+          );
+        else if (r.difficulty >= 4 && r.winRate > 0.85)
+          recs.push(
+            base(r, 'llm_overrated', 'LLM "zor" demiş ama gerçekte kolay (küratörlük yanılmış)'),
+          );
+      }
+    }
+    // Terk kuralı: yeterli OYNANMA (plays≥min) gerektirir (tamamlanma değil —
+    // asıl sinyal zaten yarıda bırakılması). Az tamamlanmış olsa bile geçerli.
+    if (r.abandonRate >= 0.5 && r.plays >= minSample) {
+      recs.push(base(r, 'high_abandon', 'Yüksek terk oranı — oyuncular bu kelimede pes ediyor'));
+    }
+  }
+  return recs;
+}
+
+/** Kelime satırlarını CSV'ye çevir (dışa aktarma). */
+function wordsToCsv(rows) {
+  const cols = [
+    'word',
+    'lang',
+    'wlen',
+    'plays',
+    'completed',
+    'winRate',
+    'avgAttempts',
+    'abandonRate',
+    'difficulty',
+    'sample',
+    'enough',
+  ];
+  const esc = (v) => {
+    if (v == null) return '';
+    const s = String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const lines = [cols.join(',')];
+  for (const r of rows) {
+    lines.push(
+      cols
+        .map((c) => (typeof r[c] === 'number' ? Math.round(r[c] * 1e4) / 1e4 : esc(r[c])))
+        .join(','),
+    );
+  }
+  return lines.join('\n') + '\n';
+}
+
+module.exports = {
+  open,
+  normalizeEvent,
+  aggregate,
+  aggregateWords,
+  wordRecommendations,
+  wordsToCsv,
+};

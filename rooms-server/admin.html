@@ -188,11 +188,87 @@
       .wr-mid {
         color: var(--warn);
       }
+      .filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 14px;
+      }
+      .filters select,
+      .filters input,
+      .filters button {
+        background: var(--card);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 7px 10px;
+        font: inherit;
+      }
+      .filters button {
+        cursor: pointer;
+      }
+      .wtable th {
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+      }
+      .wtable th.sorted::after {
+        content: ' ▾';
+        color: var(--accent);
+      }
+      .wtable th.asc::after {
+        content: ' ▴';
+      }
+      tr.out-hard td {
+        background: color-mix(in srgb, var(--bad) 12%, transparent);
+      }
+      tr.out-easy td {
+        background: color-mix(in srgb, var(--good) 10%, transparent);
+      }
+      tr.insufficient {
+        opacity: 0.5;
+      }
+      .mono {
+        font-variant-numeric: tabular-nums;
+      }
+      .rec {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line);
+        font-size: 14px;
+      }
+      .rec b {
+        min-width: 90px;
+      }
+      .rec .k {
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .k-too_hard,
+      .k-llm_underrated,
+      .k-high_abandon {
+        background: #3a1618;
+        color: #ff9b9b;
+      }
+      .k-too_easy,
+      .k-llm_overrated {
+        background: #17361a;
+        color: #7ee787;
+      }
     </style>
   </head>
   <body>
     <header>
       <h1>📊 Kelimebaz — Yönetim Panosu</h1>
+      <div class="ranges" id="tabs">
+        <button data-t="summary" class="on">Özet</button>
+        <button data-t="words">Kelimeler</button>
+      </div>
       <div class="ranges" id="ranges">
         <button data-r="today">Bugün</button>
         <button data-r="7d" class="on">7 gün</button>
@@ -323,7 +399,184 @@
           ).toLocaleString('tr')} · ${act.length} gün · anonim veri</p>`;
       }
 
-      async function load() {
+      // --- Kelime raporu ---
+      const RECKIND = {
+        too_hard: 'çok zor',
+        too_easy: 'çok kolay',
+        llm_underrated: 'LLM hafife almış',
+        llm_overrated: 'LLM abartmış',
+        high_abandon: 'yüksek terk',
+      };
+      let wdata = null; // {rows, recommendations, minSample}
+      let sortKey = 'winRate',
+        sortAsc = true; // en zor üstte
+      const wfilters = { lang: '', len: 0, min: 30 };
+
+      async function loadWords() {
+        const base = location.pathname.replace(/\/$/, '');
+        const qs = new URLSearchParams({ range });
+        if (wfilters.lang) qs.set('lang', wfilters.lang);
+        if (wfilters.len) qs.set('len', wfilters.len);
+        qs.set('min', wfilters.min);
+        try {
+          const r = await fetch(base + '/words?' + qs, { headers: { accept: 'application/json' } });
+          if (!r.ok) throw new Error('http ' + r.status);
+          wdata = await r.json();
+          renderWords();
+        } catch (e) {
+          $('#main').innerHTML = `<div class="empty">Veri alınamadı: ${esc(e.message)}</div>`;
+        }
+      }
+
+      function sortRows(rows) {
+        const s = [...rows].sort((a, b) => {
+          const x = a[sortKey],
+            y = b[sortKey];
+          if (typeof x === 'string') return (x || '').localeCompare(y || '', 'tr');
+          return (x ?? -1) - (y ?? -1);
+        });
+        return sortAsc ? s : s.reverse();
+      }
+
+      function renderWords() {
+        const d = wdata;
+        const base = location.pathname.replace(/\/$/, '');
+        const csvUrl =
+          base +
+          '/words?' +
+          new URLSearchParams({ range, min: wfilters.min, format: 'csv', ...(wfilters.lang ? { lang: wfilters.lang } : {}), ...(wfilters.len ? { len: wfilters.len } : {}) });
+
+        const filters = `
+          <div class="filters">
+            <label>Dil:
+              <select id="fLang">
+                <option value="">Hepsi</option><option value="tr">Türkçe</option><option value="en">İngilizce</option>
+              </select></label>
+            <label>Uzunluk:
+              <select id="fLen"><option value="0">Hepsi</option>${[4, 5, 6, 7]
+                .map((n) => `<option value="${n}">${n} harf</option>`)
+                .join('')}</select></label>
+            <label>Min. örneklem: <input id="fMin" type="number" min="1" style="width:70px" value="${wfilters.min}" /></label>
+            <button id="apply">Uygula</button>
+            <span style="flex:1"></span>
+            <button id="csv">⬇ CSV</button>
+            <button id="json">⬇ JSON</button>
+          </div>`;
+
+        if (!d.rows.length) {
+          $('#main').innerHTML =
+            filters +
+            `<div class="empty">Bu filtrede kelime verisi yok.<br /><span class="pill">Oyunlar oynandıkça kelime istatistikleri burada birikir.</span></div>`;
+          wireWordControls(csvUrl);
+          return;
+        }
+
+        const enough = d.rows.filter((r) => r.enough).length;
+        const rows = sortRows(d.rows);
+        const th = (k, label) =>
+          `<th data-k="${k}" class="${sortKey === k ? 'sorted ' + (sortAsc ? 'asc' : '') : ''}">${label}</th>`;
+
+        const body = rows
+          .map((r) => {
+            const cls = !r.enough
+              ? 'insufficient'
+              : r.winRate <= 0.25
+                ? 'out-hard'
+                : r.winRate >= 0.95
+                  ? 'out-easy'
+                  : '';
+            const llm = r.difficulty == null ? '—' : '★'.repeat(r.difficulty);
+            return `<tr class="${cls}">
+              <td><b>${esc(r.word)}</b></td><td>${r.lang || '—'}</td><td>${r.wlen}</td>
+              <td class="mono">${r.plays}</td><td class="mono">${r.completed}</td>
+              <td class="mono ${wrClass(r.winRate)}">${r.enough ? pct(r.winRate) : '<span class="pill">az veri</span>'}</td>
+              <td class="mono">${r.avgAttempts ? r.avgAttempts.toFixed(2) : '—'}</td>
+              <td class="mono">${pct(r.abandonRate)}</td>
+              <td title="LLM zorluk 1–5">${llm}</td>
+              <td class="mono">${r.sample}</td></tr>`;
+          })
+          .join('');
+
+        // Öneriler
+        const recs = d.recommendations;
+        const recHtml = recs.length
+          ? recs
+              .map(
+                (r) =>
+                  `<div class="rec"><b>${esc(r.word)}</b><span class="k k-${r.kind}">${
+                    RECKIND[r.kind] || r.kind
+                  }</span><span>${esc(r.msg)} · kazanma ${pct(r.winRate)}, ort ${r.avgAttempts.toFixed(
+                    1,
+                  )}, n=${r.sample}${r.difficulty ? ', LLM ' + '★'.repeat(r.difficulty) : ''}</span></div>`,
+              )
+              .join('')
+          : `<div class="rec"><span class="pill">Yeterli örneklemli (n≥${d.minSample}) kelime yok → henüz somut öneri yok.</span></div>`;
+
+        $('#main').innerHTML = `
+          ${filters}
+          <div class="tiles">
+            <div class="tile"><div class="n">${d.rows.length}</div><div class="l">Kelime (veri var)</div></div>
+            <div class="tile"><div class="n">${enough}</div><div class="l">Karar için yeterli (n≥${d.minSample})</div></div>
+            <div class="tile"><div class="n">${recs.length}</div><div class="l">Havuz önerisi</div></div>
+          </div>
+          <section><h2>🎯 Havuz önerileri (yalnız yeterli örneklem)</h2>${recHtml}</section>
+          <section><h2>Kelime istatistikleri</h2>
+            <div style="overflow-x:auto"><table class="wtable">
+              <tr>${th('word', 'Kelime')}${th('lang', 'Dil')}${th('wlen', 'Uz.')}${th('plays', 'Oynanma')}${th(
+                'completed',
+                'Biten',
+              )}${th('winRate', 'Kazanma')}${th('avgAttempts', 'Ort. tahmin')}${th('abandonRate', 'Terk')}${th(
+                'difficulty',
+                'LLM',
+              )}${th('sample', 'n')}</tr>
+              ${body}
+            </table></div>
+            <p class="foot" style="text-align:left">Soluk satır = yetersiz örneklem (karar için kullanma). Kırmızı = çok zor, yeşil = çok kolay (uç değer). LLM ★ = zorluk 1–5.</p>
+          </section>`;
+        wireWordControls(csvUrl);
+      }
+
+      function wireWordControls(csvUrl) {
+        const set = (id, val) => {
+          const el = $('#' + id);
+          if (el) el.value = val;
+        };
+        set('fLang', wfilters.lang);
+        set('fLen', wfilters.len);
+        const apply = $('#apply');
+        if (apply)
+          apply.onclick = () => {
+            wfilters.lang = $('#fLang').value;
+            wfilters.len = Number($('#fLen').value) || 0;
+            wfilters.min = Math.max(1, Number($('#fMin').value) || 30);
+            loadWords();
+          };
+        const csv = $('#csv');
+        if (csv) csv.onclick = () => (location.href = csvUrl);
+        const json = $('#json');
+        if (json)
+          json.onclick = () => {
+            const blob = new Blob([JSON.stringify(wdata, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'kelime-istatistik.json';
+            a.click();
+          };
+        document.querySelectorAll('.wtable th[data-k]').forEach((thEl) => {
+          thEl.onclick = () => {
+            const k = thEl.dataset.k;
+            if (sortKey === k) sortAsc = !sortAsc;
+            else {
+              sortKey = k;
+              sortAsc = k === 'winRate' || k === 'word' || k === 'lang'; // kazanma: en zor üstte
+            }
+            renderWords();
+          };
+        });
+      }
+
+      // --- Ortak yükleme / sekme ---
+      async function loadSummary() {
         const base = location.pathname.replace(/\/$/, '');
         try {
           const r = await fetch(base + '/summary?range=' + range, { headers: { accept: 'application/json' } });
@@ -334,6 +587,19 @@
         }
       }
 
+      let tab = 'summary';
+      function load() {
+        $('#main').innerHTML = '<p class="empty">Yükleniyor…</p>';
+        return tab === 'words' ? loadWords() : loadSummary();
+      }
+
+      $('#tabs').addEventListener('click', (e) => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        tab = b.dataset.t;
+        [...$('#tabs').children].forEach((x) => x.classList.toggle('on', x === b));
+        load();
+      });
       $('#ranges').addEventListener('click', (e) => {
         const b = e.target.closest('button');
         if (!b) return;
