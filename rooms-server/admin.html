@@ -367,6 +367,7 @@
         <button data-t="summary" class="on">Özet</button>
         <button data-t="words">Kelimeler</button>
         <button data-t="rooms">Odalar</button>
+        <button data-t="daily">Takvim</button>
       </div>
       <div class="ranges" id="ranges">
         <button data-r="today">Bugün</button>
@@ -850,6 +851,83 @@
         }, 4000);
       }
 
+      // --- Günün kelimesi takvimi ---
+      async function loadDaily() {
+        try {
+          const d = await (await api('/daily?past=14&future=30')).json();
+          renderDaily(d);
+        } catch (e) {
+          if (e.message !== 'auth')
+            $('#main').innerHTML = `<div class="empty">Alınamadı: ${esc(e.message)}</div>`;
+        }
+      }
+
+      const WD = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+      function cell(x, started) {
+        // override varsa vurgula; algo ise soluk. Perf (geçmiş) varsa göster.
+        const w = x.override || x.algo || '—';
+        const ov = x.override ? ` style="color:var(--accent);font-weight:700"` : '';
+        const perf =
+          x.winRate != null
+            ? ` <span class="pill">${Math.round(x.winRate * 100)}% · n${x.sample}</span>`
+            : '';
+        return `<span${ov}>${esc(w)}</span>${x.override ? ' ✎' : ''}${perf}`;
+      }
+
+      function renderDaily(d) {
+        const rows = d.days
+          .map((day) => {
+            const dt = new Date(day.date + 'T00:00:00Z');
+            const wd = WD[dt.getUTCDay()];
+            const today = day.isToday ? ' style="outline:1px solid var(--accent)"' : '';
+            const tag = day.started ? '<span class="pill">başladı</span>' : '';
+            const act = day.started
+              ? '<span class="pill">kilitli</span>'
+              : `<button data-d="${day.dayIndex}" data-l="tr" class="assign">TR ata</button>
+                 <button data-d="${day.dayIndex}" data-l="en" class="assign">EN ata</button>
+                 ${day.tr.override || day.en.override ? `<button data-d="${day.dayIndex}" class="clr danger">✕</button>` : ''}`;
+            return `<tr${today}>
+              <td>${day.date}<br /><span class="pill">${wd}${day.isToday ? ' · bugün' : ''}</span></td>
+              <td>${cell(day.tr, day.started)}</td>
+              <td>${cell(day.en, day.started)}</td>
+              <td>${tag}</td>
+              <td class="modact" style="margin:0">${act}</td></tr>`;
+          })
+          .join('');
+        $('#main').innerHTML = `
+          <section>
+            <h2>Günün kelimesi takvimi</h2>
+            <p class="foot" style="text-align:left">Gelecek günlerin kelimesini önceden gör ve gerekirse değiştir. <b>Gün başladıktan sonra değiştirilemez</b> (herkes aynı kelimeyi görmeli). Sunucu erişilemezse istemci gömülü algoritmayı kullanır. ✎ = elle atanmış (override); soluk = algoritmik.</p>
+            <div style="overflow-x:auto"><table>
+              <tr><th>Tarih</th><th>Türkçe</th><th>İngilizce</th><th>Durum</th><th>Eylem</th></tr>
+              ${rows}
+            </table></div>
+          </section>`;
+        document
+          .querySelectorAll('.assign')
+          .forEach((b) => (b.onclick = () => assignDay(+b.dataset.d, b.dataset.l)));
+        document
+          .querySelectorAll('.clr')
+          .forEach((b) => (b.onclick = () => clearDay(+b.dataset.d)));
+      }
+
+      async function assignDay(dayIndex, lang) {
+        const word = prompt(
+          `${lang.toUpperCase()} — bu güne atanacak kelime (cevap havuzunda olmalı):`,
+        );
+        if (!word) return;
+        const r = await post('/daily/override', { dayIndex, lang, word: word.trim() });
+        if (r.status === 422) alert('Bu kelime cevap havuzunda yok. Havuzdaki bir kelime seç.');
+        else if (r.status === 409) alert('Bu gün başladı/geçti — değiştirilemez.');
+        loadDaily();
+      }
+      async function clearDay(dayIndex) {
+        if (!confirm('Bu günün override’larını kaldır (algoritmaya dön)?')) return;
+        await post('/daily/clear', { dayIndex, lang: 'tr' });
+        await post('/daily/clear', { dayIndex, lang: 'en' });
+        loadDaily();
+      }
+
       // --- Ortak yükleme / sekme ---
       async function loadSummary() {
         const base = location.pathname.replace(/\/$/, '');
@@ -874,6 +952,7 @@
           startRoomsTimer();
           return loadRooms();
         }
+        if (tab === 'daily') return loadDaily();
         return tab === 'words' ? loadWords() : loadSummary();
       }
 

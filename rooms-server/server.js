@@ -61,6 +61,20 @@ function difficultyMaps() {
 const rlEvents = rateLimiter(Number(process.env.RL_EVENTS || 60), 60_000);
 const EVENTS_MAX_BATCH = 200; // tek istekte kabul edilen en çok olay
 
+// --- GÜNÜN KELİMESİ geçersiz kılma (override) deposu ---
+// Kötü bir günlük kelime çıkarsa yeniden dağıtım yapmadan müdahale. Override YALNIZ
+// gelecek günler için; istemci sunucu erişilemezse gömülü algoritmaya düşer.
+const dailyMod = require('./daily');
+let daily = null;
+try {
+  daily = dailyMod.open({ file: process.env.DAILY_OVERRIDES_FILE });
+  console.log(
+    `[günlük] override deposu hazır · önizleme havuzu: ${daily.hasPools ? 'var' : 'yok (words.json eksik)'}`,
+  );
+} catch (e) {
+  console.error('[günlük] başlatılamadı:', e.message);
+}
+
 // --- YÖNETİM PANOSU kimlik doğrulaması (tek kullanıcı, oturum tabanlı) ---
 // Parola KARMASI env'de (düz metin yok). ADMIN_PASS_HASH yoksa panel KAPALI
 // (503) → asla kimlik doğrulamasız açılmaz. HTTPS ŞART (aşağıda httpsOk).
@@ -977,6 +991,93 @@ const routes = {
     const removed = before - room.messages.length;
     audit(req, 'room_msg_delete', removed > 0, `${room.code} · ${id}`);
     send(res, 200, { ok: true, removed });
+  },
+
+  // --- GÜNÜN KELİMESİ override ---
+  // PUBLIC: istemci bugünün (±1 gün) override'ını çeker. Auth YOK (spoiler yok:
+  // yalnız bugün penceresi). Kısa önbellek → her oyunda istek atılmaz.
+  'GET /daily-overrides': async (req, res) => {
+    if (!daily) return send(res, 200, { overrides: {} });
+    const today = daily.dayIndexFor(new Date());
+    const map = daily.windowMap(today - 1, today + 1);
+    const body = JSON.stringify({ overrides: map });
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Access-Control-Allow-Origin': res.corsOrigin || ALLOWED_ORIGINS[0],
+      Vary: 'Origin',
+      'Cache-Control': 'public, max-age=1800',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    res.end(body);
+  },
+
+  // ADMIN: takvim (geçmiş perf + gelecek önizleme + override).
+  'GET /admin/daily': async (req, res, url) => {
+    if (!requireSession(req, res, 'daily')) return;
+    if (!daily) return send(res, 503, { error: 'no_daily' });
+    const today = daily.dayIndexFor(new Date());
+    const past = clampInt(url.searchParams.get('past'), 0, 60, 14);
+    const future = clampInt(url.searchParams.get('future'), 1, 90, 30);
+    // Geçmiş günlük kelimelerin kazanma oranı (telemetriden — zorluk raporuyla bağ).
+    const winMap = {};
+    if (telemetry) {
+      try {
+        const { rows } = telemetry.wordStats(0, now() + 1, difficultyMaps(), 1);
+        for (const r of rows)
+          winMap[`${r.lang}:${r.word}`] = { winRate: r.winRate, sample: r.sample };
+      } catch {
+        /* telemetri yoksa performans boş kalır */
+      }
+    }
+    const days = [];
+    for (let d = today - past; d <= today + future; d++) {
+      const entry = {
+        dayIndex: d,
+        date: daily.dateOf(d),
+        started: d <= today,
+        isToday: d === today,
+      };
+      for (const lang of ['tr', 'en']) {
+        const override = daily.getOverride(d, lang);
+        const algo = daily.algoWord(d, lang);
+        const word = override || algo;
+        const perf = d < today && word ? winMap[`${lang}:${word}`] : null;
+        entry[lang] = { algo, override, word, ...(perf || {}) };
+      }
+      days.push(entry);
+    }
+    audit(req, 'daily', true, `bugün ${today}`);
+    send(res, 200, { today, days });
+  },
+
+  // ADMIN: bir güne kelime ata (GELECEK gün + havuzda olmalı). Bugün/geçmiş engelli.
+  'POST /admin/daily/override': async (req, res) => {
+    if (!requireSession(req, res, 'daily_override')) return;
+    if (!daily) return send(res, 503, { error: 'no_daily' });
+    const body = await readJson(req);
+    const dayIndex = clampInt(body.dayIndex, 0, 1e9, -1);
+    const lang = body.lang === 'en' ? 'en' : body.lang === 'tr' ? 'tr' : null;
+    const word = String(body.word || '').trim();
+    if (dayIndex < 0 || !lang || !word) return send(res, 400, { error: 'bad_input' });
+    // Gün başladıktan sonra değişiklik YOK (sabah/akşam farklı kelime olmasın).
+    if (dayIndex <= daily.dayIndexFor(new Date())) return send(res, 409, { error: 'day_started' });
+    if (!daily.inPool(word, lang)) return send(res, 422, { error: 'not_in_pool' }); // sözlük doğrulaması
+    daily.setOverride(dayIndex, lang, word);
+    audit(req, 'daily_override', true, `${daily.dateOf(dayIndex)} ${lang}=${word}`);
+    send(res, 200, { ok: true, word: daily.getOverride(dayIndex, lang) });
+  },
+
+  // ADMIN: override kaldır (GELECEK gün). Bugün/geçmiş engelli.
+  'POST /admin/daily/clear': async (req, res) => {
+    if (!requireSession(req, res, 'daily_clear')) return;
+    if (!daily) return send(res, 503, { error: 'no_daily' });
+    const body = await readJson(req);
+    const dayIndex = clampInt(body.dayIndex, 0, 1e9, -1);
+    const lang = body.lang === 'en' ? 'en' : 'tr';
+    if (dayIndex <= daily.dayIndexFor(new Date())) return send(res, 409, { error: 'day_started' });
+    daily.clearOverride(dayIndex, lang);
+    audit(req, 'daily_clear', true, `${daily.dateOf(dayIndex)} ${lang}`);
+    send(res, 200, { ok: true });
   },
 };
 

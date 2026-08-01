@@ -118,4 +118,21 @@ describe('Günlük kelime rotasyonu', () => {
       }
     });
   });
+
+  /**
+   * SUNUCU PARITY: rooms-server/daily-rotation.js bu değerlerin AYNISINI üretmeli
+   * (yönetim takvimi önizlemesi gerçekle uyuşsun). Aynı GOLDEN dizi
+   * rooms-server/daily-rotation.test.mjs'te de kontrol edilir → iki kopya senkron.
+   * Biri kayarsa kendi tarafındaki test kırılır.
+   */
+  describe('golden değerler (sunucu JS ile paylaşılan)', () => {
+    it('targetBand 0..20', () => {
+      const g = [2, 4, 4, 3, 2, 3, 3, 2, 4, 5, 3, 2, 1, 2, 3, 4, 3, 5, 1, 1, 2];
+      expect(Array.from({ length: 21 }, (_, d) => targetBand(d))).toEqual(g);
+    });
+    it('lengthForDay 0..20', () => {
+      const g = [4, 7, 6, 5, 7, 6, 5, 4, 4, 5, 6, 7, 5, 6, 7, 4, 6, 5, 4, 7, 6];
+      expect(Array.from({ length: 21 }, (_, d) => lengthForDay(d))).toEqual(g);
+    });
+  });
 });

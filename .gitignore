@@ -56,3 +56,6 @@ src/app/data/.audit-*.json
 rooms-server/telemetry/
 rooms-server/word-difficulty-*.json
 rooms-server/admin-audit.log
+rooms-server/words.json
+rooms-server/words-en.json
+rooms-server/daily-overrides.json

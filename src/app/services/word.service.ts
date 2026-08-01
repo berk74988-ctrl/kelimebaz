@@ -92,6 +92,12 @@ export class WordService {
     }
   }
 
+  // 📅 GÜNÜN KELİMESİ geçersiz kılma (override) — `${lang}:${dayIndex}` → KELİME.
+  // Sunucudan gelir; önbellekten SENKRON okunur (wordOfTheDay senkron çalışır).
+  // Sunucu erişilemezse boş kalır → gömülü algoritma kullanılır (oyun etkilenmez).
+  private static readonly OVR_KEY = 'kelimebaz:daily-overrides';
+  private readonly _overrides = new Map<string, string>();
+
   constructor() {
     // Test tohumu varsa senkron yükle (async beklemeden hazır ol).
     for (const lang of Object.keys(WordService.seed) as Lang[]) {
@@ -100,11 +106,62 @@ export class WordService {
     }
     if (this.loaded.size) this._status.set('ready');
 
+    this.loadOverridesCache(); // senkron: önceki oturumun override'ları hemen hazır
+    // Testte (tohumluyken) ağ isteği atma; üretimde bugünün override'ını tazele.
+    if (!Object.keys(WordService.seed).length) void this.refreshOverrides();
+
     // Aktif dil değişince o dilin havuzunu (yoksa) yükle.
     effect(() => {
       const lang = this.langSvc.lang();
       void this.ensure(lang);
     });
+  }
+
+  /** RoomService ile aynı köken: canlıda /berk/rooms, yerelde :4243. */
+  private overrideBase(): string {
+    if (typeof location === 'undefined') return 'http://localhost:4243';
+    const host = location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:4243';
+    return '/berk/rooms';
+  }
+
+  private loadOverridesCache(): void {
+    try {
+      const raw = localStorage.getItem(WordService.OVR_KEY);
+      const obj = raw ? (JSON.parse(raw) as { map?: Record<string, string> }) : null;
+      for (const [k, v] of Object.entries(obj?.map ?? {})) this._overrides.set(k, v);
+    } catch {
+      /* depolama yok/bozuk → override yok, gömülü algoritma */
+    }
+  }
+
+  /**
+   * Bugünün override'ını sunucudan çek (best-effort). Başarısızsa sessizce geç →
+   * gömülü algoritma. Kısa önbellek: oturum başına bir kez (her oyunda DEĞİL).
+   */
+  async refreshOverrides(): Promise<void> {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 4000);
+      const res = await fetch(this.overrideBase() + '/daily-overrides', { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!res.ok) return;
+      const data = (await res.json()) as { overrides?: Record<string, Record<string, string>> };
+      for (const [di, byLang] of Object.entries(data.overrides ?? {})) {
+        for (const [lang, word] of Object.entries(byLang ?? {})) {
+          if (word) this._overrides.set(`${lang}:${di}`, String(word));
+        }
+      }
+      const map: Record<string, string> = {};
+      this._overrides.forEach((v, k) => (map[k] = v));
+      try {
+        localStorage.setItem(WordService.OVR_KEY, JSON.stringify({ map, at: Date.now() }));
+      } catch {
+        /* depolama kapalı — bellekte kalır */
+      }
+    } catch {
+      /* sunucu erişilemez → gömülü algoritma (oyun her koşulda çalışır) */
+    }
   }
 
   /** Dilin veri dosyalarını dinamik import eder (ayrı chunk → tembel indirilir). */
@@ -242,7 +299,15 @@ export class WordService {
     if (!this.isReady) return '';
     const p = this.pool();
     if (!p) return '';
-    const picked = pickDaily(this.dayIndex(date), (L, band) => p.byLenByBand[L]?.[band] ?? []);
+    const di = this.dayIndex(date);
+    // 📅 Geçersiz kılma (override) önce: yönetici bir güne kelime atadıysa onu
+    // kullan — ama yalnız GEÇERLİ bir kelimeyse (bozuk/stale önbellek oyunu bozmasın).
+    const ov = this._overrides.get(`${this.langSvc.lang()}:${di}`);
+    if (ov) {
+      const w = this.up(ov);
+      if (p.valid.has(w)) return w;
+    }
+    const picked = pickDaily(di, (L, band) => p.byLenByBand[L]?.[band] ?? []);
     if (picked) return picked.word;
     // Güvenlik yedeği (band verisi hiç yoksa): eski sıralı seçim.
     const day = this.dayIndex(date);

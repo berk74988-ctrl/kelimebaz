@@ -434,6 +434,33 @@ Bu ilke `server.js`'te (roomView/sanitizeText yorumları) ve burada yazılıdır
 Doğrulama: uçtan uca 10 kontrol (filtre işareti, kapatma→/state, kilit→403,
 mesaj sil, orijinal küfür saklanmıyor) el ile geçti.
 
+### Günün kelimesi override (`/admin` → "Takvim")
+
+Kötü bir günlük kelime (çok zor, rahatsız edici, hatalı) çıkarsa **yeniden dağıtım
+yapmadan** müdahale. Günün kelimesi normalde `dayIndex`'ten belirleyici türetilir;
+override bir güne elle kelime atar.
+
+- **Takvim:** geçmiş 14 + bugün + gelecek 30 gün. Her gün TR/EN kelimesi
+  (algoritmik soluk, override ✎ vurgulu), geçmiş günlerin **kazanma oranı**
+  (telemetriden — kelime raporuyla bağ). Önümüzdeki günleri **oyuncudan önce** gör.
+- **Atama:** bir güne kelime ver; **cevap havuzunda** olduğu doğrulanır (yoksa 422).
+- **Değişiklik yalnız GELECEK gün:** gün başladıktan/geçtikten sonra 409
+  `day_started` → engellenir (sabah/akşam farklı kelime olmasın, paylaşım
+  ızgaraları bozulmasın, "günde bir oyun" korunur).
+- **Denetim:** tüm override/temizle/görüntüleme `admin-audit.log`'a.
+
+**Belirleyicilik (kritik):** override `dayIndex`+dil ile anahtarlanır → tüm
+istemcilere **aynı** ulaşır. İstemci (`WordService.wordOfTheDay`) önce override
+listesine bakar (public `GET /daily-overrides`, bugün ±1 pencere, **spoiler yok**),
+yoksa gömülü algoritmaya düşer. Liste **kısa önbelleğe** alınır (oturum başına bir
+kez + localStorage) — her oyunda istek atılmaz. **Sunucu erişilemezse gömülü
+varsayılan** kullanılır → oyun her koşulda çalışır.
+
+Sunucudaki algoritmik önizleme, istemcinin gömülü algoritmasıyla **birebir aynı**
+olmalı: `rooms-server/daily-rotation.js` ↔ `src/app/core/daily-rotation.ts` parity
+testiyle (her `dayIndex` için) doğrulanır. `words.json`/`word-difficulty` deploy'da
+rooms-server'a kopyalanır (yoksa önizleme boş, override yine çalışır).
+
 ### Kelime raporu — havuzu veriyle yönet (`/admin` → "Kelimeler")
 
 Telemetrinin en değerli çıktısı: her kelime için gerçek oyun verisi
