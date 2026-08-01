@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { guessAnnouncement, resultAnnouncement } from '../../core/a11y';
+import { voiceToLetters } from '../../core/voice';
 import { GameMode } from '../../models/game.model';
 import { AiHintService } from '../../services/ai-hint.service';
 import { AudioService } from '../../services/audio.service';
@@ -18,6 +19,7 @@ import { HintService } from '../../services/hint.service';
 import { LanguageService } from '../../services/language.service';
 import { StatsService } from '../../services/stats.service';
 import { ThemeService } from '../../services/theme.service';
+import { VoiceInputService } from '../../services/voice-input.service';
 import { Board } from '../board/board';
 import { EN_LETTERS, Keyboard, TR_KEY_POSITIONS, TR_LETTERS } from '../keyboard/keyboard';
 import { ResultModal } from '../result-modal/result-modal';
@@ -42,6 +44,85 @@ export class Game {
   protected readonly gold = inject(GoldService);
   private readonly aiHint = inject(AiHintService);
   private readonly stats = inject(StatsService);
+  protected readonly voice = inject(VoiceInputService);
+
+  // 🎤 SESLİ GİRİŞ (isteğe bağlı erişilebilirlik) — klavye/dokunmatik akışı hiç değişmez.
+  private static readonly VOICE_NOTICE_KEY = 'kelimebaz:voice-notice';
+  /** İlk kullanımda gösterilen gizlilik bilgilendirmesi açık mı? */
+  protected readonly voiceNoticeOpen = signal(false);
+
+  /** Mikrofon butonu görünsün mü? Destek + izin + oynanabilir durum. */
+  protected voiceAvailable(): boolean {
+    return (
+      this.voice.supported() &&
+      !this.voice.denied() &&
+      !this.game.isOver() &&
+      !this.inputLocked() &&
+      !this.resultOpen() &&
+      !this.statsOpen()
+    );
+  }
+
+  /** Mikrofona basıldı: dinliyorsa durdur; ilk kez ise önce gizlilik uyarısı. */
+  protected onMic(ev?: Event): void {
+    // Buton odakta kalırsa, onay Enter'ı butonu tekrar tetikler → odağı bırak.
+    (ev?.currentTarget as HTMLElement | undefined)?.blur();
+    if (!this.voiceAvailable() || this.locked()) return;
+    if (this.voice.listening()) {
+      this.voice.stop();
+      return;
+    }
+    if (!this.voiceNoticeSeen()) {
+      this.voiceNoticeOpen.set(true); // gizlilik: onaydan önce dinleme başlamaz
+      return;
+    }
+    this.startListening();
+  }
+
+  /** Gizlilik uyarısı onaylandı → bir daha gösterme ve hemen dinle. */
+  protected acceptVoiceNotice(): void {
+    try {
+      localStorage.setItem(Game.VOICE_NOTICE_KEY, '1');
+    } catch {
+      /* depolama kapalıysa yine de devam */
+    }
+    this.voiceNoticeOpen.set(false);
+    this.startListening();
+  }
+
+  private voiceNoticeSeen(): boolean {
+    try {
+      return localStorage.getItem(Game.VOICE_NOTICE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  /** Dinlemeyi başlat; tanınan kelimeyi TAHTAYA yazar, GÖNDERMEZ (oyuncu onaylar). */
+  private startListening(): void {
+    this.announcement.set(this.i18n.t('voice.listening'));
+    this.voice.start({
+      onResult: (transcript) => {
+        const word = voiceToLetters(transcript, this.i18n.lang(), this.game.wordLength());
+        if (!word) {
+          this.announcement.set(this.i18n.t('voice.noMatch'));
+          this.audio.sfx('invalid');
+          return;
+        }
+        this.game.setCurrent(word); // tahtaya yaz — Enter'a kadar gönderilmez
+        this.audio.sfx('key');
+        this.announcement.set(this.i18n.t('voice.heard', { word }));
+      },
+      onNoMatch: () => {
+        this.announcement.set(this.i18n.t('voice.noMatch'));
+        this.audio.sfx('invalid');
+      },
+      onError: () => {
+        this.announcement.set(this.i18n.t('voice.error'));
+        this.audio.sfx('invalid');
+      },
+    });
+  }
 
   /** 💡 İpucu açıldı mı (statik ipucu kartı; her yeni oyunda sıfırlanır). */
   protected readonly hintShown = signal(false);

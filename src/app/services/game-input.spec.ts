@@ -97,4 +97,29 @@ describe('Klavye girişi → tahta', () => {
       expect(['correct', 'present', 'absent']).toContain(keys[ch]);
     }
   });
+
+  // 🎤 SESLİ GİRİŞ: tanınan kelime TAHTAYA yazılır ama GÖNDERİLMEZ.
+  it('setCurrent tahtaya yazar ama satırı ilerletmez (oyuncu onaylayacak)', () => {
+    game.setCurrent('KALEM');
+
+    expect(firstRow()).toBe('KALEM');
+    expect(game.currentGuess()).toBe('KALEM');
+    expect(game.rowIndex()).toBe(0); // GÖNDERİLMEDİ — onay bekliyor
+
+    // Oyuncu Enter'a basınca normal akış çalışır
+    game.submit();
+    expect(game.rowIndex()).toBe(1);
+  });
+
+  it('setCurrent kelime uzunluğuna kırpar', () => {
+    game.setCurrent('KALEMLER'); // 8 harf → 5 harflik oyunda ilk 5
+    expect(game.currentGuess()).toBe('KALEM');
+  });
+
+  it('setCurrent oyuncunun düzeltmesine (SİL) izin verir', () => {
+    game.setCurrent('KALEM');
+    game.backspace();
+    game.type('P'); // KALE + P
+    expect(game.currentGuess()).toBe('KALEP');
+  });
 });

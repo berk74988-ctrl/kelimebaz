@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kelimebaz — Sesli Giriş Fizibilite Ölçümü</title>
+    <style>
+      :root {
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      body {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 18px;
+        background: #14161a;
+        color: #e8eaed;
+      }
+      h1 {
+        font-size: 20px;
+      }
+      .muted {
+        color: #9aa0a6;
+        font-size: 14px;
+      }
+      .card {
+        background: #1e2127;
+        border: 1px solid #2c313a;
+        border-radius: 10px;
+        padding: 16px;
+        margin: 14px 0;
+      }
+      label {
+        display: block;
+        margin: 8px 0 4px;
+        font-size: 14px;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #2c313a;
+        background: #14161a;
+        color: #e8eaed;
+        box-sizing: border-box;
+      }
+      button {
+        padding: 10px 18px;
+        border-radius: 999px;
+        border: 1px solid #3a7afe;
+        background: #3a7afe;
+        color: #fff;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      button.ghost {
+        background: transparent;
+        color: #e8eaed;
+        border-color: #2c313a;
+      }
+      button.listening {
+        background: #e5484d;
+        border-color: #e5484d;
+        animation: pulse 1.1s infinite;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(229, 72, 77, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 0 10px transparent;
+        }
+      }
+      .target {
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: 4px;
+        text-align: center;
+        margin: 8px 0;
+      }
+      .heard {
+        text-align: center;
+        font-size: 18px;
+        min-height: 26px;
+      }
+      .ok {
+        color: #46c93a;
+      }
+      .no {
+        color: #e5484d;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .stat {
+        font-size: 15px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      td,
+      th {
+        border-bottom: 1px solid #2c313a;
+        padding: 4px 6px;
+        text-align: left;
+      }
+      textarea {
+        width: 100%;
+        height: 140px;
+        background: #14161a;
+        color: #e8eaed;
+        border: 1px solid #2c313a;
+        border-radius: 8px;
+        box-sizing: border-box;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🎤 Sesli Giriş Fizibilite Ölçümü</h1>
+    <p class="muted">
+      Bu araç, Web Speech API'nin <b>Türkçe / İngilizce tek kelime</b> tanıma doğruluğunu ölçer. Her
+      hedef kelimeyi oku; araç, tanınan sesi oyunun harflerine indirger (boşluk/noktalama atılır) ve
+      hedefle <b>birebir eşleşiyor mu</b> sayar. Sonucu en alttan kopyalayıp geliştiriciye ilet.
+    </p>
+    <p class="muted">
+      ⚠️ Ses tarayıcı tarafından işlenir; bazı tarayıcılarda tanıma için sunucuya (ör. Google)
+      gönderilir. Ölçümü <b>3 tarayıda</b> (Chrome, Safari, Firefox) tekrarla.
+    </p>
+
+    <div class="card" id="setup">
+      <label>Tarayıcı / cihaz etiketi (rapora yazılır)</label>
+      <input id="browser" placeholder="ör. Chrome 141 / Android · Pixel 7" />
+      <label>Dil</label>
+      <select id="lang">
+        <option value="tr-TR">Türkçe (tr-TR)</option>
+        <option value="en-US">English (en-US)</option>
+      </select>
+      <label>Söyleme biçimi</label>
+      <select id="mode">
+        <option value="word">Kelime söyle ("KALEM")</option>
+        <option value="letters">Harf harf söyle ("K A L E M")</option>
+      </select>
+      <p style="margin-top: 14px">
+        <button id="startBtn">Ölçümü başlat (50 kelime)</button>
+      </p>
+      <p class="muted" id="support"></p>
+    </div>
+
+    <div class="card" id="test" style="display: none">
+      <div class="stat" id="progress"></div>
+      <div class="target" id="target"></div>
+      <div class="heard" id="heard">&nbsp;</div>
+      <div class="row" style="margin-top: 12px">
+        <button id="micBtn">🎤 Söyle</button>
+        <button class="ghost" id="skipBtn">Atla</button>
+      </div>
+      <p class="muted" style="text-align: center; margin-top: 10px" id="live"></p>
+    </div>
+
+    <div class="card" id="result" style="display: none">
+      <h2 style="margin-top: 0">Sonuç</h2>
+      <div class="stat" id="summary"></div>
+      <table id="details"></table>
+      <label style="margin-top: 12px">Raporu kopyala (geliştiriciye gönder)</label>
+      <textarea id="report" readonly></textarea>
+      <p><button class="ghost" id="copyBtn">Kopyala</button></p>
+    </div>
+
+    <script>
+      // Oyunun harf alfabesi (klav/normalizasyonla aynı; TR'de Q/W/X yok).
+      const LETTERS = {
+        'tr-TR': new Set([...'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ']),
+        'en-US': new Set([...'ABCDEFGHIJKLMNOPQRSTUVWXYZ']),
+      };
+      const up = (s, lang) => (lang === 'tr-TR' ? s.toLocaleUpperCase('tr') : s.toUpperCase());
+      function normalize(text, lang, maxLen) {
+        const set = LETTERS[lang];
+        const ls = [...up(text || '', lang)].filter((c) => set.has(c));
+        return ls.slice(0, maxLen ?? Infinity).join('');
+      }
+
+      // 50 yaygın Türkçe kelime (4–7 harf) — hedef listesi.
+      const WORDS_TR = [
+        'KALEM','MASA','KİTAP','ELMA','ARABA','KAPI','SANDALYE','PENCERE','DEFTER','OKUL',
+        'ÖĞRETMEN','ÇOCUK','BAHÇE','AĞAÇ','ÇİÇEK','DENIZ','GÜNEŞ','BULUT','YAĞMUR','RÜZGAR',
+        'KÖPEK','KEDİ','KUŞ','BALIK','ASLAN','EKMEK','PEYNIR','SÜT','ŞEKER','TUZ',
+        'MUTFAK','BANYO','SALON','YATAK','HALI','PERDE','TELEFON','BİLGİSAYAR','SAAT','AYNA',
+        'ŞEHİR','KÖPRÜ','YOL','TREN','UÇAK','VAPUR','BİLET','PARA','MARKET','HASTANE',
+      ];
+      const WORDS_EN = [
+        'APPLE','TABLE','CHAIR','WATER','HOUSE','LIGHT','MUSIC','PHONE','BREAD','CLOCK',
+        'RIVER','CLOUD','GREEN','BROWN','HEART','MONEY','PAPER','PLANT','SUGAR','TRAIN',
+        'BEACH','MOUSE','HORSE','TIGER','SHEEP','PLATE','KNIFE','SPOON','GLASS','TOWEL',
+        'DOING','QUICK','PROXY','JUMBO','ZEBRA','FANCY','WORLD','SMILE','DANCE','NIGHT',
+        'OCEAN','FIELD','STONE','BRICK','METAL','CLEAN','SHARP','SWEET','BRAVE','QUIET',
+      ];
+
+      const $ = (id) => document.getElementById(id);
+      const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+      $('support').textContent = Ctor
+        ? '✓ Bu tarayıcı Web Speech API destekliyor.'
+        : '✗ Bu tarayıcı Web Speech API DESTEKLEMİYOR — burada ölçüm yapılamaz (bu da bir bulgudur, not al).';
+      $('startBtn').disabled = !Ctor;
+
+      let words = [],
+        i = 0,
+        lang = 'tr-TR',
+        mode = 'word',
+        results = [],
+        rec = null;
+
+      $('startBtn').onclick = () => {
+        lang = $('lang').value;
+        mode = $('mode').value;
+        words = (lang === 'tr-TR' ? WORDS_TR : WORDS_EN).slice();
+        i = 0;
+        results = [];
+        $('setup').style.display = 'none';
+        $('test').style.display = '';
+        showNext();
+      };
+
+      function showNext() {
+        if (i >= words.length) return finish();
+        $('progress').textContent = `${i + 1} / ${words.length}  ·  doğru: ${
+          results.filter((r) => r.ok).length
+        }`;
+        $('target').textContent = words[i];
+        $('heard').innerHTML = '&nbsp;';
+        $('live').textContent =
+          mode === 'letters' ? 'Harfleri tek tek oku: K … A … L …' : 'Kelimeyi oku.';
+      }
+
+      $('skipBtn').onclick = () => {
+        results.push({ target: words[i], heard: '(atlandı)', ok: false });
+        i++;
+        showNext();
+      };
+
+      $('micBtn').onclick = () => {
+        if (rec) {
+          rec.stop();
+          return;
+        }
+        rec = new Ctor();
+        rec.lang = lang;
+        rec.interimResults = false;
+        rec.maxAlternatives = 3;
+        rec.continuous = false;
+        let got = false;
+        $('micBtn').classList.add('listening');
+        $('micBtn').textContent = '● Dinleniyor…';
+        rec.onresult = (e) => {
+          got = true;
+          const target = words[i];
+          // 3 alternatifin herhangi biri hedefe eşitse DOĞRU say (recognizer'a adil).
+          const alts = [...e.results[0]].map((a) => normalize(a.transcript, lang, target.length));
+          const ok = alts.includes(target);
+          const heard = alts[0] || '(boş)';
+          $('heard').innerHTML = ok
+            ? `<span class="ok">✓ ${heard}</span>`
+            : `<span class="no">✗ ${heard}</span> <span class="muted">(hedef ${target})</span>`;
+          results.push({ target, heard, ok });
+          i++;
+          setTimeout(showNext, 700);
+        };
+        rec.onerror = (e) => {
+          $('live').textContent = 'Hata: ' + (e.error || '?');
+        };
+        rec.onend = () => {
+          $('micBtn').classList.remove('listening');
+          $('micBtn').textContent = '🎤 Söyle';
+          rec = null;
+          if (!got) $('live').textContent = 'Ses alınamadı, tekrar dene.';
+        };
+        try {
+          rec.start();
+        } catch {
+          rec = null;
+        }
+      };
+
+      function finish() {
+        $('test').style.display = 'none';
+        $('result').style.display = '';
+        const total = results.length;
+        const correct = results.filter((r) => r.ok).length;
+        const pct = total ? Math.round((correct / total) * 100) : 0;
+        $('summary').innerHTML = `<b>${correct}/${total} doğru = %${pct}</b> · ${
+          $('browser').value || '(etiket yok)'
+        } · ${lang} · ${mode === 'letters' ? 'harf harf' : 'kelime'}`;
+        $('details').innerHTML =
+          '<tr><th>#</th><th>Hedef</th><th>Duyulan</th><th>?</th></tr>' +
+          results
+            .map(
+              (r, n) =>
+                `<tr><td>${n + 1}</td><td>${r.target}</td><td>${r.heard}</td><td>${
+                  r.ok ? '✓' : '✗'
+                }</td></tr>`,
+            )
+            .join('');
+        const report =
+          `KELİMEBAZ SESLİ GİRİŞ FİZİBİLİTE\n` +
+          `Tarayıcı/cihaz: ${$('browser').value || '(etiket yok)'}\n` +
+          `Dil: ${lang} · Biçim: ${mode === 'letters' ? 'harf harf' : 'kelime'}\n` +
+          `SONUÇ: ${correct}/${total} = %${pct}\n\n` +
+          results.map((r, n) => `${n + 1}. ${r.target} → ${r.heard} ${r.ok ? 'OK' : 'X'}`).join('\n');
+        $('report').value = report;
+      }
+
+      $('copyBtn').onclick = () => {
+        $('report').select();
+        try {
+          navigator.clipboard.writeText($('report').value);
+          $('copyBtn').textContent = 'Kopyalandı ✓';
+        } catch {
+          document.execCommand('copy');
+        }
+      };
+    </script>
+  </body>
+</html>

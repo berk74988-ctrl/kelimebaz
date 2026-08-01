@@ -248,6 +248,17 @@ export class GameService {
     this.clearMessage();
   }
 
+  /**
+   * SESLİ GİRİŞ — tanınan (zaten harflere indirgenmiş, büyük harf) kelimeyi
+   * MEVCUT satıra yazar. GÖNDERMEZ: oyuncu tahtada görüp Enter'la onaylar veya
+   * klavyeyle düzeltir. Böylece düşük tanıma doğruluğu oyunu asla bozamaz.
+   */
+  setCurrent(word: string): void {
+    if (this.isOver()) return;
+    this._current.set([...word].slice(0, this.wordLength()).join(''));
+    this.clearMessage();
+  }
+
   /** Son harfi sil. */
   backspace(): void {
     if (this.isOver()) return;

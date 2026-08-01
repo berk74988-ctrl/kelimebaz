@@ -137,6 +137,49 @@
     </div>
   }
 
+  <!-- 🎤 SESLİ GİRİŞ (isteğe bağlı) — destek + izin varsa görünür; yoksa HİÇ render edilmez.
+       Duyulan kelime tahtaya yazılır, GÖNDERİLMEZ: oyuncu Enter'la onaylar/düzeltir. -->
+  @if (voiceAvailable()) {
+    <div class="voice">
+      <button
+        class="voice-btn"
+        type="button"
+        [class.listening]="voice.listening()"
+        [attr.aria-pressed]="voice.listening()"
+        [attr.aria-label]="voice.listening() ? i18n.t('voice.stop') : i18n.t('voice.start')"
+        (click)="onMic($event)"
+      >
+        <span class="voice-ico" aria-hidden="true">🎤</span>
+        <span class="voice-label">{{
+          voice.listening() ? i18n.t('voice.listening') : i18n.t('voice.start')
+        }}</span>
+      </button>
+    </div>
+  }
+
+  <!-- Gizlilik bilgilendirmesi — ilk mikrofon kullanımından ÖNCE bir kez -->
+  @if (voiceNoticeOpen()) {
+    <div
+      class="voice-notice"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="i18n.t('voice.privacyTitle')"
+    >
+      <div class="voice-notice-card">
+        <h2>🎤 {{ i18n.t('voice.privacyTitle') }}</h2>
+        <p>{{ i18n.t('voice.privacyBody') }}</p>
+        <div class="voice-notice-actions">
+          <button class="ghost" type="button" (click)="voiceNoticeOpen.set(false)">
+            {{ i18n.t('common.cancel') }}
+          </button>
+          <button class="primary" type="button" (click)="acceptVoiceNotice()">
+            {{ i18n.t('voice.privacyOk') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Ekran klavyesi de fiziksel klavyeyle AYNI yoldan geçer (kilit dahil) -->
   <app-keyboard
     [keyStates]="game.keyStates()"
