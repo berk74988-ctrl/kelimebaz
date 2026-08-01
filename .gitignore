@@ -51,3 +51,6 @@ rooms-server/.test-flow-state.json
 
 # Sozluk denetimi gecici ciktilari
 src/app/data/.audit-*.json
+
+# Telemetri verisi (yerel/sunucu — repoya girmez)
+rooms-server/telemetry/

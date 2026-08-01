@@ -19,6 +19,7 @@ import { LeagueService } from './league.service';
 import { QuestService } from './quest.service';
 import { PlayStyleService } from './play-style.service';
 import { StatsService } from './stats.service';
+import { TelemetryService } from './telemetry.service';
 import { ThemeModeService } from './theme-mode.service';
 import { WordService } from './word.service';
 
@@ -38,6 +39,21 @@ export class GameService {
   private readonly quests = inject(QuestService);
   private readonly league = inject(LeagueService);
   private readonly lang = inject(LanguageService);
+  private readonly telemetry = inject(TelemetryService);
+
+  /** Bu oyunun başlangıç anı (telemetri süresi için; anonim). */
+  private _startAt = 0;
+
+  /** Anonim "oyun başladı" olayı — cevap kurulduktan sonra çağrılır. */
+  private emitStart(): void {
+    this._startAt = Date.now();
+    this.telemetry.gameStart({
+      mode: this._mode(),
+      lang: this.lang.lang(),
+      wlen: this.wordLength(),
+      word: this._answer(),
+    });
+  }
 
   // --- Durum (signals) ---
   private readonly _answer = signal('');
@@ -160,6 +176,7 @@ export class GameService {
     this._current.set('');
     this._status.set('playing');
     this.clearMessage();
+    this.emitStart();
   }
 
   /**
@@ -179,6 +196,7 @@ export class GameService {
     this._current.set('');
     this._status.set('playing');
     this.clearMessage();
+    this.emitStart();
   }
 
   /**
@@ -221,6 +239,7 @@ export class GameService {
     this._status.set('playing');
     this.clearMessage();
     this.save();
+    this.emitStart();
   }
 
   /**
@@ -343,6 +362,17 @@ export class GameService {
     // 🏆 Lig puanı (LP): kazan → +LP, kaybet → -LP. Değişimi sonuç ekranı gösterir.
     // YZ modu CASUAL — ligi (rekabetçi merdiven) etkilemez.
     this._lpDelta.set(casual ? 0 : this.league.recordResult(won, attempts, mode));
+
+    // 📊 Anonim "oyun bitti" (kimlik/kişisel veri yok; kapatılabilir).
+    this.telemetry.gameEnd({
+      mode,
+      lang: this.lang.lang(),
+      wlen: this.wordLength(),
+      word: this._answer(),
+      result: won ? 'won' : 'lost',
+      attempts,
+      duration_ms: this._startAt ? Date.now() - this._startAt : 0,
+    });
   }
 
   /** Sonucu emoji ızgarası olarak paylaş metnine çevirir (harf içermez). */

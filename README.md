@@ -301,6 +301,43 @@ Sunucu yalnızca `127.0.0.1`'de dinler — internete doğrudan açık değildir,
 
 ---
 
+## Anonim telemetri (gizlilik)
+
+Oyunun nasıl oynandığını görmek için **tamamen anonim** kullanım verisi toplanır
+(`rooms-server/telemetry.js` + `POST /events` · istemci `services/telemetry.service.ts`).
+Amaç kör uçuşu bitirmek: hangi mod tercih ediliyor, hangi kelime çok zor.
+
+**Ne toplanıyor** (hepsi anonim): oyun başladı/bitti (mod, dil, kelime uzunluğu,
+kelime, kazandı/kaybetti, tahmin sayısı, süre), mod seçimi, dil değişimi, hata
+olayları (ör. sözlük yüklenemedi).
+
+**Ne toplanmıyor — pazarlık konusu değil:**
+
+- **Oyuncu kimliği YOK** — kalıcı bir tanımlayıcı üretilmez/gönderilmez.
+- **IP kaydedilmez** — yalnızca sunucuda geçici hız sınırı anahtarı olarak
+  kullanılır, veriye girmez.
+- **Kişisel veri / profil adı / avatar** hiçbir şekilde gönderilmez.
+- Zaman damgası **sunucuda** damgalanır (istemci saati/parmak izi sızmaz).
+
+**Nasıl kapatılır:** Ayarlar → "Anonim kullanım verisi gönder". **Varsayılan
+AÇIK** — gerekçe: veri tamamen anonim, tek dokunuşla kapatılabiliyor ve burada
+açıkça yazıyor; kapalı başlasa neredeyse hiç veri gelmez ve "kör uçuş" amacı
+boşa çıkardı. **Kapatınca gerçekten hiçbir istek gitmez** (olay kuyruğa bile
+alınmaz).
+
+**Sağlamlık:** Telemetri oyunu **asla** etkilemez. Olaylar arka planda, toplu,
+`sendBeacon` ile (yanıt beklenmeden) gönderilir; sunucu kapalı/yavaş/erişilemezse
+sessizce vazgeçilir (uçak modu testiyle doğrulanır). Sunucu tarafında telemetri
+başlatılamazsa `/events` 503 döner, odalar/ipucu etkilenmez.
+
+**Depolama:** Node 22.5+ ise yerleşik `node:sqlite`; yoksa (canlı sunucu Node 20)
+**aynı şemalı NDJSON** dosyası — bağımlılık eklenmez, Node yükselince otomatik
+SQLite'a geçer. Saklama süresi **90 gün** (`TELEMETRY_RETENTION_DAYS`); eski
+kayıtlar günlük bakımda otomatik temizlenir. Günlük **yedek** alınır
+(`telemetry/backups/`, son 7). Doğrulama: `node rooms-server/telemetry.test.mjs`.
+
+---
+
 ## Test
 
 ```bash

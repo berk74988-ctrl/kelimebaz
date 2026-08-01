@@ -24,6 +24,22 @@ const badWords = require('./bad-words');
 
 const PORT = process.env.PORT || 4243;
 
+// --- ANONİM TELEMETRİ (isteğe bağlı, oyunu ASLA etkilemez) ---
+// Başlatılamazsa telemetry=null → /events 503 döner, odalar/ipucu etkilenmez.
+let telemetry = null;
+try {
+  telemetry = require('./telemetry').open({
+    dir: process.env.TELEMETRY_DIR || path.join(__dirname, 'telemetry'),
+    retentionDays: Number(process.env.TELEMETRY_RETENTION_DAYS || 90),
+  });
+  console.log(`[telemetri] arka uç=${telemetry.backend} · saklama=${telemetry.retentionDays} gün`);
+} catch (e) {
+  console.error('[telemetri] başlatılamadı (oyun etkilenmez):', e.message);
+}
+// Olay gönderimi için IP başına hız sınırı (toplu geldiği için geniş).
+const rlEvents = rateLimiter(Number(process.env.RL_EVENTS || 60), 60_000);
+const EVENTS_MAX_BATCH = 200; // tek istekte kabul edilen en çok olay
+
 // --- IP/oyuncu başına kayan pencere hız sınırı (bellekte) ---
 // Herkese açık uç nokta: kötüye kullanımı sınırla. Aşınca 429 döner.
 function rateLimiter(limit, windowMs) {
@@ -300,13 +316,13 @@ function send(res, status, body) {
   res.end(data);
 }
 
-function readJson(req) {
+function readJson(req, maxBytes = 8192) {
   return new Promise((resolve) => {
     let raw = '';
     let tooBig = false;
     req.on('data', (chunk) => {
       raw += chunk;
-      if (raw.length > 8192) {
+      if (raw.length > maxBytes) {
         tooBig = true;
         req.destroy();
       }
@@ -557,7 +573,54 @@ const routes = {
     }
     send(res, 200, { hint: text });
   },
+
+  // --- ANONİM TELEMETRİ ---
+  // Girdi: { events: [{type, mode, lang, wlen, word, result, attempts, duration_ms, code}, ...] }
+  // Toplu, doğrulanır, temizlenir, yazılır. KİMLİK/IP YAZILMAZ. Depo yoksa 503.
+  'POST /events': async (req, res) => {
+    if (!telemetry) return send(res, 503, { error: 'disabled' });
+    if (!rlEvents(clientIp(req))) {
+      stats.rateLimited++;
+      return send(res, 429, { error: 'rate_limited' });
+    }
+    const body = await readJson(req, 32_768); // toplu olaya izin ver (yine sınırlı)
+    const list = Array.isArray(body.events) ? body.events : [];
+    if (!list.length) return send(res, 200, { ok: true, written: 0 });
+    const t = now();
+    let written = 0;
+    for (const raw of list.slice(0, EVENTS_MAX_BATCH)) {
+      const ev = telemetry.normalize(raw, t);
+      if (!ev) continue; // geçersiz → atla
+      try {
+        telemetry.insert(ev);
+        written++;
+      } catch {
+        /* yazma hatası sessiz — telemetri oyunu/isteği bozmaz */
+      }
+    }
+    send(res, 200, { ok: true, written });
+  },
 };
+
+// --- Telemetri bakımı: açılışta + günde bir kez (eski kayıt temizliği + yedek) ---
+if (telemetry) {
+  const maintain = () => {
+    const r = telemetry.runMaintenance(now());
+    console.log(`[telemetri] bakım: ${telemetry.count()} kayıt · ${r.pruned} eski silindi`);
+  };
+  try {
+    maintain();
+  } catch {
+    /* bakım hatası kritik değil */
+  }
+  setInterval(() => {
+    try {
+      maintain();
+    } catch {
+      /* yoksay */
+    }
+  }, 24 * 60 * 60 * 1000).unref?.();
+}
 
 // --- Kalıcılık: zarif kapanmada odaları diske yaz, açılışta geri oku ---
 
@@ -616,7 +679,13 @@ const server = http.createServer(async (req, res) => {
   // Sağlık kontrolü
   if (url.pathname === '/' || url.pathname === '/health') {
     // hint: YZ ipucu özelliği açık mı? (ANTHROPIC_API_KEY sunucuda tanımlı mı)
-    return send(res, 200, { ok: true, rooms: rooms.size, uptime: process.uptime(), hint: HINT_ENABLED });
+    return send(res, 200, {
+      ok: true,
+      rooms: rooms.size,
+      uptime: process.uptime(),
+      hint: HINT_ENABLED,
+      telemetry: telemetry ? telemetry.backend : false,
+    });
   }
 
   const handler = routes[key];

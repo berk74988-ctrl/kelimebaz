@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { ErrorScreen } from './components/error-screen/error-screen';
 import { Game } from './components/game/game';
 import { LeagueScreen } from './components/league-screen/league-screen';
@@ -15,6 +15,7 @@ import { AudioService } from './services/audio.service';
 import { ContrastService } from './services/contrast.service';
 import { LanguageService } from './services/language.service';
 import { SeoService } from './services/seo.service';
+import { TelemetryService } from './services/telemetry.service';
 import { ThemeService } from './services/theme.service';
 import { WordService } from './services/word.service';
 
@@ -47,11 +48,16 @@ export class App {
   private readonly words = inject(WordService);
   private readonly audio = inject(AudioService);
   private readonly seo = inject(SeoService); // dile göre başlık/meta/OG günceller
+  private readonly telemetry = inject(TelemetryService);
 
   constructor() {
     // Müziği açılışta başlatmayı dener. Tarayıcı sesli otomatik oynatmayı
     // engellerse (standart politika) ilk dokunuş/tıklamada kendiliğinden başlar.
     this.audio.init();
+    // 📊 Anonim hata olayı — sözlük yüklenemezse (kişisel veri yok).
+    effect(() => {
+      if (this.words.status() === 'error') this.telemetry.error('dict_load_fail');
+    });
   }
 
   /**
@@ -73,6 +79,7 @@ export class App {
   protected play(mode: GameMode): void {
     this.mode.set(mode);
     this.view.set('game');
+    this.telemetry.modeSelect(mode, this.lang.lang()); // 📊 anonim
   }
 
   /** Tema seçildi → o temayı oyna (casual mod). */
@@ -80,6 +87,7 @@ export class App {
     this.themeId.set(id);
     this.mode.set('theme');
     this.view.set('game');
+    this.telemetry.modeSelect('theme', this.lang.lang()); // 📊 anonim
   }
 
   /** Oyundan çıkış — tema modundaysa tema ekranına, değilse ana menüye. */

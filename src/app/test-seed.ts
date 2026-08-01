@@ -19,6 +19,13 @@ import words from './data/words.json';
 import { Hint, HintService } from './services/hint.service';
 import { WordService } from './services/word.service';
 
+// Telemetri testlerde KAPALI — birim testler ağ isteği tetiklemesin (deterministik).
+try {
+  localStorage.setItem('kelimebaz:telemetry', '0');
+} catch {
+  /* jsdom yoksa yoksay */
+}
+
 WordService.seedForTest({
   tr: {
     answers: words.words as string[],

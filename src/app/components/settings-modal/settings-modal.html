@@ -207,6 +207,27 @@
 
     <h3 class="sec">{{ i18n.t('settings.sectionData') }}</h3>
 
+    <!-- Anonim kullanım verisi — kapatınca hiçbir istek gitmez -->
+    <div class="row">
+      <div class="txt">
+        <b>📊 {{ i18n.t('settings.telemetry') }}</b>
+        <span>{{ i18n.t('settings.telemetryDesc') }}</span>
+      </div>
+      <button
+        class="sw"
+        type="button"
+        role="switch"
+        [class.on]="telemetry.enabled()"
+        [attr.aria-checked]="telemetry.enabled()"
+        [attr.aria-label]="
+          telemetry.enabled() ? i18n.t('settings.telemetryOff') : i18n.t('settings.telemetryOn')
+        "
+        (click)="toggleTelemetry()"
+      >
+        <i></i>
+      </button>
+    </div>
+
     <!-- Yedekleme: dışa/içe aktar -->
     <div class="row">
       <div class="txt">

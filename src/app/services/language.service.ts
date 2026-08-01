@@ -1,6 +1,7 @@
-import { computed, effect, Injectable, signal } from '@angular/core';
+import { computed, effect, Injectable, inject, signal } from '@angular/core';
 import { Lang, upperFor } from '../core/lang';
 import trMessages from '../../i18n/tr.json';
+import { TelemetryService } from './telemetry.service';
 
 const KEY = 'kelimebaz:lang';
 type Dict = Record<string, string>;
@@ -62,8 +63,11 @@ export class LanguageService {
     await this.ensure(this._lang());
   }
 
+  private readonly telemetry = inject(TelemetryService);
+
   set(lang: Lang): void {
     if (lang !== 'tr' && lang !== 'en') return;
+    const changed = this._lang() !== lang;
     this._lang.set(lang);
     try {
       localStorage.setItem(KEY, lang);
@@ -72,6 +76,7 @@ export class LanguageService {
     }
     this.apply();
     this.syncUrl(lang); // paylaşılan link doğru dilde açılsın (?lang=...)
+    if (changed) this.telemetry.langChange(lang); // 📊 anonim
   }
 
   /**
