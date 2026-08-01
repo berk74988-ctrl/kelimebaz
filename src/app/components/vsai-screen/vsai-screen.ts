@@ -18,6 +18,7 @@ import {
 import { raceOutcome } from '../../core/vsai-race';
 import { LetterState, MAX_ATTEMPTS } from '../../models/game.model';
 import { AudioService } from '../../services/audio.service';
+import { BalanceService } from '../../services/balance.service';
 import { GameService } from '../../services/game.service';
 import { GoldService } from '../../services/gold.service';
 import { LanguageService } from '../../services/language.service';
@@ -60,6 +61,7 @@ export class VsaiScreen {
   private readonly game = inject(GameService);
   protected readonly i18n = inject(LanguageService);
   private readonly telemetry = inject(TelemetryService);
+  private readonly balance = inject(BalanceService);
 
   readonly back = output<void>();
 
@@ -149,10 +151,14 @@ export class VsaiScreen {
     this.aiTimeMs = 0;
     this.matchStart = performance.now();
     const len = [...w].length;
+    // YZ zorluğu sunucudan ayarlanabilir: topK çarpanı (>1 daha çok aday = kolay,
+    // <1 = zor). En az 1. Diğer strateji parametreleri korunur.
+    const mul = this.balance.aiTopKMul();
+    const cfg = { ...p.config, topK: Math.max(1, Math.round(p.config.topK * mul)) };
     this.solver = new AiSolver(
       w,
       this.words.answersOfLength(len),
-      p.config,
+      cfg,
       this.MAX,
       Math.random,
       aiOpeners(this.i18n.lang(), len),

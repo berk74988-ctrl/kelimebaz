@@ -11,6 +11,7 @@ import { PERSONAS } from '../../core/ai-personas';
 import { hasEnoughData, PLAY_STYLE_INSIGHTS } from '../../core/play-style';
 import { PROFILE_STATS } from '../../core/profile-stats';
 import { itemsByCategory } from '../../core/shop-catalog';
+import { BalanceService } from '../../services/balance.service';
 import { GoldService } from '../../services/gold.service';
 import { InventoryService } from '../../services/inventory.service';
 import { LanguageService } from '../../services/language.service';
@@ -42,6 +43,7 @@ export class ProfileScreen {
   protected readonly profile = inject(ProfileService);
   protected readonly statsService = inject(StatsService);
   protected readonly gold = inject(GoldService);
+  protected readonly balance = inject(BalanceService);
   protected readonly questService = inject(QuestService);
   protected readonly inventory = inject(InventoryService);
   protected readonly i18n = inject(LanguageService);
@@ -105,12 +107,12 @@ export class ProfileScreen {
 
   /** Bu seviyenin galibiyet başına verdiği ek altın (seviye ödülü). */
   protected get winBonus() {
-    return levelBonus(this.level.level);
+    return levelBonus(this.level.level, this.balance.goldConfig());
   }
 
   /** Bir sonraki seviyenin galibiyet başına ek altını — "yükselince ne kazanırım". */
   protected get nextWinBonus() {
-    return levelBonus(this.level.level + 1);
+    return levelBonus(this.level.level + 1, this.balance.goldConfig());
   }
 
   protected onName(event: Event): void {

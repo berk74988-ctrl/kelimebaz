@@ -75,6 +75,18 @@ try {
   console.error('[günlük] başlatılamadı:', e.message);
 }
 
+// --- DENGE AYARLARI (ekonomi/zorluk override) ---
+// Kod içi değerler varsayılan; sunucu override sunarsa istemci onu kullanır
+// (aralığa sıkıştırılmış). Erişilemezse istemci gömülü varsayılana düşer.
+const balanceMod = require('./balance');
+let balance = null;
+try {
+  balance = balanceMod.open({ file: process.env.BALANCE_FILE });
+  console.log(`[denge] ayar deposu hazır · ${Object.keys(balance.overrides()).length} override`);
+} catch (e) {
+  console.error('[denge] başlatılamadı:', e.message);
+}
+
 // --- YÖNETİM PANOSU kimlik doğrulaması (tek kullanıcı, oturum tabanlı) ---
 // Parola KARMASI env'de (düz metin yok). ADMIN_PASS_HASH yoksa panel KAPALI
 // (503) → asla kimlik doğrulamasız açılmaz. HTTPS ŞART (aşağıda httpsOk).
@@ -1077,6 +1089,60 @@ const routes = {
     if (dayIndex <= daily.dayIndexFor(new Date())) return send(res, 409, { error: 'day_started' });
     daily.clearOverride(dayIndex, lang);
     audit(req, 'daily_clear', true, `${daily.dateOf(dayIndex)} ${lang}`);
+    send(res, 200, { ok: true });
+  },
+
+  // --- DENGE AYARLARI ---
+  // PUBLIC: istemci override'ları çeker (auth yok; kısa önbellek). Değer aralığı
+  // istemcide ayrıca sıkıştırılır → bu uç bozuk veri döndürse bile oyun güvende.
+  'GET /balance': async (req, res) => {
+    if (!balance) return send(res, 200, { overrides: {} });
+    const body = JSON.stringify({ overrides: balance.overrides() });
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Access-Control-Allow-Origin': res.corsOrigin || ALLOWED_ORIGINS[0],
+      Vary: 'Origin',
+      'Cache-Control': 'public, max-age=600',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    res.end(body);
+  },
+
+  // ADMIN: şema (mevcut · varsayılan · aralık) + değişiklik geçmişi.
+  'GET /admin/balance': async (req, res) => {
+    if (!requireSession(req, res, 'balance')) return;
+    if (!balance) return send(res, 503, { error: 'no_balance' });
+    send(res, 200, { params: balance.schema(), history: balance.history() });
+  },
+
+  // ADMIN: değer ata — ARALIK DIŞI 400 (hem burada hem istemcide denetlenir).
+  'POST /admin/balance/set': async (req, res) => {
+    if (!requireSession(req, res, 'balance_set')) return;
+    if (!balance) return send(res, 503, { error: 'no_balance' });
+    const body = await readJson(req);
+    const r = balance.set(String(body.key || ''), Number(body.value), new Date().toISOString());
+    if (r.error) {
+      audit(req, 'balance_set', false, `${body.key}=${body.value} · ${r.error}`);
+      return send(res, 400, { error: r.error });
+    }
+    audit(req, 'balance_set', true, `${body.key}=${r.value}`);
+    send(res, 200, { ok: true, value: r.value });
+  },
+
+  // ADMIN: geri al — tek anahtar ({key}) ya da hepsi ({all:true}).
+  'POST /admin/balance/reset': async (req, res) => {
+    if (!requireSession(req, res, 'balance_reset')) return;
+    if (!balance) return send(res, 503, { error: 'no_balance' });
+    const body = await readJson(req);
+    const at = new Date().toISOString();
+    if (body.all) {
+      balance.resetAll(at);
+      audit(req, 'balance_reset', true, 'hepsi');
+    } else {
+      const r = balance.reset(String(body.key || ''), at);
+      if (r.error) return send(res, 400, { error: r.error });
+      audit(req, 'balance_reset', true, String(body.key));
+    }
     send(res, 200, { ok: true });
   },
 };

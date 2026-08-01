@@ -15,6 +15,28 @@ export const DAILY_BONUS = 10; // günün kelimesi ekstra ödüllendirilir
 export const LOSS_GOLD = 2; // kaybedince de az bir şey
 
 /**
+ * ALTIN AYARLARI — sunucudan yönetilebilir (bkz. core/balance.ts). Varsayılanlar
+ * yukarıdaki gömülü sabitlerdir; `goldForGame`/`levelBonus` isteğe bağlı bir cfg
+ * alır (verilmezse gömülü varsayılan). Böylece saf ve geriye uyumlu kalır.
+ */
+export interface GoldConfig {
+  winGold: number;
+  speedGold: number;
+  dailyBonus: number;
+  lossGold: number;
+  levelGold: number;
+  levelGoldCap: number;
+}
+export const GOLD_DEFAULTS: GoldConfig = {
+  winGold: WIN_GOLD,
+  speedGold: SPEED_GOLD,
+  dailyBonus: DAILY_BONUS,
+  lossGold: LOSS_GOLD,
+  levelGold: 4,
+  levelGoldCap: 40,
+};
+
+/**
  * SEVİYE ÖDÜLÜ — oyuncu seviyesi yükseldikçe her galibiyette KADEMELİ artan bonus.
  *
  *   Seviye 1 → +0    Seviye 2 → +4    Seviye 3 → +8    Seviye 5 → +16 ...
@@ -31,17 +53,23 @@ export const LEVEL_GOLD = 4; // her seviye için ek
 export const LEVEL_GOLD_CAP = 40; // üst sınır (≈ seviye 11'de dolar)
 
 /** Verilen seviyenin galibiyet başına ek altını. */
-export function levelBonus(level: number): number {
+export function levelBonus(level: number, cfg: GoldConfig = GOLD_DEFAULTS): number {
   const l = Math.max(1, Math.floor(level || 1));
-  return Math.min(LEVEL_GOLD_CAP, (l - 1) * LEVEL_GOLD);
+  return Math.min(cfg.levelGoldCap, (l - 1) * cfg.levelGold);
 }
 
 /** Bir oyunun sonunda kazanılan altın (seviye ödülü dâhil). */
-export function goldForGame(won: boolean, attempts: number, isDaily: boolean, level = 1): number {
-  if (!won) return LOSS_GOLD;
+export function goldForGame(
+  won: boolean,
+  attempts: number,
+  isDaily: boolean,
+  level = 1,
+  cfg: GoldConfig = GOLD_DEFAULTS,
+): number {
+  if (!won) return cfg.lossGold;
 
   const tries = Math.max(1, Math.min(MAX_ATTEMPTS, attempts));
-  const speed = (MAX_ATTEMPTS - tries) * SPEED_GOLD;
+  const speed = (MAX_ATTEMPTS - tries) * cfg.speedGold;
 
-  return WIN_GOLD + speed + (isDaily ? DAILY_BONUS : 0) + levelBonus(level);
+  return cfg.winGold + speed + (isDaily ? cfg.dailyBonus : 0) + levelBonus(level, cfg);
 }

@@ -368,6 +368,7 @@
         <button data-t="words">Kelimeler</button>
         <button data-t="rooms">Odalar</button>
         <button data-t="daily">Takvim</button>
+        <button data-t="balance">Denge</button>
       </div>
       <div class="ranges" id="ranges">
         <button data-r="today">Bugün</button>
@@ -928,6 +929,86 @@
         loadDaily();
       }
 
+      // --- Denge ayarları ---
+      const GROUP = { gold: '🪙 Altın oranları', ai: '🤖 YZ zorluğu' };
+      async function loadBalance() {
+        try {
+          const d = await (await api('/balance')).json();
+          renderBalance(d);
+        } catch (e) {
+          if (e.message !== 'auth')
+            $('#main').innerHTML = `<div class="empty">Alınamadı: ${esc(e.message)}</div>`;
+        }
+      }
+
+      function renderBalance(d) {
+        const groups = {};
+        for (const p of d.params) (groups[p.group] = groups[p.group] || []).push(p);
+        const sections = Object.entries(groups)
+          .map(([g, params]) => {
+            const rows = params
+              .map(
+                (p) => `<tr>
+                  <td>${esc(p.label)}<br /><span class="pill">${esc(p.key)} · aralık ${p.min}–${p.max}</span></td>
+                  <td><input class="bval" data-k="${p.key}" data-min="${p.min}" data-max="${p.max}" type="number" step="${p.int ? 1 : 0.05}" value="${p.current}" style="width:90px" /></td>
+                  <td class="mono">${p.def}${p.overridden ? ' <span class="badge lock">override</span>' : ''}</td>
+                  <td class="modact" style="margin:0">
+                    <button class="bset" data-k="${p.key}">Kaydet</button>
+                    ${p.overridden ? `<button class="brst danger" data-k="${p.key}">↺ Varsayılan</button>` : ''}
+                  </td></tr>`,
+              )
+              .join('');
+            return `<section><h2>${GROUP[g] || g}</h2>
+              <table><tr><th>Ayar</th><th>Değer</th><th>Varsayılan</th><th>Eylem</th></tr>${rows}</table></section>`;
+          })
+          .join('');
+        const anyOverride = d.params.some((p) => p.overridden);
+        const hist = d.history.length
+          ? d.history
+              .map(
+                (h) =>
+                  `<div class="rec"><b>${esc(h.key)}</b><span>${h.from} → ${h.to}${h.reset ? ' (geri al)' : ''} · <span class="pill">${new Date(h.at).toLocaleString('tr')}</span></span></div>`,
+              )
+              .join('')
+          : '<div class="rec"><span class="pill">Henüz değişiklik yok</span></div>';
+        $('#main').innerHTML = `
+          <p class="foot" style="text-align:left">Kod içi değerler <b>varsayılan</b>; buradan değiştirince istemci sunucu değerini kullanır (aralığa sıkıştırılır). Sunucu erişilemezse oyun gömülü varsayılanla çalışır. Aralık dışı değer <b>reddedilir</b>. Oyuncuların mevcut altını/envanteri <b>etkilenmez</b> — yalnız bundan sonraki kazançlar/zorluk değişir.</p>
+          ${anyOverride ? '<div class="modact" style="margin-bottom:12px"><button class="danger" id="brstall">↺ Tümünü varsayılana döndür</button></div>' : ''}
+          ${sections}
+          <section><h2>Değişiklik geçmişi</h2>${hist}</section>`;
+        document
+          .querySelectorAll('.bset')
+          .forEach((b) => (b.onclick = () => setBalance(b.dataset.k)));
+        document
+          .querySelectorAll('.brst')
+          .forEach((b) => (b.onclick = () => resetBalance(b.dataset.k)));
+        const all = $('#brstall');
+        if (all)
+          all.onclick = async () => {
+            if (!confirm('Tüm denge ayarlarını varsayılana döndür?')) return;
+            await post('/balance/reset', { all: true });
+            loadBalance();
+          };
+      }
+
+      async function setBalance(key) {
+        const inp = document.querySelector(`.bval[data-k="${key}"]`);
+        const value = Number(inp.value);
+        const min = +inp.dataset.min,
+          max = +inp.dataset.max;
+        if (!Number.isFinite(value) || value < min || value > max) {
+          alert(`Aralık dışı: ${min}–${max} arası bir değer gir.`); // istemci denetimi
+          return;
+        }
+        const r = await post('/balance/set', { key, value });
+        if (r.status === 400) alert('Sunucu reddetti (aralık dışı).');
+        loadBalance();
+      }
+      async function resetBalance(key) {
+        await post('/balance/reset', { key });
+        loadBalance();
+      }
+
       // --- Ortak yükleme / sekme ---
       async function loadSummary() {
         const base = location.pathname.replace(/\/$/, '');
@@ -953,6 +1034,7 @@
           return loadRooms();
         }
         if (tab === 'daily') return loadDaily();
+        if (tab === 'balance') return loadBalance();
         return tab === 'words' ? loadWords() : loadSummary();
       }
 

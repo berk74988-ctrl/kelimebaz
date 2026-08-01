@@ -59,3 +59,4 @@ rooms-server/admin-audit.log
 rooms-server/words.json
 rooms-server/words-en.json
 rooms-server/daily-overrides.json
+rooms-server/balance-overrides.json

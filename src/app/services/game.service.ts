@@ -11,6 +11,7 @@ import {
 } from '../models/game.model';
 import { evaluateGuess, keyStatesFrom } from '../core/evaluate';
 import { goldForGame, levelBonus } from '../core/gold';
+import { BalanceService } from './balance.service';
 import { weakestLetter } from '../core/play-style';
 import { buildShareText } from '../core/share';
 import { GoldService } from './gold.service';
@@ -40,6 +41,7 @@ export class GameService {
   private readonly league = inject(LeagueService);
   private readonly lang = inject(LanguageService);
   private readonly telemetry = inject(TelemetryService);
+  private readonly balance = inject(BalanceService);
 
   /** Bu oyunun başlangıç anı (telemetri süresi için; anonim). */
   private _startAt = 0;
@@ -350,14 +352,16 @@ export class GameService {
     if (!casual) this.stats.record(won, attempts);
 
     // Altın KORUNUR — oynamanın karşılığı YZ modunda da verilir.
-    const fromGame = goldForGame(won, attempts, isDaily, level);
+    // Oranlar sunucudan yönetilebilir (aralığa sıkıştırılmış; yoksa gömülü varsayılan).
+    const goldCfg = this.balance.goldConfig();
+    const fromGame = goldForGame(won, attempts, isDaily, level, goldCfg);
     this.gold.earn(fromGame);
 
     const fromQuests = this.quests.recordGame(won, attempts, isDaily);
 
     this._goldEarned.set(fromGame + fromQuests);
     this._questGold.set(fromQuests);
-    this._levelGold.set(won ? levelBonus(level) : 0);
+    this._levelGold.set(won ? levelBonus(level, goldCfg) : 0);
 
     // 🏆 Lig puanı (LP): kazan → +LP, kaybet → -LP. Değişimi sonuç ekranı gösterir.
     // YZ modu CASUAL — ligi (rekabetçi merdiven) etkilemez.

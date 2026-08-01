@@ -461,6 +461,34 @@ olmalı: `rooms-server/daily-rotation.js` ↔ `src/app/core/daily-rotation.ts` p
 testiyle (her `dayIndex` için) doğrulanır. `words.json`/`word-difficulty` deploy'da
 rooms-server'a kopyalanır (yoksa önizleme boş, override yine çalışır).
 
+### Denge ayarları (`/admin` → "Denge")
+
+Oyun dengesini (ekonomi/zorluk) **yeniden derleme/dağıtım yapmadan** ayarla. Kod
+içi değerler **varsayılan**; sunucu bir geçersiz kılma sunarsa istemci onu kullanır.
+
+**Kapsam (bilinçli DAR):** yalnız gerçekten dengelenmesi gerekenler — **altın
+oranları** (kazanma/hız/günlük/kayıp/seviye ödülü + tavanı) + tek **YZ zorluk
+kolu** (`aiTopKMul`: persona topK çarpanı; >1 kolay, <1 zor). Mağaza/görev/lig
+şimdilik gömülü (riski düşük tutmak için dar başlandı; `core/balance.ts`'e param
+ekleyerek genişletilebilir).
+
+- **Panel:** her ayar için mevcut · varsayılan · geçerli aralık yan yana; kaydet
+  + **↺ varsayılana dön** (tek tık geri al) + **tümünü sıfırla**. Değişiklik geçmişi.
+- **Aralık denetimi İKİ tarafta:** sunucu aralık dışını **reddeder** (400); istemci
+  de gelen değeri aralığa **sıkıştırır** (`mergeBalance`) → hatalı giriş (fiyat 0,
+  altın 999999) ekonomiyi bozamaz.
+- **Geri alınabilir + kayıtlı:** her değişiklik `admin-audit.log` + geçmiş; reset
+  ile önceki değerlere tek tıkla dönülür.
+
+**Sağlamlık:** Ekonomi ayarı için oyun **asla beklemez** — değerler senkron
+(önbellekten) okunur. Sunucu erişilemezse **gömülü varsayılan** kullanılır. Override
+oturum başına bir kez çekilir (her oyunda değil) + localStorage'a önbelleklenir.
+
+**Oyuncu koruması:** Ayar yalnız **bundan sonraki** kazanç oranlarını / YZ
+zorluğunu değiştirir; oyuncunun **mevcut altını ve envanteri ETKİLENMEZ** (test
+edilir). Şema parity: `rooms-server/balance.js` ↔ `src/app/core/balance.ts` golden
+testiyle senkron.
+
 ### Kelime raporu — havuzu veriyle yönet (`/admin` → "Kelimeler")
 
 Telemetrinin en değerli çıktısı: her kelime için gerçek oyun verisi
