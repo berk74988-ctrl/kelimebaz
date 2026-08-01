@@ -28,6 +28,8 @@
     "check:dictionary": "node scripts/dictionary-check.mjs",
     "audit:dictionary": "node scripts/audit-dictionary.mjs",
     "apply:blacklist": "node scripts/apply-blacklist.mjs",
+    "review:content": "node tools/content-review/server.mjs",
+    "review:apply": "node tools/content-review/apply-reviews.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
     "build:dictionary": "node scripts/build-dictionary.mjs",
     "build:icons": "node scripts/build-pwa-icons.mjs",
