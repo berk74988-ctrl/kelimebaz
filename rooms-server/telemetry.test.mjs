@@ -66,5 +66,51 @@ function testStore(backend) {
 testStore('ndjson'); // her Node'da çalışır (yedek yol)
 testStore(undefined); // varsayılan (Node 22+ sqlite, yoksa ndjson)
 
+// --- aggregate: pano metrikleri (saf) ---
+const NOW2 = 1_700_000_000_000;
+const rows = [
+  { type: 'game_start', ts: NOW2, mode: 'daily', lang: 'tr' },
+  { type: 'game_end', ts: NOW2, mode: 'daily', lang: 'tr', wlen: 5, result: 'won', attempts: 3 },
+  { type: 'game_start', ts: NOW2, mode: 'practice', lang: 'en' },
+  { type: 'game_end', ts: NOW2, mode: 'practice', lang: 'en', wlen: 7, result: 'lost', attempts: 6 },
+  { type: 'game_end', ts: NOW2, mode: 'vsai', lang: 'tr', wlen: 5, result: 'won', attempts: 4, code: 'hard' },
+  { type: 'error', ts: NOW2, code: 'x' },
+];
+const s = T.aggregate(rows, 0, NOW2 + 1, NOW2);
+ok(s.totals.starts === 2 && s.totals.completed === 3 && s.totals.errors === 1, 'aggregate: toplamlar');
+ok(s.winRate === 0.5, 'aggregate: tekil kazanma oranı vsai HARİÇ (1/2)');
+ok(s.modes.daily === 1 && s.modes.practice === 1, 'aggregate: mod dağılımı start’tan');
+ok(s.langs.tr === 1 && s.langs.en === 1, 'aggregate: dil dağılımı');
+ok(s.guessDist[3] === 1 && s.guessDist.fail === 1, 'aggregate: tahmin dağılımı (kazanılan tur + fail)');
+ok(s.byLength.find((x) => x.wlen === 7).winRate === 0, 'aggregate: 7 harf kazanma oranı');
+ok(s.vsai.totalGames === 1 && s.vsai.byTier[0].tier === 'hard', 'aggregate: vsai zorluk (tier)');
+
+// --- performans: 30 günlük veride özet < 1 sn ---
+// Asıl maliyet aggregate() compute'udur (sqlite readRange tek indeksli sorgu, O(sonuç)).
+// 40k satırda (30 günlük yoğun kullanım) compute'u ölçüyoruz.
+(function perf() {
+  const DAY = 86_400_000;
+  const base = NOW2;
+  const rows = [];
+  for (let i = 0; i < 40_000; i++) {
+    rows.push({
+      type: i % 2 ? 'game_end' : 'game_start',
+      ts: base - (i % 30) * DAY,
+      mode: ['daily', 'practice', 'vsai', 'theme'][i % 4],
+      lang: i % 3 ? 'tr' : 'en',
+      wlen: 4 + (i % 4),
+      result: i % 2 ? (i % 5 ? 'won' : 'lost') : null,
+      attempts: 1 + (i % 6),
+      code: i % 4 === 2 ? 'hard' : null,
+    });
+  }
+  const t0 = process.hrtime.bigint();
+  const out = T.aggregate(rows, base - 30 * DAY, base + 1, base);
+  const ms = Number(process.hrtime.bigint() - t0) / 1e6;
+  ok(out.totals.starts + out.totals.completed > 0, 'perf: özet veri döndü');
+  ok(ms < 1000, `perf: 30 gün / 40k olay özeti < 1 sn (${ms.toFixed(0)}ms)`);
+  console.log(`  ⏱ aggregate 40k olay: ${ms.toFixed(0)}ms`);
+})();
+
 console.log(`\ntelemetri: ${pass} geçti, ${fail} kaldı`);
 process.exit(fail ? 1 : 0);

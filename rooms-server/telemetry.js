@@ -71,7 +71,9 @@ function sqliteStore(dir) {
     mode TEXT, lang TEXT, wlen INTEGER, word TEXT,
     result TEXT, attempts INTEGER, duration_ms INTEGER, code TEXT
   )`);
+  // ts üzerinde indeks: pano sorguları tarih ARALIĞIYLA filtreler (30 günde <1 sn).
   db.exec(`CREATE INDEX IF NOT EXISTS idx_events_ts ON events(ts)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_events_type_ts ON events(type, ts)`);
   const ins = db.prepare(
     `INSERT INTO events(${COLUMNS.join(',')}) VALUES(${COLUMNS.map(() => '?').join(',')})`,
   );
@@ -89,6 +91,9 @@ function sqliteStore(dir) {
     },
     backup(dest) {
       db.exec(`VACUUM INTO '${dest.replace(/'/g, "''")}'`);
+    },
+    readRange(from, to) {
+      return db.prepare(`SELECT * FROM events WHERE ts >= ? AND ts < ?`).all(from, to);
     },
   };
 }
@@ -124,6 +129,116 @@ function ndjsonStore(dir) {
     },
     backup(dest) {
       if (fs.existsSync(file)) fs.copyFileSync(file, dest);
+    },
+    readRange(from, to) {
+      const out = [];
+      for (const l of readLines()) {
+        try {
+          const o = JSON.parse(l);
+          if (o.ts >= from && o.ts < to) out.push(o);
+        } catch {
+          /* bozuk satır atla */
+        }
+      }
+      return out;
+    },
+  };
+}
+
+// --- Pano özeti: ham satırlardan metrikleri hesapla (saf, arka uçtan bağımsız) ---
+function aggregate(rows, from, to, at) {
+  const starts = rows.filter((r) => r.type === 'game_start');
+  const ends = rows.filter((r) => r.type === 'game_end');
+  const errors = rows.filter((r) => r.type === 'error').length;
+  // vsai bir YARIŞ (tahmin anlamı farklı) → "genel" metriklerden ayrılır.
+  const solo = ends.filter((r) => r.mode !== 'vsai');
+  const vsai = ends.filter((r) => r.mode === 'vsai');
+
+  const dayKey = (ms) => new Date(ms).toISOString().slice(0, 10);
+  const days = {};
+  const bump = (d, k) => ((days[d] = days[d] || { starts: 0, completed: 0 })[k]++, void 0);
+  for (const r of starts) bump(dayKey(r.ts), 'starts');
+  for (const r of ends) bump(dayKey(r.ts), 'completed');
+  const activity = Object.keys(days)
+    .sort()
+    .map((day) => ({ day, ...days[day] }));
+
+  const tally = (arr, key, pred) => {
+    const m = {};
+    for (const r of arr) {
+      if (pred && !pred(r)) continue;
+      const k = r[key];
+      if (k == null) continue;
+      m[k] = (m[k] || 0) + 1;
+    }
+    return m;
+  };
+
+  // Tahmin dağılımı (yalnız solo): kazanılanlar tur sayısına göre, kayıp = fail.
+  const guessDist = { fail: 0 };
+  for (let i = 1; i <= 6; i++) guessDist[i] = 0;
+  for (const r of solo) {
+    if (r.result === 'won' && r.attempts) guessDist[Math.min(6, Math.max(1, r.attempts))]++;
+    else if (r.result === 'lost') guessDist.fail++;
+  }
+
+  // Kelime uzunluğu performansı (solo): oyun sayısı, kazanma oranı, ort. tahmin.
+  const lenMap = {};
+  for (const r of solo) {
+    if (!r.wlen) continue;
+    const m = (lenMap[r.wlen] = lenMap[r.wlen] || { games: 0, won: 0, att: 0, attN: 0 });
+    m.games++;
+    if (r.result === 'won') m.won++;
+    if (r.attempts) {
+      m.att += r.attempts;
+      m.attN++;
+    }
+  }
+  const byLength = Object.keys(lenMap)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .map((wlen) => {
+      const m = lenMap[wlen];
+      return {
+        wlen,
+        games: m.games,
+        winRate: m.games ? m.won / m.games : 0,
+        avgAttempts: m.attN ? m.att / m.attN : 0,
+      };
+    });
+
+  // YZ modu: zorluk (code=tier) dağılımı + tier başına oyuncu kazanma oranı.
+  const tierMap = {};
+  for (const r of vsai) {
+    const t = r.code || '?';
+    const m = (tierMap[t] = tierMap[t] || { games: 0, won: 0 });
+    m.games++;
+    if (r.result === 'won') m.won++;
+  }
+  const vsaiByTier = Object.entries(tierMap).map(([tier, m]) => ({
+    tier,
+    games: m.games,
+    winRate: m.games ? m.won / m.games : 0,
+  }));
+
+  const soloWon = solo.filter((r) => r.result === 'won').length;
+  const vsaiWon = vsai.filter((r) => r.result === 'won').length;
+
+  return {
+    range: { from, to },
+    generatedAt: at,
+    totals: { starts: starts.length, completed: ends.length, errors },
+    activity,
+    modes: tally(starts, 'mode'),
+    langs: tally(starts, 'lang'),
+    winRate: solo.length ? soloWon / solo.length : 0,
+    soloGames: solo.length,
+    guessDist,
+    byLength,
+    vsai: {
+      totalGames: vsai.length,
+      winRate: vsai.length ? vsaiWon / vsai.length : 0,
+      byTier: vsaiByTier,
     },
   };
 }
@@ -162,6 +277,11 @@ function open(opts = {}) {
     count: () => store.count(),
     backup: (dest) => store.backup(dest),
 
+    /** Pano özeti: [from, to) aralığındaki metrikler (boş aralıkta güvenli). */
+    summary(from, to, at) {
+      return aggregate(store.readRange(from, to), from, to, at);
+    },
+
     /** Günlük bakım: eski kayıtları temizle + yedek al + eski yedekleri buda. */
     runMaintenance(nowMs) {
       let pruned = 0;
@@ -195,4 +315,4 @@ function open(opts = {}) {
   };
 }
 
-module.exports = { open, normalizeEvent };
+module.exports = { open, normalizeEvent, aggregate };

@@ -84,6 +84,7 @@ export class TelemetryService {
     result: 'won' | 'lost';
     attempts: number;
     duration_ms: number;
+    code?: string; // ör. YZ modunda zorluk (tier)
   }): void {
     this.track({ type: 'game_end', ...e });
   }

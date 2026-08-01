@@ -364,15 +364,19 @@ export class GameService {
     this._lpDelta.set(casual ? 0 : this.league.recordResult(won, attempts, mode));
 
     // 📊 Anonim "oyun bitti" (kimlik/kişisel veri yok; kapatılabilir).
-    this.telemetry.gameEnd({
-      mode,
-      lang: this.lang.lang(),
-      wlen: this.wordLength(),
-      word: this._answer(),
-      result: won ? 'won' : 'lost',
-      attempts,
-      duration_ms: this._startAt ? Date.now() - this._startAt : 0,
-    });
+    // YZ (vsai) HARİÇ: onun sonucu bir YARIŞ (çözme değil) — doğru sonuç + zorluk
+    // (tier) VsaiScreen tarafından emit edilir; burada emit edilse yanlış olurdu.
+    if (mode !== 'vsai') {
+      this.telemetry.gameEnd({
+        mode,
+        lang: this.lang.lang(),
+        wlen: this.wordLength(),
+        word: this._answer(),
+        result: won ? 'won' : 'lost',
+        attempts,
+        duration_ms: this._startAt ? Date.now() - this._startAt : 0,
+      });
+    }
   }
 
   /** Sonucu emoji ızgarası olarak paylaş metnine çevirir (harf içermez). */

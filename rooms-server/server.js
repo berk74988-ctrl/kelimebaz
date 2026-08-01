@@ -19,6 +19,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const hintUtil = require('./hint-util');
 const badWords = require('./bad-words');
 
@@ -39,6 +40,70 @@ try {
 // Olay gönderimi için IP başına hız sınırı (toplu geldiği için geniş).
 const rlEvents = rateLimiter(Number(process.env.RL_EVENTS || 60), 60_000);
 const EVENTS_MAX_BATCH = 200; // tek istekte kabul edilen en çok olay
+
+// --- YÖNETİM PANOSU kimlik doğrulaması (HTTP Basic) ---
+// ADMIN_PASS TANIMSIZSA panel KAPALIDIR (503) → asla kimlik doğrulamasız açılmaz.
+// (Bu, tam bir auth paketi gelene kadar tek-yönetici için yeterli, gerçek bir kapı.)
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || '';
+const ADMIN_ENABLED = !!ADMIN_PASS;
+const rlAdmin = rateLimiter(Number(process.env.RL_ADMIN || 30), 60_000); // kaba-kuvvete karşı
+
+function safeEq(a, b) {
+  const ba = Buffer.from(String(a));
+  const bb = Buffer.from(String(b));
+  return ba.length === bb.length && crypto.timingSafeEqual(ba, bb);
+}
+
+function basicAuthOk(req) {
+  const m = /^Basic (.+)$/.exec(req.headers.authorization || '');
+  if (!m) return false;
+  let dec = '';
+  try {
+    dec = Buffer.from(m[1], 'base64').toString('utf8');
+  } catch {
+    return false;
+  }
+  const i = dec.indexOf(':');
+  if (i < 0) return false;
+  // İki karşılaştırma da her zaman yapılır (zamanlama sızıntısını azalt).
+  const okUser = safeEq(dec.slice(0, i), ADMIN_USER);
+  const okPass = safeEq(dec.slice(i + 1), ADMIN_PASS);
+  return okUser && okPass;
+}
+
+/** Panel kapısı: kapalıysa 503, kimlik yoksa 401 (tarayıcı giriş penceresi). */
+function adminGate(req, res) {
+  if (!ADMIN_ENABLED) {
+    send(res, 503, { error: 'admin_disabled' });
+    return false;
+  }
+  if (!rlAdmin(clientIp(req))) {
+    stats.rateLimited++;
+    send(res, 429, { error: 'rate_limited' });
+    return false;
+  }
+  if (!basicAuthOk(req)) {
+    res.writeHead(401, {
+      'WWW-Authenticate': 'Basic realm="Kelimebaz Yönetim", charset="UTF-8"',
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+    });
+    res.end(JSON.stringify({ error: 'auth_required' }));
+    return false;
+  }
+  return true;
+}
+
+/** ?range=today|7d|30d|all → [from, to) zaman aralığı. */
+function rangeFromParam(r) {
+  const to = now() + 1;
+  const DAY = 86_400_000;
+  if (r === 'today') return { from: to - (to % DAY), to };
+  if (r === '7d') return { from: to - 7 * DAY, to };
+  if (r === '30d') return { from: to - 30 * DAY, to };
+  return { from: 0, to }; // all
+}
 
 // --- IP/oyuncu başına kayan pencere hız sınırı (bellekte) ---
 // Herkese açık uç nokta: kötüye kullanımı sınırla. Aşınca 429 döner.
@@ -600,6 +665,27 @@ const routes = {
     }
     send(res, 200, { ok: true, written });
   },
+
+  // --- YÖNETİM PANOSU (kimlik doğrulamalı; ADMIN_PASS yoksa 503) ---
+  'GET /admin': async (req, res) => {
+    if (!adminGate(req, res)) return;
+    let html;
+    try {
+      html = fs.readFileSync(path.join(__dirname, 'admin.html'), 'utf8');
+    } catch {
+      return send(res, 500, { error: 'no_page' });
+    }
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end(html);
+  },
+
+  // Özet metrikler (tarih aralığı parametreli). Yalnız kimlik doğrulanmışsa.
+  'GET /admin/summary': async (req, res, url) => {
+    if (!adminGate(req, res)) return;
+    if (!telemetry) return send(res, 503, { error: 'no_telemetry' });
+    const { from, to } = rangeFromParam(url.searchParams.get('range'));
+    send(res, 200, telemetry.summary(from, to, now()));
+  },
 };
 
 // --- Telemetri bakımı: açılışta + günde bir kez (eski kayıt temizliği + yedek) ---
@@ -685,6 +771,7 @@ const server = http.createServer(async (req, res) => {
       uptime: process.uptime(),
       hint: HINT_ENABLED,
       telemetry: telemetry ? telemetry.backend : false,
+      admin: ADMIN_ENABLED,
     });
   }
 

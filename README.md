@@ -336,6 +336,34 @@ SQLite'a geçer. Saklama süresi **90 gün** (`TELEMETRY_RETENTION_DAYS`); eski
 kayıtlar günlük bakımda otomatik temizlenir. Günlük **yedek** alınır
 (`telemetry/backups/`, son 7). Doğrulama: `node rooms-server/telemetry.test.mjs`.
 
+### Yönetim panosu (`/admin`)
+
+Toplanan telemetriyi okunabilir kılan pano. **Nerede yaşıyor:** ayrı bir Angular
+uygulaması DEĞİL — `rooms-server`'ın sunduğu **tek, bağımsız bir sayfa**
+(`rooms-server/admin.html` + `GET /admin/summary`). Gerekçe: oyun paketine
+**sıfır kod** ekler (paket boyutu değişmez), ayrı build/deploy hattı gerekmez ve
+veri zaten burada (DB). Yönetim kodu oyundan tamamen ayrıktır.
+
+**Gösterdikleri:** günlük aktivite, oyun sayısı, mod dağılımı, dil dağılımı,
+tekil kazanma oranı, tahmin dağılımı, kelime uzunluğu performansı (7 harf zor mu),
+YZ modu zorluk (tier) dağılımı + oyuncu kazanma oranı. Tarih aralığı:
+**Bugün / 7 gün / 30 gün / Tümü**. Veri yokken düzgün boş durum gösterir.
+
+**Kimlik doğrulama (şart):** HTTP Basic Auth. `ADMIN_PASS` **tanımlı değilse
+panel tamamen KAPALIDIR** (`/admin` → 503) — yani kimlik doğrulaması olmadan
+asla erişilemez. Etkinleştirmek için servis ortamına parola ver:
+
+```bash
+# /etc/systemd/system/berk-rooms.service içine:
+#   Environment=ADMIN_PASS=güçlü-bir-parola
+sudo systemctl daemon-reload && sudo systemctl restart berk-rooms
+# Panel: http://34.158.136.9/berk/rooms/admin  (kullanıcı: admin)
+```
+
+Kaba-kuvvete karşı IP hız sınırı + sabit-zamanlı parola karşılaştırması var.
+Bu, tam bir auth paketi gelene kadar tek-yönetici için yeterli, gerçek bir kapı.
+**Performans:** özet sorgusu 30 gün / 40k olayda ~50 ms (indeksli; <1 sn şartı).
+
 ---
 
 ## Test

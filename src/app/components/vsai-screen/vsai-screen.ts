@@ -22,6 +22,7 @@ import { GameService } from '../../services/game.service';
 import { GoldService } from '../../services/gold.service';
 import { LanguageService } from '../../services/language.service';
 import { StatsService } from '../../services/stats.service';
+import { TelemetryService } from '../../services/telemetry.service';
 import { WordService } from '../../services/word.service';
 import { Game } from '../game/game';
 
@@ -58,6 +59,7 @@ export class VsaiScreen {
   private readonly audio = inject(AudioService);
   private readonly game = inject(GameService);
   protected readonly i18n = inject(LanguageService);
+  private readonly telemetry = inject(TelemetryService);
 
   readonly back = output<void>();
 
@@ -265,6 +267,19 @@ export class VsaiScreen {
     this.stats.recordVsai(res === 'win', this.persona().id, {
       attempts: me.attempts,
       solved: me.solved,
+    });
+
+    // 📊 Anonim YZ maç sonucu — GERÇEK yarış sonucu + zorluk (tier) code alanında.
+    // Zorluk kalibrasyonunun gerçek karşılığını görmek için (pano YZ bölümü).
+    this.telemetry.gameEnd({
+      mode: 'vsai',
+      lang: this.i18n.lang(),
+      wlen: [...this.word()].length,
+      word: this.word(),
+      result: res === 'win' ? 'won' : 'lost', // beraberlik de "kazanmadı"
+      attempts: me.attempts,
+      duration_ms: me.timeMs,
+      code: this.persona().tier, // zorluk seviyesi
     });
 
     const b = res === 'win' ? PERSONA_BONUS[this.persona().tier] : 0;

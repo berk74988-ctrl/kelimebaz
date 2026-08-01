@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Kelimebaz — Yönetim Panosu</title>
+    <style>
+      :root {
+        --bg: #14161a;
+        --card: #1e2127;
+        --line: #2c313a;
+        --text: #e8eaed;
+        --muted: #9aa0a6;
+        --accent: #3a7afe;
+        --good: #46c93a;
+        --bad: #e5484d;
+        --warn: #e8a33d;
+        font-family: system-ui, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        background: var(--bg);
+        border-bottom: 1px solid var(--line);
+        padding: 14px 20px;
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        flex-wrap: wrap;
+        z-index: 2;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0;
+        flex: 1;
+      }
+      .ranges {
+        display: flex;
+        gap: 6px;
+      }
+      .ranges button {
+        background: var(--card);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 7px 12px;
+        font: inherit;
+        cursor: pointer;
+      }
+      .ranges button.on {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .tile {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .tile .n {
+        font-size: 28px;
+        font-weight: 800;
+      }
+      .tile .l {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      section {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 16px 18px;
+        margin-bottom: 16px;
+      }
+      section h2 {
+        font-size: 15px;
+        margin: 0 0 12px;
+      }
+      .bars {
+        display: grid;
+        gap: 8px;
+      }
+      .bar {
+        display: grid;
+        grid-template-columns: 130px 1fr 62px;
+        gap: 10px;
+        align-items: center;
+        font-size: 14px;
+      }
+      .bar .track {
+        background: #0f1114;
+        border-radius: 6px;
+        overflow: hidden;
+        height: 20px;
+      }
+      .bar .fill {
+        height: 100%;
+        background: var(--accent);
+        min-width: 2px;
+      }
+      .bar .val {
+        text-align: right;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .bar .lbl {
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 7px 8px;
+        border-bottom: 1px solid var(--line);
+        font-variant-numeric: tabular-nums;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .spark {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 60px;
+        margin-top: 6px;
+      }
+      .spark > div {
+        flex: 1;
+        background: var(--accent);
+        min-height: 2px;
+        border-radius: 3px 3px 0 0;
+      }
+      .empty {
+        text-align: center;
+        color: var(--muted);
+        padding: 60px 20px;
+        font-size: 17px;
+      }
+      .foot {
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+        margin: 20px 0;
+      }
+      .pill {
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #0f1114;
+        color: var(--muted);
+      }
+      .wr-good {
+        color: var(--good);
+      }
+      .wr-bad {
+        color: var(--bad);
+      }
+      .wr-mid {
+        color: var(--warn);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>📊 Kelimebaz — Yönetim Panosu</h1>
+      <div class="ranges" id="ranges">
+        <button data-r="today">Bugün</button>
+        <button data-r="7d" class="on">7 gün</button>
+        <button data-r="30d">30 gün</button>
+        <button data-r="all">Tümü</button>
+      </div>
+    </header>
+    <main id="main"><p class="empty">Yükleniyor…</p></main>
+
+    <script>
+      const $ = (s) => document.querySelector(s);
+      let range = '7d';
+
+      const pct = (x) => Math.round(x * 100) + '%';
+      const esc = (s) =>
+        String(s ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+      const wrClass = (x) => (x >= 0.6 ? 'wr-good' : x >= 0.35 ? 'wr-mid' : 'wr-bad');
+
+      const MODE_LABEL = {
+        daily: 'Günün Kelimesi',
+        practice: 'Serbest',
+        room: 'Oda',
+        vsai: 'YZ',
+        theme: 'Tema',
+      };
+      const LANG_LABEL = { tr: 'Türkçe', en: 'İngilizce' };
+
+      function bars(entries, opts = {}) {
+        const max = Math.max(1, ...entries.map((e) => e.value));
+        return `<div class="bars">${entries
+          .map(
+            (e) =>
+              `<div class="bar"><div class="lbl">${esc(e.label)}</div>
+               <div class="track"><div class="fill" style="width:${(e.value / max) * 100}%${
+                e.color ? ';background:' + e.color : ''
+              }"></div></div>
+               <div class="val">${opts.fmt ? opts.fmt(e) : e.value}</div></div>`,
+          )
+          .join('')}</div>`;
+      }
+
+      function render(d) {
+        const m = $('#main');
+        const noData = d.totals.starts === 0 && d.totals.completed === 0;
+        if (noData) {
+          m.innerHTML = `<div class="empty">Bu aralıkta henüz veri yok.<br /><span class="pill">Oyun oynandıkça burada görünür.</span></div>`;
+          return;
+        }
+
+        // Aktivite mini grafiği (günlük başlangıç)
+        const act = d.activity;
+        const amax = Math.max(1, ...act.map((a) => a.starts));
+        const spark = act.length
+          ? `<div class="spark">${act
+              .map(
+                (a) =>
+                  `<div title="${a.day}: ${a.starts} başlangıç, ${a.completed} tamamlanan" style="height:${
+                    (a.starts / amax) * 100
+                  }%"></div>`,
+              )
+              .join('')}</div>`
+          : '';
+
+        const modeEntries = Object.entries(d.modes)
+          .sort((a, b) => b[1] - a[1])
+          .map(([k, v]) => ({ label: MODE_LABEL[k] || k, value: v }));
+        const langEntries = Object.entries(d.langs)
+          .sort((a, b) => b[1] - a[1])
+          .map(([k, v]) => ({ label: LANG_LABEL[k] || k, value: v }));
+
+        const gd = d.guessDist;
+        const guessEntries = [1, 2, 3, 4, 5, 6]
+          .map((i) => ({ label: i + ' tahmin', value: gd[i] || 0, color: 'var(--good)' }))
+          .concat([{ label: 'Bulamadı', value: gd.fail || 0, color: 'var(--bad)' }]);
+
+        const lenRows = d.byLength
+          .map(
+            (r) =>
+              `<tr><td>${r.wlen} harf</td><td>${r.games}</td>
+               <td class="${wrClass(r.winRate)}">${pct(r.winRate)}</td>
+               <td>${r.avgAttempts.toFixed(2)}</td></tr>`,
+          )
+          .join('');
+
+        const vsai = d.vsai;
+        const tierRows = vsai.byTier.length
+          ? vsai.byTier
+              .map(
+                (t) =>
+                  `<tr><td>${esc(t.tier)}</td><td>${t.games}</td><td class="${wrClass(
+                    t.winRate,
+                  )}">${pct(t.winRate)}</td></tr>`,
+              )
+              .join('')
+          : `<tr><td colspan="3" class="pill">YZ maçı yok</td></tr>`;
+
+        m.innerHTML = `
+          <div class="tiles">
+            <div class="tile"><div class="n">${d.totals.starts}</div><div class="l">Oyun başlangıcı</div></div>
+            <div class="tile"><div class="n">${d.totals.completed}</div><div class="l">Tamamlanan oyun</div></div>
+            <div class="tile"><div class="n ${wrClass(d.winRate)}">${pct(d.winRate)}</div><div class="l">Kazanma oranı (tekil)</div></div>
+            <div class="tile"><div class="n">${d.totals.errors}</div><div class="l">Hata olayı</div></div>
+          </div>
+
+          <section><h2>Aktivite (günlük başlangıç)</h2>${
+            spark || '<span class="pill">tek gün</span>'
+          }</section>
+
+          <section><h2>Mod dağılımı</h2>${bars(modeEntries)}</section>
+          <section><h2>Dil dağılımı</h2>${bars(langEntries)}</section>
+          <section><h2>Tahmin dağılımı (tekil oyun)</h2>${bars(guessEntries)}</section>
+
+          <section><h2>Kelime uzunluğu performansı</h2>
+            <table><tr><th>Uzunluk</th><th>Oyun</th><th>Kazanma</th><th>Ort. tahmin</th></tr>${
+              lenRows || '<tr><td colspan="4" class="pill">veri yok</td></tr>'
+            }</table>
+          </section>
+
+          <section><h2>🤖 YZ modu — zorluk & kazanma</h2>
+            <p class="pill">Toplam YZ maçı: ${vsai.totalGames} · oyuncu kazanma: ${pct(
+              vsai.winRate,
+            )}</p>
+            <table style="margin-top:10px"><tr><th>Zorluk (tier)</th><th>Maç</th><th>Oyuncu kazanma</th></tr>${tierRows}</table>
+          </section>
+
+          <p class="foot">Aralık: ${new Date(d.range.from || 0).toLocaleDateString('tr')} – ${new Date(
+            d.range.to,
+          ).toLocaleString('tr')} · ${act.length} gün · anonim veri</p>`;
+      }
+
+      async function load() {
+        const base = location.pathname.replace(/\/$/, '');
+        try {
+          const r = await fetch(base + '/summary?range=' + range, { headers: { accept: 'application/json' } });
+          if (!r.ok) throw new Error('http ' + r.status);
+          render(await r.json());
+        } catch (e) {
+          $('#main').innerHTML = `<div class="empty">Veri alınamadı: ${esc(e.message)}</div>`;
+        }
+      }
+
+      $('#ranges').addEventListener('click', (e) => {
+        const b = e.target.closest('button');
+        if (!b) return;
+        range = b.dataset.r;
+        [...$('#ranges').children].forEach((x) => x.classList.toggle('on', x === b));
+        load();
+      });
+      load();
+    </script>
+  </body>
+</html>
