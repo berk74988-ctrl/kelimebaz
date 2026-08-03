@@ -2,7 +2,7 @@
   "note": "İçerik kapsamı CIRCIR (ratchet) tabanı — her kategori için İZİN VERİLEN eksik sayısı. Gerçek eksik bunu AŞARSA CI kırmızı olur (havuz büyümüş/içerik silinmiş). İçerik eklenince bu sayıları düşür: `node scripts/check-content-coverage.mjs --update`. Hedef: hepsi 0.",
   "updatedFrom": "node scripts/check-content-coverage.mjs --update",
   "allowed": {
-    "tr.hint": 2240,
+    "tr.hint": 0,
     "tr.card": 2240,
     "tr.difficulty": 0,
     "en.hint": 330,
