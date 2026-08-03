@@ -19,8 +19,10 @@ type HintMap = Record<string, Hint>;
  * inene kadar `for()` null döner (buton çıkmaz), inince şablon kendiliğinden yeniler.
  *
  * TÜRKÇE: hints-tr-native.json (Türkçe kelimenin Türkçe tanımı).
- * İNGİLİZCE: hints-tr.json (İngilizce cevapların Türkçeye çevrilmiş tanımları).
- * Her iki kaynakta da açıklama cevabı doğrudan vermez (kelime/kök/çekim gizli).
+ * İNGİLİZCE: hints-en.json (İngilizce kelimenin İngilizce tanımı + sözcük türü).
+ * ALMANCA: hints-de.json (Almanca kelimenin Almanca tanımı + tür/artikel).
+ * Her kaynakta da açıklama cevabı doğrudan vermez (kelime/kök/çekim gizli).
+ * (Not: eski hints-tr.json = İngilizce cevapların Türkçe çevirisiydi; artık kullanılmıyor.)
  */
 @Injectable({ providedIn: 'root' })
 export class HintService {
@@ -61,7 +63,7 @@ export class HintService {
         ? import('../data/hints-tr-native.json')
         : lang === 'de'
           ? import('../data/hints-de.json')
-          : import('../data/hints-tr.json')
+          : import('../data/hints-en.json')
     )
       .then((m) => {
         const map = ((m as { default?: unknown }).default ?? m) as HintMap;

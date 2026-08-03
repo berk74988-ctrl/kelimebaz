@@ -38,10 +38,11 @@ jobs:
       - name: İçerik kapsamı (havuz ↔ ipucu/kart/zorluk)
         run: npm run check:coverage
 
-      # İpucu kalitesi: cevap sızıntısı yok + (DE) sözcük türü/artikel etiketi doğru.
-      - name: İpucu içerik denetimi (TR + DE)
+      # İpucu kalitesi: cevap sızıntısı yok + tür etiketi doğru + (EN) kesik/boşta-— yok.
+      - name: İpucu içerik denetimi (TR + EN + DE)
         run: |
           npm run check:hint-tr
+          npm run check:hint-en
           npm run check:hint-de
 
       - name: Birim testleri (vitest)

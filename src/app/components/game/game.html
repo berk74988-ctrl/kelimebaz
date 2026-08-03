@@ -79,7 +79,7 @@
   <div class="notice">
     <app-toast [text]="game.message()" />
 
-    <!-- 💡 İPUCU — her iki dilde (TR: yerli ipuçları, EN: çeviri; hint.for() veri yoksa null) -->
+    <!-- 💡 İPUCU — her dilde yerli (TR/EN/DE kendi dilinde tanım; hint.for() veri yoksa null) -->
     @if (hint.for(game.answer()); as h) {
       <div class="hint-bar">
         @if (hintShown()) {
