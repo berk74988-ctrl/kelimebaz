@@ -11,12 +11,14 @@ import {
   viewChild,
 } from '@angular/core';
 import { copyText, shareNative } from '../../core/clipboard';
+import { analyzeGuesses, GuessAnalysis } from '../../core/guess-analysis';
 import { buildShareGrid } from '../../core/share';
 import { GameStatus, MAX_ATTEMPTS } from '../../models/game.model';
 import { GameService } from '../../services/game.service';
 import { GoldService } from '../../services/gold.service';
 import { LanguageService } from '../../services/language.service';
 import { LeagueService } from '../../services/league.service';
+import { WordService } from '../../services/word.service';
 import { Countdown } from '../countdown/countdown';
 import { StatsPanel } from '../stats-panel/stats-panel';
 import { WordCardComponent } from '../word-card/word-card';
@@ -31,6 +33,7 @@ import { WordCardComponent } from '../word-card/word-card';
 })
 export class ResultModal implements AfterViewInit {
   private readonly game = inject(GameService);
+  private readonly words = inject(WordService);
   protected readonly gold = inject(GoldService);
   protected readonly league = inject(LeagueService);
   protected readonly i18n = inject(LanguageService);
@@ -61,6 +64,32 @@ export class ResultModal implements AfterViewInit {
 
   /** Cevap, harf harf — oyunun kutu diliyle gösterilir. */
   protected readonly answerLetters = computed(() => [...this.answer()]);
+
+  /**
+   * 🔎 Maç sonu tahmin analizi — her tahminin kalitesi (aday eleme + entropi + en iyi
+   * alternatif). Yalnız modal açıkken (oyun bitince) bir kez hesaplanır (lazy computed).
+   */
+  protected readonly analysis = computed<GuessAnalysis[]>(() => {
+    const ans = this.answer();
+    const words = this.game.guesses().map((g) => g.word);
+    if (!ans || !words.length) return [];
+    const pool = this.words.answersOfLength([...ans].length);
+    return analyzeGuesses(ans, words, pool, this.i18n.lang());
+  });
+
+  /** Analiz panelini aç/kapa (varsayılan kapalı — sonuç ekranını kalabalıklaştırmasın). */
+  protected readonly analysisOpen = signal(false);
+  protected toggleAnalysis(): void {
+    this.analysisOpen.update((v) => !v);
+  }
+
+  /** Tüm maçın ortalama isabeti (0-100) — analizden türetilir, kısa bir rozet için. */
+  protected readonly accuracy = computed(() => {
+    const a = this.analysis();
+    if (!a.length) return 0;
+    const w = { optimal: 100, great: 85, good: 70, fair: 45, weak: 20 } as const;
+    return Math.round(a.reduce((s, x) => s + w[x.quality], 0) / a.length);
+  });
 
   /** Bu oyunda kazanılan altın — oyun + seviye ödülü + tamamlanan görevler. */
   protected readonly goldEarned = this.game.goldEarned;

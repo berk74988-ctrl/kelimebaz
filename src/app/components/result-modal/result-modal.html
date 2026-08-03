@@ -98,6 +98,38 @@
       <app-stats-panel [highlight]="status() === 'won' ? attempts() : null" />
     </section>
 
+    <!-- 🔎 Maç analizi — her tahminin kalitesi (aday eleme + en iyi alternatif). Aç/kapa -->
+    @if (analysis().length) {
+      <section class="analysis">
+        <button
+          class="an-toggle"
+          type="button"
+          (click)="toggleAnalysis()"
+          [attr.aria-expanded]="analysisOpen()"
+        >
+          <span>🔎 {{ i18n.t('analysis.title') }}</span>
+          <span class="an-acc">{{ i18n.t('analysis.accuracy', { n: accuracy() }) }}</span>
+          <span class="chev" aria-hidden="true">{{ analysisOpen() ? '▲' : '▼' }}</span>
+        </button>
+        @if (analysisOpen()) {
+          <ol class="an-list">
+            @for (a of analysis(); track $index) {
+              <li class="an-row" [class]="'q-' + a.quality">
+                <span class="an-word">{{ a.word }}</span>
+                <span class="an-badge">{{ i18n.t('analysis.q.' + a.quality) }}</span>
+                <span class="an-meta">
+                  {{ i18n.t('analysis.eliminated', { n: a.eliminated, of: a.candidatesBefore }) }}
+                  @if (!a.solved && a.quality !== 'optimal' && a.bestWord !== a.word) {
+                    <span class="an-best">· {{ i18n.t('analysis.best', { w: a.bestWord }) }}</span>
+                  }
+                </span>
+              </li>
+            }
+          </ol>
+        }
+      </section>
+    }
+
     <!-- Paylaşılacak ızgaranın önizlemesi — harf yok, spoiler yok -->
     <pre class="preview" [attr.aria-label]="i18n.t('result.previewAria')">{{ shareGrid() }}</pre>
 

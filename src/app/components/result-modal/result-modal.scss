@@ -394,3 +394,91 @@
     transform: rotateX(-90deg) translateY(10px);
   }
 }
+
+/* 🔎 Maç analizi — her tahminin kalitesi (aç/kapa) */
+.analysis {
+  margin-top: 4px;
+}
+.an-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+
+  .an-acc {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .chev {
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+}
+.an-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.an-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border-left: 3px solid var(--absent);
+  font-size: 12px;
+
+  .an-word {
+    font-family: v.$font-mono;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    min-width: 5.5em;
+  }
+  .an-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--absent);
+    color: var(--on-absent, #fff);
+  }
+  .an-meta {
+    color: var(--text-muted);
+    margin-left: auto;
+    text-align: right;
+  }
+  .an-best {
+    color: var(--text);
+  }
+
+  /* Kalite renkleri — oyunun semantik renkleriyle */
+  &.q-optimal,
+  &.q-great {
+    border-left-color: var(--correct);
+    .an-badge {
+      background: var(--correct);
+      color: var(--on-correct);
+    }
+  }
+  &.q-good,
+  &.q-fair {
+    border-left-color: var(--present);
+    .an-badge {
+      background: var(--present);
+      color: var(--on-present, #1a1a1a);
+    }
+  }
+}
