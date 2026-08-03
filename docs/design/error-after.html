@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="tr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        --bg: #10131a; --surface: #191e28; --surface-2: #222836; --border: #2e3646;
+        --text: #eef2f7; --text-muted: #93a1b1; --absent: #3a4150; --on-absent: #eef2f7;
+        --accent: #6c8cff; --accent-2: #9d7bff; --radius: 12px; --radius-lg: 20px;
+        --font: 'Segoe UI', system-ui, sans-serif;
+        --mono: 'JetBrains Mono', Consolas, ui-monospace, monospace;
+      }
+      * { box-sizing: border-box; margin: 0; }
+      body { font-family: var(--font); background: radial-gradient(120% 80% at 50% -10%, #171c2b 0%, var(--bg) 60%); color: var(--text); }
+      .wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+      .card {
+        position: relative; width: 100%; max-width: 400px; text-align: center;
+        padding: 40px 28px 32px; background: var(--surface);
+        border: 1px solid var(--border); border-radius: var(--radius-lg);
+        box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.6);
+        overflow: hidden;
+      }
+      /* Karakter: üstte ince vurgu şeridi (markanın rengi) */
+      .card::before {
+        content: ''; position: absolute; inset: 0 0 auto; height: 3px;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      }
+      .brand { font-size: 11px; font-weight: 700; letter-spacing: 0.28em; color: var(--text-muted); }
+      /* Oyunun kendi dili: hiçbir harfin tutmadığı bir tahmin satırı */
+      .tiles { display: flex; gap: 6px; justify-content: center; margin: 20px 0 4px; }
+      .t {
+        width: 46px; height: 46px; display: grid; place-items: center;
+        font-family: var(--mono); font-size: 22px; font-weight: 700;
+        border-radius: 6px; background: var(--absent); color: var(--on-absent);
+      }
+      h1 { margin-top: 18px; font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
+      .msg { margin-top: 10px; font-size: 14px; line-height: 1.6; color: var(--text-muted); }
+      .btn {
+        width: 100%; margin-top: 26px; padding: 13px; font-size: 15px; font-weight: 800;
+        border: 0; border-radius: var(--radius); color: #fff; background: var(--accent);
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card" role="alert">
+        <p class="brand">KELİMEBAZ</p>
+        <div class="tiles" aria-hidden="true">
+          <span class="t">?</span><span class="t">?</span><span class="t">?</span><span class="t">?</span>
+        </div>
+        <h1>Oyun başlatılamadı</h1>
+        <p class="msg">Kelime listesi yüklenemedi. Bu genelde geçici bir sorundur — tekrar denemek çoğu zaman çözer.</p>
+        <button class="btn">↻ Tekrar dene</button>
+      </section>
+    </main>
+  </body>
+</html>

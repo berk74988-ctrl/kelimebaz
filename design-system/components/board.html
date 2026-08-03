@@ -1,0 +1,44 @@
+<!-- @dsCard group="Oyun" -->
+<!doctype html>
+<html lang="tr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Oyun Tahtası</title>
+    <style>
+      :root {
+        --bg: #10131a; --text: #eef2f7; --text-muted: #93a1b1;
+        --correct: #4caf82; --present: #d9a441; --absent: #3a4150;
+        --on-correct: #062012; --on-present: #2a1d05; --on-absent: #eef2f7;
+        --tile-border: #2e3646;
+        --mono: 'JetBrains Mono', Consolas, ui-monospace, monospace;
+        --font: 'Segoe UI', system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); padding: 28px; display: grid; place-items: center; }
+      .wrap { text-align: center; }
+      h1 { font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 18px; }
+      .board { display: grid; grid-template-rows: repeat(4, 1fr); gap: 6px; }
+      .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+      .t {
+        width: 52px; height: 52px; display: grid; place-items: center;
+        font-family: var(--mono); font-size: 25px; font-weight: 700;
+        border-radius: 6px; border: 2px solid var(--tile-border);
+      }
+      .correct { background: var(--correct); color: var(--on-correct); border-color: var(--correct); }
+      .present { background: var(--present); color: var(--on-present); border-color: var(--present); }
+      .absent { background: var(--absent); color: var(--on-absent); border-color: var(--absent); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Oyun Tahtası</h1>
+      <div class="board">
+        <div class="row"><div class="t absent">A</div><div class="t present">R</div><div class="t absent">A</div><div class="t absent">B</div><div class="t present">A</div></div>
+        <div class="row"><div class="t present">K</div><div class="t absent">U</div><div class="t absent">Ş</div><div class="t present">A</div><div class="t absent">K</div></div>
+        <div class="row"><div class="t correct">K</div><div class="t correct">A</div><div class="t absent">P</div><div class="t present">L</div><div class="t present">I</div></div>
+        <div class="row"><div class="t correct">K</div><div class="t correct">A</div><div class="t correct">L</div><div class="t correct">E</div><div class="t correct">M</div></div>
+      </div>
+    </div>
+  </body>
+</html>

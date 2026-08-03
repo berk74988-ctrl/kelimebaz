@@ -1,0 +1,44 @@
+<!-- @dsCard group="Oyun · Kutular" -->
+<!doctype html>
+<html lang="tr" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Harf Kutuları · Açık</title>
+    <style>
+      :root {
+        --bg: #f6f7fb; --surface: #ffffff; --border: #d3d6de; --text: #131720; --text-muted: #667085;
+        --correct: #4caf82; --present: #d9a441; --absent: #6b7280;
+        --on-correct: #062012; --on-present: #2a1d05; --on-absent: #ffffff;
+        --tile-border: #cdd2dc; --tile-border-filled: #8b93a3;
+        --mono: 'JetBrains Mono', Consolas, ui-monospace, monospace;
+        --font: 'Segoe UI', system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); padding: 28px; }
+      h1 { font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 18px; }
+      .states { display: flex; gap: 14px; flex-wrap: wrap; }
+      .state { text-align: center; }
+      .tile {
+        width: 58px; height: 58px; display: grid; place-items: center;
+        font-family: var(--mono); font-size: 28px; font-weight: 700;
+        border-radius: 6px; border: 2px solid var(--tile-border);
+      }
+      .tile.filled { border-color: var(--tile-border-filled); }
+      .tile.correct { background: var(--correct); color: var(--on-correct); border-color: var(--correct); }
+      .tile.present { background: var(--present); color: var(--on-present); border-color: var(--present); }
+      .tile.absent { background: var(--absent); color: var(--on-absent); border-color: var(--absent); }
+      .lbl { margin-top: 8px; font-size: 12px; color: var(--text-muted); }
+    </style>
+  </head>
+  <body>
+    <h1>Harf Kutuları · Açık tema</h1>
+    <div class="states">
+      <div class="state"><div class="tile"></div><div class="lbl">boş</div></div>
+      <div class="state"><div class="tile filled">K</div><div class="lbl">yazıldı</div></div>
+      <div class="state"><div class="tile correct">A</div><div class="lbl">doğru yerde</div></div>
+      <div class="state"><div class="tile present">L</div><div class="lbl">kelimede var</div></div>
+      <div class="state"><div class="tile absent">E</div><div class="lbl">kelimede yok</div></div>
+    </div>
+  </body>
+</html>

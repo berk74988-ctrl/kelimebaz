@@ -1,0 +1,52 @@
+<!-- @dsCard group="Butonlar" -->
+<!doctype html>
+<html lang="tr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Butonlar</title>
+    <style>
+      :root {
+        --bg: #10131a; --surface: #191e28; --surface-2: #222836; --border: #2e3646;
+        --text: #eef2f7; --text-muted: #93a1b1; --accent: #6c8cff; --danger: #e0625c;
+        --share-1: #546dc7; --share-2: #7a60c7; --radius: 12px;
+        --font: 'Segoe UI', system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); padding: 28px; }
+      h1 { font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 18px; }
+      .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+      button { font: inherit; cursor: pointer; border: 0; border-radius: var(--radius); padding: 12px 22px; font-weight: 700; font-size: 15px; }
+      .primary { background: var(--accent); color: #fff; }
+      .ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+      .danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+      .share { background: linear-gradient(90deg, var(--share-1), var(--share-2)); color: #fff; }
+      .pill { border-radius: 999px; padding: 9px 18px; font-size: 14px; }
+      .icon { width: 44px; height: 44px; border-radius: 12px; background: var(--surface-2); color: var(--text); display: grid; place-items: center; padding: 0; font-size: 18px; }
+      .lbl { color: var(--text-muted); font-size: 12px; width: 100%; margin: 0 0 -6px; }
+    </style>
+  </head>
+  <body>
+    <h1>Butonlar</h1>
+    <p class="lbl">Birincil eylemler</p>
+    <div class="row">
+      <button class="primary">Oyna</button>
+      <button class="ghost">Geri</button>
+      <button class="danger">Sıfırla</button>
+      <button class="share">Sonucu Paylaş</button>
+    </div>
+    <p class="lbl">Hap (segment/ikincil)</p>
+    <div class="row">
+      <button class="primary pill">Günün Kelimesi</button>
+      <button class="ghost pill">Serbest</button>
+      <button class="ghost pill">🪙 20</button>
+    </div>
+    <p class="lbl">Simge butonları (başlık çubuğu)</p>
+    <div class="row">
+      <button class="icon">←</button>
+      <button class="icon">👁</button>
+      <button class="icon">📊</button>
+      <button class="icon">🌙</button>
+    </div>
+  </body>
+</html>

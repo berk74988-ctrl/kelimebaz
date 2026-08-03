@@ -1,0 +1,56 @@
+<!-- @dsCard group="Oyun" -->
+<!doctype html>
+<html lang="tr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ekran Klavyesi</title>
+    <style>
+      :root {
+        --bg: #10131a; --surface: #191e28; --border: #2e3646; --text: #eef2f7; --text-muted: #93a1b1;
+        --correct: #4caf82; --present: #d9a441; --absent: #3a4150;
+        --on-correct: #062012; --on-present: #2a1d05; --on-absent: #eef2f7;
+        --key-bg: #222836; --accent: #6c8cff;
+        --font: 'Segoe UI', system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); padding: 28px; }
+      h1 { font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 18px; }
+      .kb { display: grid; gap: 8px; max-width: 520px; }
+      .krow { display: flex; gap: 6px; justify-content: center; }
+      .key {
+        min-width: 34px; height: 50px; padding: 0 10px; border-radius: 8px;
+        background: var(--key-bg); color: var(--text); font-weight: 700; font-size: 15px;
+        display: grid; place-items: center; border: 0;
+      }
+      .key.correct { background: var(--correct); color: var(--on-correct); }
+      .key.present { background: var(--present); color: var(--on-present); }
+      .key.absent { background: var(--absent); color: var(--on-absent); }
+      .key.wide { min-width: 58px; font-size: 12px; letter-spacing: 0.04em; }
+      .key.enter { background: var(--accent); color: #fff; }
+      .legend { margin-top: 16px; color: var(--text-muted); font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>Ekran Klavyesi</h1>
+    <div class="kb">
+      <div class="krow">
+        <span class="key correct">E</span><span class="key">R</span><span class="key present">T</span>
+        <span class="key">Y</span><span class="key">U</span><span class="key absent">I</span>
+        <span class="key">O</span><span class="key">P</span><span class="key">Ğ</span><span class="key">Ü</span>
+      </div>
+      <div class="krow">
+        <span class="key">A</span><span class="key present">S</span><span class="key">D</span>
+        <span class="key absent">F</span><span class="key">G</span><span class="key">H</span>
+        <span class="key">J</span><span class="key correct">K</span><span class="key">L</span><span class="key">Ş</span><span class="key">İ</span>
+      </div>
+      <div class="krow">
+        <span class="key wide enter">ENTER</span>
+        <span class="key">Z</span><span class="key">C</span><span class="key absent">V</span>
+        <span class="key">B</span><span class="key">N</span><span class="key">M</span><span class="key">Ö</span><span class="key">Ç</span>
+        <span class="key wide">SİL</span>
+      </div>
+    </div>
+    <p class="legend">Her tuş, o harfin bilinen en güçlü durumunu gösterir (yeşil asla geriye gitmez).</p>
+  </body>
+</html>

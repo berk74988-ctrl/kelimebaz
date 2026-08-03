@@ -5,32 +5,75 @@
   display: grid;
   place-items: center;
   padding: v.$space-4;
+  // Hafif üstten vurgu ışıması — karakter katar, tokenlardan beslenir
+  background: radial-gradient(
+    120% 80% at 50% -10%,
+    color-mix(in srgb, var(--accent) 10%, var(--bg)) 0%,
+    var(--bg) 60%
+  );
 }
 
 .card {
+  position: relative;
   width: 100%;
-  max-width: 380px;
+  max-width: 400px;
   text-align: center;
-  padding: v.$space-5 v.$space-4;
+  padding: v.$space-5 v.$space-4 v.$space-4;
 
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+
+  // Üstte markanın renk şeridi
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  }
 }
 
-.ico {
-  font-size: 40px;
-  line-height: 1;
+.brand {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  color: var(--text-muted);
+}
+
+// Başarısız tahmin satırı — oyunun kendi dilini kullanır (jenerik emoji yerine)
+.tiles {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin: v.$space-3 0 v.$space-1;
+}
+
+.t {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  font-family: v.$font-mono;
+  font-size: 22px;
+  font-weight: 700;
+  border-radius: 6px;
+  background: var(--absent);
+  color: var(--on-absent);
 }
 
 h1 {
   margin-top: v.$space-3;
-  font-size: 20px;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 .msg {
   margin-top: v.$space-2;
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--text-muted);
 }
@@ -38,14 +81,19 @@ h1 {
 .btn {
   width: 100%;
   margin-top: v.$space-4;
-  padding: 12px;
-  font-size: 14px;
+  padding: 13px;
+  font-size: 15px;
   font-weight: 800;
   border-radius: var(--radius);
-  color: var(--on-correct);
-  background: var(--correct);
+  color: #fff;
+  // Retry NÖTR bir eylem → accent (yeşil "doğru harf" anlamı taşırdı)
+  background: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: v.$space-1;
 
   &:hover {
-    filter: brightness(1.1);
+    filter: brightness(1.08);
   }
 }

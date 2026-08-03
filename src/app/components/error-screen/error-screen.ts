@@ -14,10 +14,17 @@ import { LanguageService } from '../../services/language.service';
   template: `
     <main class="wrap">
       <section class="card" role="alert">
-        <p class="ico" aria-hidden="true">😕</p>
+        <p class="brand" aria-hidden="true">KELİMEBAZ</p>
+        <!-- Oyunun kendi görsel dili: hiçbir harfin tutmadığı bir tahmin satırı -->
+        <div class="tiles" aria-hidden="true">
+          <span class="t">?</span><span class="t">?</span><span class="t">?</span
+          ><span class="t">?</span>
+        </div>
         <h1>{{ i18n.t('error.title') }}</h1>
         <p class="msg">{{ i18n.t('error.message') }}</p>
-        <button class="btn" type="button" (click)="onRetry()">{{ i18n.t('error.reload') }}</button>
+        <button class="btn" type="button" (click)="onRetry()">
+          ↻ {{ i18n.t('error.reload') }}
+        </button>
       </section>
     </main>
   `,

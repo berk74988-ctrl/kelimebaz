@@ -1,0 +1,105 @@
+<!-- @dsCard group="Tipografi" -->
+<!doctype html>
+<html lang="tr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tipografi</title>
+    <style>
+      :root {
+        --bg: #10131a;
+        --surface: #191e28;
+        --border: #2e3646;
+        --text: #eef2f7;
+        --text-muted: #93a1b1;
+        --accent: #6c8cff;
+        --font: 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', sans-serif;
+        --mono: 'JetBrains Mono', Consolas, ui-monospace, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+        padding: 28px;
+      }
+      h1 {
+        font-size: 15px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin: 0 0 20px;
+      }
+      .spec {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 8px 18px;
+        align-items: baseline;
+        padding: 14px 0;
+        border-top: 1px solid var(--border);
+      }
+      .spec .lbl {
+        color: var(--text-muted);
+        font-size: 12px;
+        font-family: var(--mono);
+      }
+      .display {
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      .h1 {
+        font-size: 22px;
+        font-weight: 700;
+      }
+      .h2 {
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .body {
+        font-size: 15px;
+        line-height: 1.5;
+      }
+      .small {
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+      .tiles {
+        font-family: var(--mono);
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.28em;
+      }
+      .stack {
+        margin-top: 22px;
+        padding: 14px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+      .stack b {
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Tipografi</h1>
+
+    <div class="spec"><span class="lbl">Display · 800</span><span class="display">Kelimebaz</span></div>
+    <div class="spec"><span class="lbl">Başlık · 700</span><span class="h1">Günün Kelimesi</span></div>
+    <div class="spec"><span class="lbl">Alt başlık · 600</span><span class="h2">Herkes için aynı · günde bir</span></div>
+    <div class="spec"><span class="lbl">Gövde · 400</span><span class="body">Gizli kelimeyi 6 tahminde bul.</span></div>
+    <div class="spec"><span class="lbl">Küçük · muted</span><span class="small">100.385 kelimelik Türkçe sözlük</span></div>
+    <div class="spec"><span class="lbl">Mono · kutular</span><span class="tiles">KALEM</span></div>
+
+    <div class="stack">
+      <b>Gövde yazı tipi:</b> Segoe UI, system-ui, -apple-system, Roboto…<br />
+      <b>Mono (kutular/kod):</b> JetBrains Mono, Consolas, ui-monospace
+    </div>
+  </body>
+</html>

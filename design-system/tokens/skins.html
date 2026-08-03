@@ -1,0 +1,34 @@
+<!-- @dsCard group="Renkler" -->
+<!doctype html>
+<html lang="tr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mağaza Temaları (data-skin)</title>
+    <style>
+      :root { --bg: #10131a; --surface: #191e28; --border: #2e3646; --text: #eef2f7; --text-muted: #93a1b1; --font: 'Segoe UI', system-ui, sans-serif; }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); padding: 28px; }
+      h1 { font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 4px; }
+      p.sub { margin: 0 0 22px; color: var(--text-muted); font-size: 13px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+      .skin { border: 1px solid var(--border); border-radius: 12px; padding: 14px; background: var(--surface); }
+      .swatch { height: 44px; border-radius: 8px; margin-bottom: 12px; }
+      .btn { display: inline-block; padding: 7px 14px; border-radius: 999px; color: #fff; font-weight: 700; font-size: 13px; }
+      .name { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+    </style>
+  </head>
+  <body>
+    <h1>Mağaza Temaları</h1>
+    <p class="sub">Yalnız <code>--accent</code> / <code>--accent-2</code> değişir; oyun durumu renkleri (WCAG ölçülü) korunur.</p>
+    <div class="grid">
+      <div class="skin"><div class="name">Klasik</div><div class="swatch" style="background: linear-gradient(135deg, #6c8cff, #9d7bff)"></div><span class="btn" style="background: #6c8cff">Oyna</span></div>
+      <div class="skin"><div class="name">Okyanus</div><div class="swatch" style="background: linear-gradient(135deg, #22b8cf, #3b82f6)"></div><span class="btn" style="background: #22b8cf">Oyna</span></div>
+      <div class="skin"><div class="name">Gün batımı</div><div class="swatch" style="background: linear-gradient(135deg, #f97316, #ec4899)"></div><span class="btn" style="background: #f97316">Oyna</span></div>
+      <div class="skin"><div class="name">Orman</div><div class="swatch" style="background: linear-gradient(135deg, #22c55e, #84cc16)"></div><span class="btn" style="background: #22c55e">Oyna</span></div>
+      <div class="skin"><div class="name">Üzüm</div><div class="swatch" style="background: linear-gradient(135deg, #a855f7, #6366f1)"></div><span class="btn" style="background: #a855f7">Oyna</span></div>
+      <div class="skin"><div class="name">Gül</div><div class="swatch" style="background: linear-gradient(135deg, #f43f5e, #fb7185)"></div><span class="btn" style="background: #f43f5e">Oyna</span></div>
+      <div class="skin"><div class="name">🏆 Şampiyon</div><div class="swatch" style="background: linear-gradient(135deg, #e8b923, #c084fc)"></div><span class="btn" style="background: #e8b923; color: #241a02">Oyna</span></div>
+    </div>
+  </body>
+</html>

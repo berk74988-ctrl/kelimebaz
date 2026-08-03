@@ -1,0 +1,53 @@
+<!-- @dsCard group="Boşluk & Yarıçap" -->
+<!doctype html>
+<html lang="tr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Boşluk & Yarıçap</title>
+    <style>
+      :root {
+        --bg: #10131a;
+        --surface: #191e28;
+        --surface-2: #222836;
+        --border: #2e3646;
+        --text: #eef2f7;
+        --text-muted: #93a1b1;
+        --accent: #6c8cff;
+        --font: 'Segoe UI', system-ui, sans-serif;
+        --mono: 'JetBrains Mono', Consolas, ui-monospace, monospace;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); padding: 28px; }
+      h1 { font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 20px; }
+      h2 { font-size: 13px; margin: 0 0 12px; }
+      .scale { display: grid; gap: 10px; margin-bottom: 28px; }
+      .bar { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 14px; }
+      .bar .lbl { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
+      .bar .box { height: 16px; background: var(--accent); border-radius: 4px; }
+      .radii { display: flex; gap: 16px; flex-wrap: wrap; }
+      .rad { text-align: center; }
+      .rad .demo { width: 96px; height: 64px; background: var(--surface-2); border: 1px solid var(--border); }
+      .rad .lbl { margin-top: 8px; font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
+    </style>
+  </head>
+  <body>
+    <h1>Boşluk & Yarıçap</h1>
+
+    <h2>Boşluk ölçeği (4px tabanlı)</h2>
+    <div class="scale">
+      <div class="bar"><span class="lbl">--space-1 · 4</span><div class="box" style="width: 4px"></div></div>
+      <div class="bar"><span class="lbl">--space-2 · 8</span><div class="box" style="width: 8px"></div></div>
+      <div class="bar"><span class="lbl">--space-3 · 16</span><div class="box" style="width: 16px"></div></div>
+      <div class="bar"><span class="lbl">--space-4 · 24</span><div class="box" style="width: 24px"></div></div>
+      <div class="bar"><span class="lbl">--space-5 · 40</span><div class="box" style="width: 40px"></div></div>
+    </div>
+
+    <h2>Köşe yarıçapı</h2>
+    <div class="radii">
+      <div class="rad"><div class="demo" style="border-radius: 8px"></div><div class="lbl">--radius-sm · 8</div></div>
+      <div class="rad"><div class="demo" style="border-radius: 12px"></div><div class="lbl">--radius · 12</div></div>
+      <div class="rad"><div class="demo" style="border-radius: 20px"></div><div class="lbl">--radius-lg · 20</div></div>
+    </div>
+  </body>
+</html>

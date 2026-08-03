@@ -1,0 +1,57 @@
+<!-- @dsCard group="Kartlar" -->
+<!doctype html>
+<html lang="tr" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kartlar</title>
+    <style>
+      :root {
+        --bg: #10131a; --surface: #191e28; --surface-2: #222836; --border: #2e3646;
+        --text: #eef2f7; --text-muted: #93a1b1; --accent: #6c8cff; --accent-2: #9d7bff;
+        --present: #d9a441; --radius: 12px; --radius-lg: 20px;
+        --font: 'Segoe UI', system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); padding: 28px; }
+      h1 { font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); margin: 0 0 18px; }
+      .wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; align-items: start; }
+      .mode {
+        display: flex; align-items: center; gap: 14px; text-align: left;
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+        padding: 16px 18px;
+      }
+      .mode .ico { font-size: 26px; }
+      .mode b { display: block; font-size: 16px; }
+      .mode span { color: var(--text-muted); font-size: 13px; }
+      .mode .arw { margin-left: auto; color: var(--text-muted); }
+      .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+      .stat .n { font-size: 26px; font-weight: 800; }
+      .stat .l { color: var(--text-muted); font-size: 12px; }
+      .hint {
+        background: color-mix(in srgb, var(--present) 12%, var(--surface));
+        border: 1px solid color-mix(in srgb, var(--present) 34%, var(--border));
+        border-radius: var(--radius); padding: 12px 14px; font-size: 14px;
+      }
+      .hint b { color: var(--present); }
+    </style>
+  </head>
+  <body>
+    <h1>Kartlar</h1>
+    <div class="wrap">
+      <div class="mode">
+        <span class="ico">🗓️</span>
+        <span><b>Günün Kelimesi</b><span>Herkes için aynı · günde bir</span></span>
+        <span class="arw">→</span>
+      </div>
+      <div class="tiles">
+        <div class="stat"><div class="n">128</div><div class="l">Oynanan</div></div>
+        <div class="stat"><div class="n">%74</div><div class="l">Kazanma</div></div>
+        <div class="stat"><div class="n">12</div><div class="l">Seri</div></div>
+        <div class="stat"><div class="n">18</div><div class="l">En iyi</div></div>
+      </div>
+      <div class="hint">🏷️ <b>İsim</b> — Artikel: die</div>
+    </div>
+  </body>
+</html>
