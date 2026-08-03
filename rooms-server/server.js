@@ -1503,6 +1503,30 @@ const routes = {
       measureBusy = false;
     }
   },
+
+  // --- İÇERİK KAPSAMI (LLM içerik paketi · Faz A) ---
+  // ADMIN: her içerik türü için toplam/kapsanan/eksik + eksik örnek. Kaynak:
+  // content-index.json (scripts/build-content-index.mjs, CI ile AYNI çekirdek →
+  // "iki yerde farklı sonuç çıkmaz"). İndeks yoksa boş döner (henüz üretilmemiş).
+  'GET /admin/content/coverage': async (req, res) => {
+    if (!requireSession(req, res, 'content_coverage')) return;
+    let idx;
+    try {
+      idx = JSON.parse(fs.readFileSync(path.join(__dirname, 'content-index.json'), 'utf8'));
+    } catch {
+      return send(res, 200, { generatedAt: null, categories: [] });
+    }
+    const MAX = 300; // eksik örnek üst sınırı (yanıt boyutu koruması)
+    const categories = (idx.categories || []).map((c) => ({
+      id: c.id,
+      label: c.label,
+      total: c.total,
+      covered: c.covered,
+      missingCount: c.total - c.covered,
+      missingSample: (c.missing || []).slice(0, MAX),
+    }));
+    send(res, 200, { generatedAt: idx.generatedAt, categories });
+  },
 };
 
 // --- Telemetri bakımı: açılışta + günde bir kez (eski kayıt temizliği + yedek) ---

@@ -32,6 +32,7 @@
     "review:apply": "node tools/content-review/apply-reviews.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
     "check:coverage": "node scripts/check-content-coverage.mjs",
+    "build:content-index": "node scripts/build-content-index.mjs",
     "check:hint-tr": "node scripts/hint-check-tr-native.mjs",
     "check:hint-en": "node scripts/hint-check-en.mjs",
     "check:hint-de": "node scripts/hint-check-de.mjs",

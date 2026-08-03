@@ -371,6 +371,7 @@
         <button data-t="balance">Denge</button>
         <button data-t="ai">🤖 YZ</button>
         <button data-t="aibeh">🎚️ YZ Güç</button>
+        <button data-t="content">📚 İçerik</button>
       </div>
       <div class="ranges" id="ranges">
         <button data-r="today">Bugün</button>
@@ -1346,6 +1347,54 @@
         loadAIBeh();
       }
 
+      // --- 📚 İçerik kapsamı (LLM içerik paketi · Faz A) ---
+      async function loadContent() {
+        try {
+          const d = await (await api('/content/coverage')).json();
+          renderContent(d);
+        } catch (e) {
+          if (e.message !== 'auth')
+            $('#main').innerHTML = `<div class="empty">Alınamadı: ${esc(e.message)}</div>`;
+        }
+      }
+
+      function renderContent(d) {
+        if (!d.categories || !d.categories.length) {
+          $('#main').innerHTML = `<div class="empty">İçerik indeksi henüz üretilmemiş.<br />
+            <span class="pill">node scripts/build-content-index.mjs</span> çalıştırılıp sunucuya kopyalanmalı.</div>`;
+          return;
+        }
+        const rows = d.categories
+          .map((c) => {
+            const pct = c.total ? Math.round((c.covered / c.total) * 100) : 100;
+            const full = c.missingCount === 0;
+            const col = full ? 'var(--good, #2ec16e)' : pct >= 80 ? '#e0a63a' : '#d9534f';
+            const sample =
+              c.missingCount > 0
+                ? `<div class="foot" style="text-align:left;margin-top:4px">eksik örnek: ${c.missingSample
+                    .slice(0, 40)
+                    .map((w) => `<span class="pill">${esc(w)}</span>`)
+                    .join(' ')}${c.missingCount > c.missingSample.length ? ` <span class="pill">+${c.missingCount - c.missingSample.length} daha</span>` : ''}</div>`
+                : '';
+            return `<section style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
+                <b>${esc(c.label)}</b>
+                <span class="mono">${c.covered}/${c.total} · %${pct}${full ? ' ✅' : ` · <span style="color:${col}">${c.missingCount} eksik</span>`}</span>
+              </div>
+              <div style="background:var(--line);border-radius:6px;height:12px;overflow:hidden;margin-top:6px">
+                <div style="width:${pct}%;height:100%;background:${col}"></div>
+              </div>
+              ${sample}
+            </section>`;
+          })
+          .join('');
+        $('#main').innerHTML = `
+          <p class="foot" style="text-align:left">Her içerik türü için <b>yayındaki (gömülü) kapsam</b>: kaç cevap kelimesinde ipucu/kart/zorluk var. Kaynak CI kontrolüyle (OYUN-261) <b>aynı çekirdek</b> — panel ve CI aynı sonucu verir. Yeni kelime eklenip içerik geride kalırsa buradan görülür.</p>
+          <p class="foot" style="text-align:left"><span class="pill">İndeks: ${d.generatedAt ? new Date(d.generatedAt).toLocaleString('tr') : 'yok'}</span></p>
+          ${rows}
+          <p class="foot" style="text-align:left;margin-top:14px">Sonraki fazlar (bu pakette karar verildi, kod aşamalı): eksikler için <b>panelden üretim</b> (maliyet onayı + günlük bütçe), otomatik ön denetim, <b>onay kuyruğu</b> (onayla/reddet/düzelt), yayına alma. Mimari: sunucu overlay + depoya dışa aktarma (bkz. docs/yz-icerik-panel-karari.md).</p>`;
+      }
+
       // --- Ortak yükleme / sekme ---
       async function loadSummary() {
         const base = location.pathname.replace(/\/$/, '');
@@ -1374,6 +1423,7 @@
         if (tab === 'balance') return loadBalance();
         if (tab === 'ai') return loadAI();
         if (tab === 'aibeh') return loadAIBeh();
+        if (tab === 'content') return loadContent();
         return tab === 'words' ? loadWords() : loadSummary();
       }
 
