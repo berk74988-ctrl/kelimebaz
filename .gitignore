@@ -60,3 +60,8 @@ rooms-server/words.json
 rooms-server/words-en.json
 rooms-server/daily-overrides.json
 rooms-server/balance-overrides.json
+
+# Sıkıştırılmamış müzik KAYNAĞI — yayına gitmez, çıktı (public/music.*) zaten depoda.
+# 4.2 MB; her klonlayana yük olmasın diye takip edilmez. Yeri: scripts/build-music.mjs
+# başındaki nota bak. Yeniden kodlamak için kaynağı buraya koyup: npm run build:music
+audio-src/

@@ -2,7 +2,11 @@
  * MÜZİK OPTİMİZE EDİCİ — kaynak parçayı arka plan müziği için küçük, döngüye
  * uygun dosyalara yeniden kodlar (ffmpeg-static ile; sistem ffmpeg gerekmez).
  *
- * Kaynak: audio-src/music-source.mp3 (repo'da tutulur, YAYINA GİTMEZ).
+ * KAYNAK: audio-src/music-source.mp3 (4.2 MB). GİT'TE TAKİP EDİLMEZ (.gitignore) —
+ * yayına gitmez ve her klonlayana yük olmasın. Çalışma ağacında audio-src/ altında
+ * durur; bu depo OneDrive'da (C:\Users\berk8\OneDrive\Belgeler\GitHub\kelimebaz)
+ * olduğundan kaynak OneDrive ile buluta yedeklidir. Taze bir klonda dosya OLMAZ →
+ * bu betiği çalıştırmadan önce kaynağı OneDrive'dan audio-src/ altına koy.
  * Çıktı (public/, yayına gider):
  *   music.ogg  → Opus 96k (birincil; Chrome/Firefox/Edge/Android)
  *   music.mp3  → MP3 96k  (yedek; Safari/iOS — Opus oynatamayan her yer)
@@ -15,13 +19,27 @@
  */
 import ffmpegPath from 'ffmpeg-static';
 import { execFileSync } from 'node:child_process';
-import { statSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const root = new URL('../', import.meta.url);
 const SRC = fileURLToPath(new URL('audio-src/music-source.mp3', root));
 const OUT_OGG = fileURLToPath(new URL('public/music.ogg', root));
 const OUT_MP3 = fileURLToPath(new URL('public/music.mp3', root));
+
+// Kaynak git'te takip edilmez → taze klonda yoktur. Ham ENOENT yerine ANLAŞILIR hata:
+if (!existsSync(SRC)) {
+  console.error(
+    'HATA: Kaynak müzik dosyası bulunamadı:\n' +
+      `  ${SRC}\n\n` +
+      'Bu dosya depoya DAHİL DEĞİLDİR (4.2 MB, yayına gitmez → .gitignore). Yalnızca\n' +
+      'müziği yeniden kodlamak için gerekir; sıkıştırılmış çıktılar (public/music.mp3\n' +
+      've public/music.ogg) zaten depoda ve yayında.\n\n' +
+      'ÇÖZÜM: Kaynağı OneDrive yedeğinden (repo OneDrive altında senkronludur) audio-src/\n' +
+      'klasörüne "music-source.mp3" adıyla koy, sonra tekrar çalıştır: npm run build:music',
+  );
+  process.exit(1);
+}
 
 const TRIM = '128'; // saniye — outro fade + sondaki sessizlik atılır (döngü için)
 const FADE = 'afade=t=in:st=0:d=0.06,afade=t=out:st=127.9:d=0.1'; // seam tık koruması
