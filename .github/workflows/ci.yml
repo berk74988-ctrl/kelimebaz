@@ -45,6 +45,10 @@ jobs:
           npm run check:hint-en
           npm run check:hint-de
 
+      # Kelime kartı: her cevap kelimesinde tanım + örnek cümle (TR + EN).
+      - name: Kelime kartı denetimi (TR + EN)
+        run: npm run check:cards
+
       - name: Birim testleri (vitest)
         run: npm test -- --watch=false
 

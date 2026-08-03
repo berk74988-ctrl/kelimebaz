@@ -3,10 +3,10 @@
   "updatedFrom": "node scripts/check-content-coverage.mjs --update",
   "allowed": {
     "tr.hint": 0,
-    "tr.card": 2240,
+    "tr.card": 0,
     "tr.difficulty": 0,
     "en.hint": 0,
-    "en.card": 2828,
+    "en.card": 0,
     "en.difficulty": 0,
     "de.hint": 0,
     "theme.tr": 0,

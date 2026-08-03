@@ -35,6 +35,7 @@
     "check:hint-tr": "node scripts/hint-check-tr-native.mjs",
     "check:hint-en": "node scripts/hint-check-en.mjs",
     "check:hint-de": "node scripts/hint-check-de.mjs",
+    "check:cards": "node scripts/card-check.mjs",
     "build:dictionary": "node scripts/build-dictionary.mjs",
     "build:icons": "node scripts/build-pwa-icons.mjs",
     "build:word-difficulty": "node scripts/build-word-difficulty.mjs",
