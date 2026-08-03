@@ -9,3 +9,5 @@ src/app/data/
 src/i18n/
 public/
 audio-src/
+# Derleme zamanı üretilen YZ açılış listesi (build-ai-openers.mjs) — uzun diziler
+src/app/core/ai-openers.ts

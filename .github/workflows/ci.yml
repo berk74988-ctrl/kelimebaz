@@ -33,6 +33,11 @@ jobs:
       - name: Çeviri tutarlılığı (i18n)
         run: npm run check:i18n
 
+      # İçerik kapsamı: cevap havuzu ↔ ipucu/kart/zorluk + tema→sözlük. Havuz büyüyüp
+      # içerik geride kalırsa (Faz 2'deki sessiz boşluk) burada KIRMIZI olur.
+      - name: İçerik kapsamı (havuz ↔ ipucu/kart/zorluk)
+        run: npm run check:coverage
+
       - name: Birim testleri (vitest)
         run: npm test -- --watch=false
 

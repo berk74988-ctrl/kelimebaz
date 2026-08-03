@@ -31,6 +31,7 @@
     "review:content": "node tools/content-review/server.mjs",
     "review:apply": "node tools/content-review/apply-reviews.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
+    "check:coverage": "node scripts/check-content-coverage.mjs",
     "build:dictionary": "node scripts/build-dictionary.mjs",
     "build:icons": "node scripts/build-pwa-icons.mjs",
     "build:word-difficulty": "node scripts/build-word-difficulty.mjs",

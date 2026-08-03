@@ -163,7 +163,8 @@ function solve(answer, cfg) {
   while (attempts < MAX_ATTEMPTS) {
     let pick;
     if (cands.length <= 2) pick = cands[0];
-    else if (attempts >= MAX_ATTEMPTS - 2) pick = rankGuess(cands, cfg, true); // güvenlik freni
+    else if (attempts >= MAX_ATTEMPTS - 2)
+      pick = rankGuess(cands, cfg, true); // güvenlik freni
     else if (attempts === 0) pick = pickOpener(cfg);
     else if (cfg.gamble && cands.length > 8 && rnd() < cfg.gamble)
       pick = cands[Math.floor(rnd() * cands.length)];
