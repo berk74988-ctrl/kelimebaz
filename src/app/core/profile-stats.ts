@@ -27,11 +27,12 @@ export interface ProfileStat {
   value: (s: Stats, lang?: Lang) => string;
 }
 
-/** Sayıyı aktif dilin binlik ayracıyla biçimler (tr: 1.000 · en: 1,000). */
-const fmt = (n: number, lang: Lang = 'tr') => n.toLocaleString(lang === 'en' ? 'en' : 'tr');
+/** Sayıyı aktif dilin binlik ayracıyla biçimler (tr/de: 1.000 · en: 1,000). */
+const fmt = (n: number, lang: Lang = 'tr') =>
+  n.toLocaleString(lang === 'en' ? 'en' : lang === 'de' ? 'de' : 'tr');
 
-/** Yüzdeyi dile göre biçimler (tr: %89 · en: 89%). */
-const pct = (r: number, lang: Lang = 'tr') => (lang === 'en' ? `${r}%` : `%${r}`);
+/** Yüzdeyi dile göre biçimler (tr: %89 · en/de: 89%). */
+const pct = (r: number, lang: Lang = 'tr') => (lang === 'tr' ? `%${r}` : `${r}%`);
 
 /** Kazanma oranı — yüzde işareti dile göre konumlanır (tr: %89 · en: 89%). */
 const rate = (s: Stats, lang: Lang = 'tr') =>

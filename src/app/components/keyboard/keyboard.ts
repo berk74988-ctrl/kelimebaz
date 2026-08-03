@@ -16,11 +16,21 @@ export const EN_ROWS: readonly (readonly string[])[] = [
   ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'SİL'],
 ];
 
+/** Almanca klavye düzeni — QWERTZ + Ä Ö Ü (ß yok; havuzda kullanılmaz). */
+export const DE_ROWS: readonly (readonly string[])[] = [
+  ['Q', 'W', 'E', 'R', 'T', 'Z', 'U', 'I', 'O', 'P', 'Ü'],
+  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ö', 'Ä'],
+  ['ENTER', 'Y', 'X', 'C', 'V', 'B', 'N', 'M', 'SİL'],
+];
+
 /** Geçerli Türkçe harfler (fiziksel klavye girişini süzmek için). */
 export const TR_LETTERS = new Set(TR_ROWS.flat().filter((k) => k !== 'ENTER' && k !== 'SİL'));
 
 /** Geçerli İngilizce harfler. */
 export const EN_LETTERS = new Set(EN_ROWS.flat().filter((k) => k !== 'ENTER' && k !== 'SİL'));
+
+/** Geçerli Almanca harfler. */
+export const DE_LETTERS = new Set(DE_ROWS.flat().filter((k) => k !== 'ENTER' && k !== 'SİL'));
 
 /**
  * TÜRKÇE OLMAYAN FİZİKSEL KLAVYELER İÇİN TUŞ KONUMU EŞLEMESİ.
@@ -67,8 +77,10 @@ export class Keyboard {
   readonly enter = output<void>();
   readonly backspace = output<void>();
 
-  /** Aktif dile göre klavye düzeni (TR: 29 harf · EN: QWERTY). */
-  protected readonly rows = computed(() => (this.i18n.lang() === 'en' ? EN_ROWS : TR_ROWS));
+  /** Aktif dile göre klavye düzeni (TR: 29 harf · EN: QWERTY · DE: QWERTZ+ÄÖÜ). */
+  protected readonly rows = computed(() =>
+    this.i18n.lang() === 'en' ? EN_ROWS : this.i18n.lang() === 'de' ? DE_ROWS : TR_ROWS,
+  );
 
   protected press(key: string): void {
     if (key === 'ENTER') this.enter.emit();

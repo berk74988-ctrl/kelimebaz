@@ -44,7 +44,12 @@ export class LanguageService {
     const existing = this.inflight.get(lang);
     if (existing) return existing;
     // Not: yeni dil eklerken buraya bir kol ekle (tr gömülü, gerisi tembel).
-    const load = lang === 'en' ? import('../../i18n/en.json') : Promise.resolve(null);
+    const load =
+      lang === 'en'
+        ? import('../../i18n/en.json')
+        : lang === 'de'
+          ? import('../../i18n/de.json')
+          : Promise.resolve(null);
     const p = load
       .then((m) => {
         if (m) this.dicts.set(lang, (m as { default?: Dict }).default ?? (m as unknown as Dict));
@@ -66,7 +71,7 @@ export class LanguageService {
   private readonly telemetry = inject(TelemetryService);
 
   set(lang: Lang): void {
-    if (lang !== 'tr' && lang !== 'en') return;
+    if (lang !== 'tr' && lang !== 'en' && lang !== 'de') return;
     const changed = this._lang() !== lang;
     this._lang.set(lang);
     try {
@@ -96,9 +101,9 @@ export class LanguageService {
     return upperFor(s, this._lang());
   }
 
-  /** Sayıyı aktif dilin binlik ayracıyla biçimler (tr: 1.000 · en: 1,000). */
+  /** Sayıyı aktif dilin binlik ayracıyla biçimler (tr/de: 1.000 · en: 1,000). */
   num(n: number): string {
-    return n.toLocaleString(this._lang() === 'en' ? 'en' : 'tr');
+    return n.toLocaleString(this._lang() === 'en' ? 'en' : this._lang() === 'de' ? 'de' : 'tr');
   }
 
   private apply(): void {
@@ -125,13 +130,13 @@ export class LanguageService {
   private load(): Lang {
     try {
       const u = new URLSearchParams(location.search).get('lang');
-      if (u === 'en' || u === 'tr') return u;
+      if (u === 'en' || u === 'tr' || u === 'de') return u;
     } catch {
       /* location yok / erişilemez */
     }
     try {
       const v = localStorage.getItem(KEY);
-      if (v === 'en' || v === 'tr') return v;
+      if (v === 'en' || v === 'tr' || v === 'de') return v;
     } catch {
       /* yoksay */
     }

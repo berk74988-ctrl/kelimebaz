@@ -57,7 +57,11 @@ export class HintService {
     const existing = this.inflight.get(lang);
     if (existing) return existing;
     const p = (
-      lang === 'tr' ? import('../data/hints-tr-native.json') : import('../data/hints-tr.json')
+      lang === 'tr'
+        ? import('../data/hints-tr-native.json')
+        : lang === 'de'
+          ? import('../data/hints-de.json')
+          : import('../data/hints-tr.json')
     )
       .then((m) => {
         const map = ((m as { default?: unknown }).default ?? m) as HintMap;

@@ -57,7 +57,7 @@ export class SettingsModal implements AfterViewInit {
   }
 
   /** Dili değiştir — anında uygulanır (metinler ve kelime havuzu). */
-  protected setLang(l: 'tr' | 'en'): void {
+  protected setLang(l: 'tr' | 'en' | 'de'): void {
     this.i18n.set(l);
   }
 

@@ -13,7 +13,7 @@
     </div>
     <div class="stat">
       <b>{{
-        i18n.lang() === 'en' ? statsService.winRate() + '%' : '%' + statsService.winRate()
+        i18n.lang() !== 'tr' ? statsService.winRate() + '%' : '%' + statsService.winRate()
       }}</b>
       <span>{{ i18n.t('statspanel.winRate') }}</span>
     </div>

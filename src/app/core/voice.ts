@@ -21,6 +21,7 @@ import { Lang, upperFor } from './lang';
 const LETTERS: Record<Lang, ReadonlySet<string>> = {
   tr: new Set([...'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ']),
   en: new Set([...'ABCDEFGHIJKLMNOPQRSTUVWXYZ']),
+  de: new Set([...'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ']),
 };
 
 /**

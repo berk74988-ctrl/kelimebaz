@@ -38,6 +38,7 @@ export const MIN_GAMES = 5;
 const VOWELS: Record<Lang, ReadonlySet<string>> = {
   tr: new Set([...'AEIİOÖUÜ']),
   en: new Set([...'AEIOU']),
+  de: new Set([...'AEIOUÄÖÜ']),
 };
 
 const chars = (w: string) => [...w];

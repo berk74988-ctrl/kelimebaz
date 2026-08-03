@@ -106,7 +106,8 @@ export function guessEntropy(
 
 /** Derleme zamanında hesaplanmış SIRALI açılış listesi (ilk tur gecikmesiz). */
 export function aiOpeners(lang: Lang, length: number): readonly string[] {
-  return AI_OPENERS[lang]?.[length] ?? [];
+  // tr/en için önceden hesaplı açılışlar var; de'de yok → boş (solver normal seçer).
+  return (AI_OPENERS as Record<string, Record<number, readonly string[]>>)[lang]?.[length] ?? [];
 }
 
 export interface AiGuess {

@@ -173,11 +173,17 @@ export class WordService {
             import('../data/valid-words.json'),
             import('../data/word-difficulty-tr.json'),
           ])
-        : await Promise.all([
-            import('../data/words-en.json'),
-            import('../data/valid-words-en.json'),
-            import('../data/word-difficulty-en.json'),
-          ]);
+        : lang === 'de'
+          ? await Promise.all([
+              import('../data/words-de.json'),
+              import('../data/valid-words-de.json'),
+              import('../data/word-difficulty-de.json'),
+            ])
+          : await Promise.all([
+              import('../data/words-en.json'),
+              import('../data/valid-words-en.json'),
+              import('../data/word-difficulty-en.json'),
+            ]);
     const a = ((answersMod as { default?: unknown }).default ?? answersMod) as { words: string[] };
     const v = ((validMod as { default?: unknown }).default ?? validMod) as { words: string };
     const d = ((diffMod as { default?: unknown }).default ?? diffMod) as {

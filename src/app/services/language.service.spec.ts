@@ -56,8 +56,8 @@ describe('LanguageService — dil değişimi', () => {
       expect(lang.t('league.season', { n: 3 })).toBe('3. Dönem');
     });
 
-    it('geçersiz dil yok sayılır (tr/en dışı)', () => {
-      lang.set('de' as never);
+    it('geçersiz dil yok sayılır (tr/en/de dışı)', () => {
+      lang.set('fr' as never);
       expect(lang.lang()).toBe('tr');
     });
   });

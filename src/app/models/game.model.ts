@@ -37,7 +37,7 @@ export interface SavedGame {
   guesses: string[];
   status: GameStatus;
   /** Kaydın dili — dil değişince eski dildeki oyun sürdürülmez, taze başlar. */
-  lang?: 'tr' | 'en';
+  lang?: 'tr' | 'en' | 'de';
 }
 
 /**

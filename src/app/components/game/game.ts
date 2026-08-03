@@ -21,7 +21,13 @@ import { StatsService } from '../../services/stats.service';
 import { ThemeService } from '../../services/theme.service';
 import { VoiceInputService } from '../../services/voice-input.service';
 import { Board } from '../board/board';
-import { EN_LETTERS, Keyboard, TR_KEY_POSITIONS, TR_LETTERS } from '../keyboard/keyboard';
+import {
+  DE_LETTERS,
+  EN_LETTERS,
+  Keyboard,
+  TR_KEY_POSITIONS,
+  TR_LETTERS,
+} from '../keyboard/keyboard';
 import { ResultModal } from '../result-modal/result-modal';
 import { StatsModal } from '../stats-modal/stats-modal';
 import { Toast } from '../toast/toast';
@@ -373,8 +379,8 @@ export class Game {
     }
 
     // 1) Tuşun kendisi doğru harfi verir (aktif dilin harf setine göre süz).
-    const isEn = this.i18n.lang() === 'en';
-    const letters = isEn ? EN_LETTERS : TR_LETTERS;
+    const lang = this.i18n.lang();
+    const letters = lang === 'en' ? EN_LETTERS : lang === 'de' ? DE_LETTERS : TR_LETTERS;
     const ch = this.i18n.upper(e.key);
     if ([...ch].length === 1 && letters.has(ch)) {
       e.preventDefault();
@@ -384,8 +390,8 @@ export class Game {
 
     // 2) TÜRKÇE modda, Türkçe olmayan fiziksel klavyeler için KONUMA bak.
     //    US klavyede ';' tuşu Türkçe düzende Ş'nin yerindedir → Ş yaz.
-    //    (İngilizce modda gerek yok — harfler zaten event.key ile gelir.)
-    if (!isEn) {
+    //    (İngilizce/Almanca modda gerek yok — harfler zaten event.key ile gelir.)
+    if (lang === 'tr') {
       const byPosition = TR_KEY_POSITIONS[e.code];
       if (byPosition) {
         e.preventDefault();

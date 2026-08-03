@@ -79,7 +79,8 @@ export class VoiceInputService {
       return;
     }
     this.rec = rec;
-    rec.lang = this.i18n.lang() === 'en' ? 'en-US' : 'tr-TR';
+    const lang = this.i18n.lang();
+    rec.lang = lang === 'en' ? 'en-US' : lang === 'de' ? 'de-DE' : 'tr-TR';
     rec.interimResults = false;
     rec.maxAlternatives = 3;
     rec.continuous = false;

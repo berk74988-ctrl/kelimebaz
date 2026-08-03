@@ -37,6 +37,14 @@ describe('voiceToLetters', () => {
     expect(voiceToLetters(null, 'tr')).toBe('');
   });
 
+  it('Almanca umlaut harflerini korur; ß büyük harfte SS olur', () => {
+    expect(voiceToLetters('Zeit', 'de', 5)).toBe('ZEIT');
+    expect(voiceToLetters('grün', 'de', 5)).toBe('GRÜN');
+    expect(voiceToLetters('Mädchen', 'de', 7)).toBe('MÄDCHEN');
+    // ß Almanca büyük harfte SS'e döner (havuzda ß'li kelime yok; yine de bozulmaz)
+    expect(voiceToLetters('straße', 'de', 7)).toBe('STRASSE');
+  });
+
   it('Türkçe özel harfleri korur', () => {
     // ç ğ ş ö ü İ — büyük harf yerelden bağımsız alfabede olmalı
     const out = voiceToLetters('güçlü', 'tr', 5);

@@ -45,6 +45,15 @@
         >
           {{ i18n.t('settings.langEn') }}
         </button>
+        <button
+          type="button"
+          class="lang-opt"
+          [class.on]="i18n.lang() === 'de'"
+          [attr.aria-pressed]="i18n.lang() === 'de'"
+          (click)="setLang('de')"
+        >
+          {{ i18n.t('settings.langDe') }}
+        </button>
       </div>
     </div>
 
@@ -93,7 +102,7 @@
           (input)="onMusicVol($event)"
         />
         <span class="pc">{{
-          i18n.lang() === 'en' ? pct(audio.musicVol()) + '%' : '%' + pct(audio.musicVol())
+          i18n.lang() !== 'tr' ? pct(audio.musicVol()) + '%' : '%' + pct(audio.musicVol())
         }}</span>
       </div>
     </div>
@@ -131,7 +140,7 @@
           (input)="onSfxVol($event)"
         />
         <span class="pc">{{
-          i18n.lang() === 'en' ? pct(audio.sfxVol()) + '%' : '%' + pct(audio.sfxVol())
+          i18n.lang() !== 'tr' ? pct(audio.sfxVol()) + '%' : '%' + pct(audio.sfxVol())
         }}</span>
       </div>
     </div>
