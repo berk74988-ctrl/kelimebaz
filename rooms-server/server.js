@@ -87,6 +87,17 @@ try {
   console.error('[denge] başlatılamadı:', e.message);
 }
 
+// YZ AYAR DEPOSU — çalışma zamanı model + çağrı parametreleri (yeniden başlatmasız).
+// Depo yalnız modeli/parametreleri yönetir; API anahtarı burada YOK.
+const aiConfigMod = require('./ai-config');
+let aiConfig = null;
+try {
+  aiConfig = aiConfigMod.open({ file: process.env.AI_CONFIG_FILE });
+  console.log(`[yz] ayar deposu hazır · model=${aiConfig.current().model}`);
+} catch (e) {
+  console.error('[yz] başlatılamadı:', e.message);
+}
+
 // --- YÖNETİM PANOSU kimlik doğrulaması (tek kullanıcı, oturum tabanlı) ---
 // Parola KARMASI env'de (düz metin yok). ADMIN_PASS_HASH yoksa panel KAPALI
 // (503) → asla kimlik doğrulamasız açılmaz. HTTPS ŞART (aşağıda httpsOk).
@@ -269,27 +280,43 @@ setInterval(
 // API anahtarı YALNIZCA sunucuda env'de durur; istemciye asla gönderilmez.
 // Anahtar yoksa özellik KAPALI: /health hint:false döner → istemci butonu gizler.
 const HINT_KEY = process.env.ANTHROPIC_API_KEY || '';
-const HINT_MODEL = process.env.HINT_MODEL || 'claude-opus-5';
+// Geriye dönük yedek: depo yüklenemezse env HINT_MODEL, o da yoksa opus-5.
+const HINT_MODEL_FALLBACK = process.env.HINT_MODEL || 'claude-opus-5';
 const HINT_RL_PER_MIN = Number(process.env.HINT_RL_PER_MIN || 8); // IP başına dakikada
 const HINT_ENABLED = !!HINT_KEY;
 
 // IP başına dakikalık hız sınırı (yukarıdaki genel fabrikayla).
 const rlHint = rateLimiter(HINT_RL_PER_MIN, 60_000);
 
-/** Anthropic Messages API'yi çağır (bağımlılıksız fetch — Node 18+). */
-async function callAnthropic(system, user) {
-  const body = {
-    model: HINT_MODEL,
-    max_tokens: 400,
-    system,
-    messages: [{ role: 'user', content: user }],
-  };
-  // opus/sonnet/fable ailesinde düşünmeyi kapat → hızlı ve ucuz (tek cümlelik iş).
-  // haiku bu parametreleri almaz; onda gönderme.
-  if (!/haiku/.test(HINT_MODEL)) {
-    body.thinking = { type: 'disabled' };
-    body.output_config = { effort: 'low' };
+/**
+ * Anahtarın yalnız maskelenmiş önekini döndür (panele değer ASLA gitmez).
+ * Örn. "sk-ant-api03-xxxx…" → "sk-ant…". Tanımlı değilse boş.
+ */
+function maskedKey() {
+  if (!HINT_KEY) return '';
+  return HINT_KEY.slice(0, 6) + '…';
+}
+
+/** Model ailesine göre çağrı gövdesi (depo yoksa yedek). system/messages çağıran ekler. */
+function anthropicRequestBase() {
+  if (aiConfig) return aiConfig.request();
+  const model = HINT_MODEL_FALLBACK;
+  const base = { model, max_tokens: 400 };
+  if (!/haiku/.test(model)) {
+    base.thinking = { type: 'disabled' };
+    base.output_config = { effort: 'low' };
   }
+  return base;
+}
+
+/**
+ * Anthropic Messages API'yi çağır (bağımlılıksız fetch — Node 18+).
+ * Dönüş: { text, latencyMs, inputTokens, outputTokens, model }.
+ * Model/parametreler YZ ayar deposundan gelir (panelden yönetilir).
+ */
+async function callAnthropicRaw(system, user, timeoutMs = 12_000) {
+  const body = { ...anthropicRequestBase(), system, messages: [{ role: 'user', content: user }] };
+  const t0 = Date.now();
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -298,14 +325,28 @@ async function callAnthropic(system, user) {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(12_000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
+  const latencyMs = Date.now() - t0;
   if (!r.ok) throw new Error('api_' + r.status);
   const data = await r.json();
-  return (data.content || [])
+  const text = (data.content || [])
     .filter((b) => b.type === 'text')
     .map((b) => b.text)
     .join(' ');
+  const usage = data.usage || {};
+  return {
+    text,
+    latencyMs,
+    inputTokens: usage.input_tokens || 0,
+    outputTokens: usage.output_tokens || 0,
+    model: data.model || body.model,
+  };
+}
+
+/** İnce sarmalayıcı: yalnız metin döndürür (/hint için). */
+async function callAnthropic(system, user) {
+  return (await callAnthropicRaw(system, user)).text;
 }
 // Varsayılan 127.0.0.1: servis YALNIZCA yerelde dinler, internete kapalı.
 // Dışarıya nginx /berk/rooms/ yolu üzerinden (aynı köken) açılır — böylece
@@ -1219,6 +1260,85 @@ const routes = {
       audit(req, 'balance_reset', true, String(body.key));
     }
     send(res, 200, { ok: true });
+  },
+
+  // --- YZ AYARLARI ---
+  // ADMIN: model kataloğu (fiyat/yetenek) + mevcut config + geçmiş + anahtar durumu.
+  // GÜVENLİK: API anahtarı DEĞERİ asla dönmez — yalnız tanımlı mı + maskelenmiş önek.
+  'GET /admin/ai': async (req, res) => {
+    if (!requireSession(req, res, 'ai')) return;
+    if (!aiConfig) return send(res, 503, { error: 'no_ai' });
+    send(res, 200, {
+      schema: aiConfig.schema(),
+      history: aiConfig.history(),
+      keyDefined: HINT_ENABLED,
+      keyPrefix: maskedKey(),
+    });
+  },
+
+  // ADMIN: config ata — GEÇERSİZ kombinasyon 400 (model ailesi kuralları).
+  'POST /admin/ai/set': async (req, res) => {
+    if (!requireSession(req, res, 'ai_set')) return;
+    if (!aiConfig) return send(res, 503, { error: 'no_ai' });
+    const body = await readJson(req);
+    const r = aiConfig.set(
+      {
+        model: body.model,
+        thinking: body.thinking,
+        effort: body.effort,
+        maxTokens: Number(body.maxTokens),
+      },
+      new Date().toISOString(),
+    );
+    if (r.error) {
+      audit(req, 'ai_set', false, `${body.model} · ${r.error}`);
+      return send(res, 400, { error: r.error });
+    }
+    audit(req, 'ai_set', true, `${r.config.model}/${r.config.thinking}/${r.config.effort}`);
+    send(res, 200, { ok: true, config: r.config });
+  },
+
+  // ADMIN: gömülü varsayılana döndür (tek tık geri al).
+  'POST /admin/ai/reset': async (req, res) => {
+    if (!requireSession(req, res, 'ai_reset')) return;
+    if (!aiConfig) return send(res, 503, { error: 'no_ai' });
+    aiConfig.reset(new Date().toISOString());
+    audit(req, 'ai_reset', true, 'varsayılana');
+    send(res, 200, { ok: true });
+  },
+
+  // ADMIN: CANLI TEST — mevcut ayarla örnek bir ipucu üret, gecikme+token+metin döndür.
+  // Anahtar yoksa 503; API hatasında {error} (oyun etkilenmez, bu yalnız tanılama).
+  'POST /admin/ai/test': async (req, res) => {
+    if (!requireSession(req, res, 'ai_test')) return;
+    if (!aiConfig) return send(res, 503, { error: 'no_ai' });
+    if (!HINT_ENABLED) return send(res, 503, { error: 'no_key' });
+    // Sabit örnek girdi (cevap modele gitmez — yalnız tahminler + desenler).
+    const lang = req && req.headers && /en/.test(String(req.headers['x-test-lang'] || '')) ? 'en' : 'tr';
+    const guesses = [
+      { word: 'ARABA', pattern: '10000' },
+      { word: 'SELİM', pattern: '01020' },
+    ];
+    try {
+      const out = await callAnthropicRaw(
+        hintUtil.systemPrompt(lang),
+        hintUtil.userPrompt(5, guesses, lang),
+        25_000, // test: daha uzun bekle (yüksek effort seçilmiş olabilir)
+      );
+      const text = hintUtil.sanitizeHint(out.text) || hintUtil.genericHint(lang);
+      audit(req, 'ai_test', true, `${out.model} · ${out.latencyMs}ms`);
+      send(res, 200, {
+        ok: true,
+        model: out.model,
+        latencyMs: out.latencyMs,
+        inputTokens: out.inputTokens,
+        outputTokens: out.outputTokens,
+        text,
+      });
+    } catch (e) {
+      audit(req, 'ai_test', false, String(e && e.message));
+      send(res, 502, { error: 'ai_unavailable', detail: String(e && e.message).slice(0, 40) });
+    }
   },
 };
 

@@ -369,6 +369,7 @@
         <button data-t="rooms">Odalar</button>
         <button data-t="daily">Takvim</button>
         <button data-t="balance">Denge</button>
+        <button data-t="ai">🤖 YZ</button>
       </div>
       <div class="ranges" id="ranges">
         <button data-r="today">Bugün</button>
@@ -1009,6 +1010,181 @@
         loadBalance();
       }
 
+      // --- 🤖 YZ ayarları ---
+      let AISCHEMA = null; // son yüklenen şema (model kataloğu + mevcut config)
+      const EFFORT_RANK = { low: 0, medium: 1, high: 2, xhigh: 3, max: 4 };
+
+      async function loadAI() {
+        try {
+          const d = await (await api('/ai')).json();
+          renderAI(d);
+        } catch (e) {
+          if (e.message !== 'auth')
+            $('#main').innerHTML = `<div class="empty">Alınamadı: ${esc(e.message)}</div>`;
+        }
+      }
+
+      function currentModelSpec() {
+        const id = $('#aiModel').value;
+        return AISCHEMA.schema.models.find((m) => m.id === id);
+      }
+
+      // Model/effort değişince: effort seçenekleri + "disabled" kuralını UI'da uygula.
+      function syncAiControls() {
+        const m = currentModelSpec();
+        const thinkWrap = $('#aiThinkWrap');
+        const effWrap = $('#aiEffWrap');
+        const note = $('#aiNote');
+        if (!m.effort) {
+          // haiku: thinking/output_config almaz → alanlar gizlenir
+          thinkWrap.style.display = 'none';
+          effWrap.style.display = 'none';
+          note.textContent =
+            'Bu model thinking/effort parametresi almaz — yalnız model + max_tokens gönderilir.';
+          return;
+        }
+        thinkWrap.style.display = '';
+        effWrap.style.display = '';
+        // effort seçeneklerini modele göre yeniden kur (seçili değeri koru)
+        const effSel = $('#aiEffort');
+        const prev = effSel.value;
+        effSel.innerHTML = m.effortLevels.map((e) => `<option value="${e}">${e}</option>`).join('');
+        if (m.effortLevels.includes(prev)) effSel.value = prev;
+        // "disabled" seçeneği: model ailesi kuralı
+        const thinkSel = $('#aiThinking');
+        const optDisabled = thinkSel.querySelector('option[value="disabled"]');
+        const maxD = m.disabledMaxEffort;
+        if (maxD == null) {
+          optDisabled.disabled = true;
+          if (thinkSel.value === 'disabled') thinkSel.value = 'adaptive';
+          note.textContent = 'Bu modelde düşünme daima açık — thinking yalnız "adaptive" olabilir.';
+        } else {
+          const allowed = EFFORT_RANK[effSel.value] <= EFFORT_RANK[maxD];
+          optDisabled.disabled = !allowed;
+          if (!allowed && thinkSel.value === 'disabled') thinkSel.value = 'adaptive';
+          note.textContent = `thinking="disabled" yalnız effort ≤ ${maxD} iken kullanılabilir.`;
+        }
+      }
+
+      function renderAI(d) {
+        AISCHEMA = d;
+        const s = d.schema;
+        const cur = s.current;
+        const key = d.keyDefined
+          ? `<span class="badge lock">tanımlı</span> <span class="pill">${esc(d.keyPrefix)}</span>`
+          : `<span class="badge flag">tanımlı değil</span>`;
+        const modelOpts = s.models
+          .map(
+            (m) =>
+              `<option value="${m.id}"${m.id === cur.model ? ' selected' : ''}>${esc(m.label)} — $${m.inUsd}/$${m.outUsd} (1M gir/çık)</option>`,
+          )
+          .join('');
+        const hist = d.history.length
+          ? d.history
+              .map((h) => {
+                const f = h.from || {},
+                  t = h.to || {};
+                const fS = `${f.model}·${f.thinking}·${f.effort}·${f.maxTokens}t`;
+                const tS = `${t.model}·${t.thinking}·${t.effort}·${t.maxTokens}t`;
+                return `<div class="rec"><b>${h.reset ? 'geri al' : 'değişiklik'}</b><span>${esc(fS)} → ${esc(tS)} · <span class="pill">${new Date(h.at).toLocaleString('tr')}</span></span></div>`;
+              })
+              .join('')
+          : '<div class="rec"><span class="pill">Henüz değişiklik yok</span></div>';
+
+        $('#main').innerHTML = `
+          <p class="foot" style="text-align:left">Çalışma zamanı Claude modeli ve çağrı parametreleri — <b>yeniden başlatmadan</b> buradan yönetilir. Geçersiz kombinasyon <b>reddedilir</b> (hem burada hem sunucuda). Model ya da API hatasında oyun <b>gömülü varsayılana</b> düşer, ipucu sessizce şablon davranışına iner — kullanıcı hata görmez. <b>Güvenlik:</b> API anahtarı sunucu ortam değişkeninde kalır, panele asla gönderilmez.</p>
+          <section>
+            <h2>API anahtarı</h2>
+            <p style="margin:6px 0">${key}</p>
+            ${d.keyDefined ? '' : '<p class="foot" style="text-align:left">Anahtar tanımlı değil → ipucu özelliği kapalı, canlı test yapılamaz. Sunucuda <span class="pill">ANTHROPIC_API_KEY</span> ayarlanmalı.</p>'}
+          </section>
+          <section>
+            <h2>Model ve parametreler ${s.overridden ? '<span class="badge lock">override</span>' : '<span class="pill">varsayılan</span>'}</h2>
+            <div class="filters">
+              <label>Model <select id="aiModel">${modelOpts}</select></label>
+              <label id="aiThinkWrap">Thinking
+                <select id="aiThinking">
+                  <option value="adaptive"${cur.thinking === 'adaptive' ? ' selected' : ''}>adaptive</option>
+                  <option value="disabled"${cur.thinking === 'disabled' ? ' selected' : ''}>disabled</option>
+                </select></label>
+              <label id="aiEffWrap">Effort <select id="aiEffort"></select></label>
+              <label>max_tokens
+                <input id="aiMax" type="number" min="${s.maxTokensRange.min}" max="${s.maxTokensRange.max}" step="1" value="${cur.maxTokens}" style="width:90px" /></label>
+            </div>
+            <p class="foot" id="aiNote" style="text-align:left;margin:6px 0"></p>
+            <div class="modact">
+              <button class="bset" id="aiSave">Kaydet</button>
+              ${s.overridden ? '<button class="danger" id="aiReset">↺ Varsayılana döndür</button>' : ''}
+              <button id="aiTest"${d.keyDefined ? '' : ' disabled'}>⚡ Canlı test</button>
+            </div>
+            <div id="aiTestOut"></div>
+          </section>
+          <section><h2>Değişiklik geçmişi</h2>${hist}</section>`;
+
+        // effort seçeneklerini mevcut modele göre kur (seçili effort korunur)
+        const m = s.models.find((x) => x.id === cur.model);
+        if (m.effort) {
+          $('#aiEffort').innerHTML = m.effortLevels
+            .map((e) => `<option value="${e}"${e === cur.effort ? ' selected' : ''}>${e}</option>`)
+            .join('');
+        }
+        syncAiControls();
+
+        $('#aiModel').onchange = syncAiControls;
+        $('#aiEffort').onchange = syncAiControls;
+        $('#aiSave').onclick = saveAI;
+        const rst = $('#aiReset');
+        if (rst) rst.onclick = resetAI;
+        $('#aiTest').onclick = testAI;
+      }
+
+      async function saveAI() {
+        const m = currentModelSpec();
+        const model = $('#aiModel').value;
+        const maxTokens = Number($('#aiMax').value);
+        const range = AISCHEMA.schema.maxTokensRange;
+        if (!Number.isFinite(maxTokens) || maxTokens < range.min || maxTokens > range.max) {
+          alert(`max_tokens aralık dışı: ${range.min}–${range.max}`); // istemci denetimi
+          return;
+        }
+        const payload = { model, maxTokens };
+        if (m.effort) {
+          payload.thinking = $('#aiThinking').value;
+          payload.effort = $('#aiEffort').value;
+        } else {
+          payload.thinking = 'adaptive'; // haiku: sunucu yok sayar
+          payload.effort = 'low';
+        }
+        const r = await post('/ai/set', payload);
+        if (r.status === 400) {
+          const j = await r.json().catch(() => ({}));
+          alert('Sunucu reddetti: ' + (j.error || 'geçersiz kombinasyon'));
+          return;
+        }
+        loadAI();
+      }
+
+      async function resetAI() {
+        if (!confirm('YZ ayarını gömülü varsayılana döndür?')) return;
+        await post('/ai/reset', {});
+        loadAI();
+      }
+
+      async function testAI() {
+        const out = $('#aiTestOut');
+        out.innerHTML =
+          '<p class="foot" style="text-align:left">Test çalışıyor… (yüksek effort seçildiyse sürebilir)</p>';
+        const r = await post('/ai/test', {});
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || j.error) {
+          out.innerHTML = `<div class="rec"><b>Test başarısız</b><span>${esc(j.error || 'hata')}${j.detail ? ' · ' + esc(j.detail) : ''}</span></div>`;
+          return;
+        }
+        out.innerHTML = `<section style="margin-top:10px"><h2>Canlı test sonucu</h2>
+          <p style="margin:6px 0"><span class="pill">${esc(j.model)}</span> <span class="pill">${j.latencyMs} ms</span> <span class="pill">girdi ${j.inputTokens} tok</span> <span class="pill">çıktı ${j.outputTokens} tok</span></p>
+          <div class="rec"><span>${esc(j.text)}</span></div></section>`;
+      }
+
       // --- Ortak yükleme / sekme ---
       async function loadSummary() {
         const base = location.pathname.replace(/\/$/, '');
@@ -1035,6 +1211,7 @@
         }
         if (tab === 'daily') return loadDaily();
         if (tab === 'balance') return loadBalance();
+        if (tab === 'ai') return loadAI();
         return tab === 'words' ? loadWords() : loadSummary();
       }
 
