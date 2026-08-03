@@ -20,6 +20,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { Worker } = require('worker_threads'); // YZ ölçümü ayrı thread'de (ana döngü bloklanmaz)
 const hintUtil = require('./hint-util');
 const badWords = require('./bad-words');
 
@@ -96,6 +97,60 @@ try {
   console.log(`[yz] ayar deposu hazır · model=${aiConfig.current().model}`);
 } catch (e) {
   console.error('[yz] başlatılamadı:', e.message);
+}
+
+// YZ DAVRANIŞ DEPOSU — rakip gücü + ipucu koçu ayarları (yeniden başlatmasız).
+const aiBehaviorMod = require('./ai-behavior');
+let aiBehavior = null;
+try {
+  aiBehavior = aiBehaviorMod.open({ file: process.env.AI_BEHAVIOR_FILE });
+  console.log(`[yz-güç] davranış deposu hazır · ${Object.keys(aiBehavior.overrides()).length} override`); // prettier-ignore
+} catch (e) {
+  console.error('[yz-güç] başlatılamadı:', e.message);
+}
+
+// --- YZ ölçümü: tek eşzamanlı çalıştırma + maç sınırı + kısa önbellek ---
+const MEASURE_MATCHES_DEF = Number(process.env.MEASURE_MATCHES || 120); // band başına varsayılan
+const MEASURE_MATCHES_CAP = Number(process.env.MEASURE_MATCHES_CAP || 300); // üst sınır (CPU koruması)
+const MEASURE_CACHE_MS = 5 * 60 * 1000;
+const MEASURE_TIMEOUT_MS = 90_000;
+let measureBusy = false; // eşzamanlı çalıştırmayı engelle
+let measureCache = null; // { key, at, payload }
+
+/** Ölçümü WORKER thread'de koştur (ana olay döngüsü bloklanmaz). */
+function runMeasureWorker(wordsFile, length, configs, matches, seed) {
+  return new Promise((resolve, reject) => {
+    let done = false;
+    const worker = new Worker(path.join(__dirname, 'ai-sim-worker.js'), {
+      workerData: { wordsFile, length, configs, matches, seed },
+    });
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      worker.terminate();
+      reject(new Error('timeout'));
+    }, MEASURE_TIMEOUT_MS);
+    worker.on('message', (msg) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      worker.terminate();
+      if (msg && msg.error) reject(new Error(msg.error));
+      else resolve(msg);
+    });
+    worker.on('error', (e) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      reject(e);
+    });
+    worker.on('exit', (code) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      reject(new Error('worker_exit_' + code));
+    });
+  });
 }
 
 // --- YÖNETİM PANOSU kimlik doğrulaması (tek kullanıcı, oturum tabanlı) ---
@@ -1338,6 +1393,114 @@ const routes = {
     } catch (e) {
       audit(req, 'ai_test', false, String(e && e.message));
       send(res, 502, { error: 'ai_unavailable', detail: String(e && e.message).slice(0, 40) });
+    }
+  },
+
+  // --- YZ DAVRANIŞ AYARLARI (rakip gücü + ipucu koçu) ---
+  // PUBLIC: istemci override'ları çeker (auth yok). İstemci değerleri ayrıca
+  // aralığa sıkıştırır → bu uç bozuk dönse bile oyun gömülü varsayılanla güvende.
+  'GET /ai-behavior': async (req, res) => {
+    if (!aiBehavior) return send(res, 200, { overrides: {} });
+    const body = JSON.stringify({ overrides: aiBehavior.overrides() });
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Access-Control-Allow-Origin': res.corsOrigin || ALLOWED_ORIGINS[0],
+      Vary: 'Origin',
+      'Cache-Control': 'public, max-age=600',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    res.end(body);
+  },
+
+  // ADMIN: şema + geçmiş + son ölçüm + hedef bandı + ölçüm sınırları.
+  'GET /admin/ai-behavior': async (req, res) => {
+    if (!requireSession(req, res, 'ai_behavior')) return;
+    if (!aiBehavior) return send(res, 503, { error: 'no_ai_behavior' });
+    send(res, 200, {
+      params: aiBehavior.schema(),
+      history: aiBehavior.history(),
+      lastMeasure: aiBehavior.lastMeasure(),
+      target: aiBehavior.diffTarget,
+      tol: aiBehavior.targetTol,
+      matchesDefault: MEASURE_MATCHES_DEF,
+      matchesCap: MEASURE_MATCHES_CAP,
+    });
+  },
+
+  // ADMIN: değer ata — ARALIK DIŞI 400.
+  'POST /admin/ai-behavior/set': async (req, res) => {
+    if (!requireSession(req, res, 'ai_behavior_set')) return;
+    if (!aiBehavior) return send(res, 503, { error: 'no_ai_behavior' });
+    const body = await readJson(req);
+    const r = aiBehavior.set(String(body.key || ''), Number(body.value), new Date().toISOString());
+    if (r.error) {
+      audit(req, 'ai_behavior_set', false, `${body.key}=${body.value} · ${r.error}`);
+      return send(res, 400, { error: r.error });
+    }
+    audit(req, 'ai_behavior_set', true, `${body.key}=${r.value}`);
+    send(res, 200, { ok: true, value: r.value });
+  },
+
+  // ADMIN: geri al — tek anahtar ({key}) ya da hepsi ({all:true}).
+  'POST /admin/ai-behavior/reset': async (req, res) => {
+    if (!requireSession(req, res, 'ai_behavior_reset')) return;
+    if (!aiBehavior) return send(res, 503, { error: 'no_ai_behavior' });
+    const body = await readJson(req);
+    const at = new Date().toISOString();
+    if (body.all) {
+      aiBehavior.resetAll(at);
+      audit(req, 'ai_behavior_reset', true, 'hepsi');
+    } else {
+      const r = aiBehavior.reset(String(body.key || ''), at);
+      if (r.error) return send(res, 400, { error: r.error });
+      audit(req, 'ai_behavior_reset', true, String(body.key));
+    }
+    send(res, 200, { ok: true });
+  },
+
+  // ADMIN: ÖLÇÜM ÇALIŞTIR — seçili ayarla N maç simüle et (WORKER thread'de,
+  // ana döngü bloklanmaz). Eşzamanlı tek çalıştırma (409 busy), maç sınırı,
+  // 5 dk önbellek. Sonuç: zorluk+persona ortalama tahmin + çözememe oranı.
+  'POST /admin/ai-behavior/measure': async (req, res) => {
+    if (!requireSession(req, res, 'ai_measure')) return;
+    if (!aiBehavior) return send(res, 503, { error: 'no_ai_behavior' });
+    const body = await readJson(req);
+    const length = 5; // 5 harfli TR/EN havuz — kalibrasyonun temeli
+    const lang = body.lang === 'en' ? 'en' : 'tr';
+    const wordsFile = path.join(__dirname, lang === 'en' ? 'words-en.json' : 'words.json');
+    let matches = Math.floor(Number(body.matches));
+    if (!Number.isFinite(matches) || matches < 20) matches = MEASURE_MATCHES_DEF;
+    matches = Math.min(matches, MEASURE_MATCHES_CAP); // CPU koruması: üst sınır
+    const configs = aiBehavior.measureConfigs();
+    const seed = 20260727;
+    const key = JSON.stringify({ lang, length, matches, configs, seed });
+    // Önbellek: aynı ayar+maç sayısı 5 dk içinde tekrar ölçülmez.
+    if (measureCache && measureCache.key === key && Date.now() - measureCache.at < MEASURE_CACHE_MS) {
+      return send(res, 200, { ...measureCache.payload, cached: true });
+    }
+    if (measureBusy) return send(res, 409, { error: 'busy' }); // eşzamanlı çalıştırma yok
+    measureBusy = true;
+    try {
+      const out = await runMeasureWorker(wordsFile, length, configs, matches, seed);
+      const results = out.results || {};
+      aiBehavior.saveMeasure(results, new Date().toISOString()); // persona avg otomatik güncellenir
+      const payload = {
+        ok: true,
+        matches,
+        poolSize: out.poolSize,
+        lang,
+        results,
+        target: aiBehavior.diffTarget,
+        tol: aiBehavior.targetTol,
+      };
+      measureCache = { key, at: Date.now(), payload };
+      audit(req, 'ai_measure', true, `${matches} maç · havuz ${out.poolSize}`);
+      send(res, 200, payload);
+    } catch (e) {
+      audit(req, 'ai_measure', false, String(e && e.message).slice(0, 40));
+      send(res, 502, { error: 'measure_failed', detail: String(e && e.message).slice(0, 40) });
+    } finally {
+      measureBusy = false;
     }
   },
 };

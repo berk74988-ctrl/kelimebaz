@@ -370,6 +370,7 @@
         <button data-t="daily">Takvim</button>
         <button data-t="balance">Denge</button>
         <button data-t="ai">🤖 YZ</button>
+        <button data-t="aibeh">🎚️ YZ Güç</button>
       </div>
       <div class="ranges" id="ranges">
         <button data-r="today">Bugün</button>
@@ -1185,6 +1186,166 @@
           <div class="rec"><span>${esc(j.text)}</span></div></section>`;
       }
 
+      // --- 🎚️ YZ Güç (davranış + ölçüm) ---
+      const ABGROUP = {
+        diff: '🎚️ Zorluk (band + tempo)',
+        persona: '🎭 Karakterler (aç/kapa + ağırlık)',
+        adapt: '📈 Uyarlanabilir zorluk eşikleri',
+        hint: '🆘 İpucu koçu',
+      };
+      const RESULT_LABEL = {
+        'diff.hard': '🔴 Zor',
+        'diff.medium': '🟡 Orta',
+        'diff.easy': '🟢 Kolay',
+        'persona.temkinli': '🛡️ Temkinli',
+        'persona.unlu': '🎯 Ünlü Avcısı',
+        'persona.harfsayar': '🔢 Harf Sayar',
+        'persona.kumarbaz': '🎲 Kumarbaz',
+      };
+      let ABDATA = null;
+
+      async function loadAIBeh() {
+        try {
+          const d = await (await api('/ai-behavior')).json();
+          renderAIBeh(d);
+        } catch (e) {
+          if (e.message !== 'auth')
+            $('#main').innerHTML = `<div class="empty">Alınamadı: ${esc(e.message)}</div>`;
+        }
+      }
+
+      function renderMeasureHtml(m) {
+        const r = m.results || {};
+        const persKeys = Object.keys(r).filter((k) => k.startsWith('persona.'));
+        const row = (k) => {
+          const x = r[k];
+          if (!x) return '';
+          const tKey = k.replace('diff.', '');
+          const tgt = m.target && m.target[tKey];
+          let flag = '';
+          if (tgt != null) {
+            const off = Math.abs(x.avg - tgt) > m.tol;
+            flag = off
+              ? `<span class="badge flag">hedef ${tgt}±${m.tol} dışı</span>`
+              : `<span class="badge lock">hedefte</span>`;
+          }
+          return `<tr><td>${RESULT_LABEL[k] || esc(k)}</td><td class="mono">${x.avg}</td><td class="mono">${tgt != null ? tgt : '—'}</td><td class="mono">${x.unsolvedPct}%</td><td>${flag}</td></tr>`;
+        };
+        const diffRows = ['diff.hard', 'diff.medium', 'diff.easy'].map(row).join('');
+        const persRows = persKeys.map(row).join('');
+        return `<div style="overflow-x:auto"><table style="margin-top:10px"><tr><th>Kol</th><th>Ort. tahmin</th><th>Hedef</th><th>Çözemedi</th><th></th></tr>
+          ${diffRows}${persRows ? `<tr><td colspan="5"><span class="pill">Karakterler (ortalama ölçümden — elle yazılmaz)</span></td></tr>${persRows}` : ''}</table></div>
+          <p class="foot" style="text-align:left">Ölçüm: ${m.at ? new Date(m.at).toLocaleString('tr') : 'şimdi'}</p>`;
+      }
+
+      function renderAIBeh(d) {
+        ABDATA = d;
+        const groups = {};
+        for (const p of d.params) (groups[p.group] = groups[p.group] || []).push(p);
+        const sections = ['diff', 'persona', 'adapt', 'hint']
+          .filter((g) => groups[g])
+          .map((g) => {
+            const rows = groups[g]
+              .map(
+                (p) => `<tr>
+                  <td>${esc(p.label)}<br /><span class="pill">${esc(p.key)} · ${p.min}–${p.max}</span></td>
+                  <td><input class="abval" data-k="${p.key}" data-min="${p.min}" data-max="${p.max}" type="number" step="${p.int ? 1 : 0.05}" value="${p.current}" style="width:90px" /></td>
+                  <td class="mono">${p.def}${p.overridden ? ' <span class="badge lock">override</span>' : ''}</td>
+                  <td class="modact" style="margin:0">
+                    <button class="abset" data-k="${p.key}">Kaydet</button>
+                    ${p.overridden ? `<button class="abrst danger" data-k="${p.key}">↺</button>` : ''}
+                  </td></tr>`,
+              )
+              .join('');
+            return `<section><h2>${ABGROUP[g] || g}</h2><table><tr><th>Ayar</th><th>Değer</th><th>Varsayılan</th><th>Eylem</th></tr>${rows}</table></section>`;
+          })
+          .join('');
+        const anyOverride = d.params.some((p) => p.overridden);
+        const hist = d.history.length
+          ? d.history
+              .map(
+                (h) =>
+                  `<div class="rec"><b>${esc(h.key)}</b><span>${h.from} → ${h.to}${h.reset ? ' (geri al)' : ''} · <span class="pill">${new Date(h.at).toLocaleString('tr')}</span></span></div>`,
+              )
+              .join('')
+          : '<div class="rec"><span class="pill">Henüz değişiklik yok</span></div>';
+
+        $('#main').innerHTML = `
+          <p class="foot" style="text-align:left">YZ rakip gücü ve ipucu koçu — <b>yeniden başlatmadan</b> ayarlanır. Aralık dışı değer <b>reddedilir</b>. Ayar değişikliği <b>süren maçları bozmaz</b> (bot config'i maç başında sabitlenir). Sunucu erişilemezse oyun gömülü varsayılanla çalışır.</p>
+          <section>
+            <h2>📐 Ölçüm — "değiştir · ölç · uygula"</h2>
+            <p class="foot" style="text-align:left;margin:6px 0">Seçili ayarla N maç simüle eder; her zorluğun/karakterin ortalama tahmin sayısını gösterir — sonucu oyunculara yansıtmadan önce görürsün. Ölçüm ayrı thread'de koşar (sunucu kilitlenmez), aynı anda tek çalıştırma, ${d.matchesCap} maç üst sınırı, 5 dk önbellek.</p>
+            <div class="filters">
+              <label>Kol başına maç <input id="abMatches" type="number" min="20" max="${d.matchesCap}" step="10" value="${d.matchesDefault}" style="width:90px" /></label>
+              <button id="abMeasure">📐 Ölçüm çalıştır</button>
+            </div>
+            <div id="abMeasureOut">${d.lastMeasure ? renderMeasureHtml({ results: d.lastMeasure.results, target: d.target, tol: d.tol, at: d.lastMeasure.at }) : '<p class="foot" style="text-align:left">Henüz ölçüm yok.</p>'}</div>
+          </section>
+          ${anyOverride ? '<div class="modact" style="margin:14px 0"><button class="danger" id="abrstall">↺ Tümünü varsayılana döndür</button></div>' : ''}
+          ${sections}
+          <section><h2>Değişiklik geçmişi</h2>${hist}</section>`;
+
+        document.querySelectorAll('.abset').forEach((b) => (b.onclick = () => setAIBeh(b.dataset.k)));
+        document
+          .querySelectorAll('.abrst')
+          .forEach((b) => (b.onclick = () => resetAIBeh(b.dataset.k)));
+        const all = $('#abrstall');
+        if (all)
+          all.onclick = async () => {
+            if (!confirm('Tüm YZ güç ayarlarını varsayılana döndür?')) return;
+            await post('/ai-behavior/reset', { all: true });
+            loadAIBeh();
+          };
+        $('#abMeasure').onclick = runMeasure;
+      }
+
+      async function runMeasure() {
+        const btn = $('#abMeasure');
+        const out = $('#abMeasureOut');
+        const matches = Number($('#abMatches').value) || ABDATA.matchesDefault;
+        btn.disabled = true;
+        out.innerHTML =
+          '<p class="foot" style="text-align:left">Ölçüm çalışıyor… (birkaç saniye sürebilir)</p>';
+        try {
+          const r = await post('/ai-behavior/measure', { matches });
+          const m = await r.json();
+          if (r.status === 409) {
+            out.innerHTML =
+              '<div class="rec"><b>Meşgul</b><span>Başka bir ölçüm çalışıyor — birazdan tekrar dene.</span></div>';
+            return;
+          }
+          if (!r.ok || m.error) {
+            out.innerHTML = `<div class="rec"><b>Ölçüm başarısız</b><span>${esc(m.error || 'hata')}${m.detail ? ' · ' + esc(m.detail) : ''}</span></div>`;
+            return;
+          }
+          out.innerHTML =
+            `<p class="foot" style="text-align:left">${m.cached ? '♻️ önbellekten · ' : ''}havuz ${m.poolSize} · ${m.matches} maç/kol</p>` +
+            renderMeasureHtml(m);
+        } catch (e) {
+          out.innerHTML = `<div class="rec"><b>Hata</b><span>${esc(e.message)}</span></div>`;
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function setAIBeh(key) {
+        const inp = document.querySelector(`.abval[data-k="${key}"]`);
+        const value = Number(inp.value);
+        const min = +inp.dataset.min,
+          max = +inp.dataset.max;
+        if (!Number.isFinite(value) || value < min || value > max) {
+          alert(`Aralık dışı: ${min}–${max} arası bir değer gir.`);
+          return;
+        }
+        const r = await post('/ai-behavior/set', { key, value });
+        if (r.status === 400) alert('Sunucu reddetti (aralık dışı).');
+        loadAIBeh();
+      }
+      async function resetAIBeh(key) {
+        await post('/ai-behavior/reset', { key });
+        loadAIBeh();
+      }
+
       // --- Ortak yükleme / sekme ---
       async function loadSummary() {
         const base = location.pathname.replace(/\/$/, '');
@@ -1212,6 +1373,7 @@
         if (tab === 'daily') return loadDaily();
         if (tab === 'balance') return loadBalance();
         if (tab === 'ai') return loadAI();
+        if (tab === 'aibeh') return loadAIBeh();
         return tab === 'words' ? loadWords() : loadSummary();
       }
 
