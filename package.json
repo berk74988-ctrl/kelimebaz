@@ -42,7 +42,8 @@
     "check:vsai": "node scripts/vsai-solver-test.mjs",
     "check:persona": "node scripts/vsai-persona-test.mjs",
     "check:rooms": "node scripts/rooms-security-check.mjs",
-    "check:rooms-flow": "node scripts/rooms-flow-check.mjs"
+    "check:rooms-flow": "node scripts/rooms-flow-check.mjs",
+    "check:rooms-sse": "node scripts/rooms-sse-check.mjs"
   },
   "private": true,
   "packageManager": "npm@11.16.0",

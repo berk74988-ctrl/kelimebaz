@@ -77,10 +77,11 @@ const REQUEST_TIMEOUT = 8000;
 /**
  * Çok oyunculu oda istemcisi.
  *
- * Sunucuyla HTTP + KISA ARALIKLI SORGULAMA (polling) ile konuşur: bir odaya
- * girince ~1.5 sn'de bir GET /state çekilir, oda görünümü güncellenir. Böylece
- * lobiye katılanlar, ayar değişiklikleri, oyunun başlaması ve puanlar canlı
- * yansır — WebSocket'e gerek kalmadan.
+ * Sunucuyla HTTP + CANLI AKIŞ (SSE) ile konuşur: bir odaya girince GET /events ile
+ * tek kalıcı bağlantı açılır; sunucu oda her değiştiğinde güncel görünümü PUSH eder
+ * (lobiye katılma, ayar değişikliği, oyunun başlaması, puanlar, sohbet anında yansır).
+ * SSE kurulamazsa (tarayıcı desteklemez / uç nokta yok / proxy engelli) ~1.5 sn'lik
+ * POLLING yedeğine düşülür → özellik her koşulda çalışır. WebSocket'e gerek yok.
  */
 @Injectable({ providedIn: 'root' })
 export class RoomService {
@@ -101,6 +102,8 @@ export class RoomService {
   private playerId = '';
   private token = '';
   private poll: ReturnType<typeof setInterval> | null = null;
+  /** Canlı akış (SSE). Kurulamazsa poll yedeğe geçer (aşağıda startLive). */
+  private es: EventSource | null = null;
 
   /**
    * Açılışta kayıtlı bir oda oturumu (sessionStorage kimliği) VAR MIYDI?
@@ -125,7 +128,7 @@ export class RoomService {
   private async resume(): Promise<void> {
     if (!this.code || !this.playerId || !this.token) return;
     await this.refresh();
-    if (this._room()) this.startPolling();
+    if (this._room()) this.startLive();
   }
 
   /** Bu istemcinin oyuncu kimliği (kendini listede bulmak için). */
@@ -210,7 +213,7 @@ export class RoomService {
       this.token = r.token;
       this._room.set(r.room);
       this.saveCreds();
-      this.startPolling();
+      this.startLive();
       return true;
     } catch (e) {
       this.setError(e);
@@ -298,9 +301,9 @@ export class RoomService {
     }
   }
 
-  /** Odadan ayrıl — polling durur, durum temizlenir. */
+  /** Odadan ayrıl — canlı akış durur, durum temizlenir. */
   async leave(): Promise<void> {
-    this.stopPolling();
+    this.stopLive();
     const payload = { code: this.code, playerId: this.playerId, token: this.token };
     this._room.set(null);
     this.code = this.playerId = this.token = '';
@@ -313,7 +316,83 @@ export class RoomService {
     }
   }
 
-  // --- Polling ---
+  // --- Canlı güncelleme: SSE (birincil) + polling (yedek) ---
+
+  /**
+   * Odaya canlı bağlan: önce SSE (tek kalıcı bağlantı, sunucu değişince push eder).
+   * SSE kurulamazsa (tarayıcı desteklemiyor / uç nokta yok / proxy engelli) POLLING
+   * yedeğe düşer → özellik bugünkü gibi çalışır (regresyon yok). SSE canlıysa polling
+   * durur; SSE koparsa yedek polling devreye girer, SSE arka planda yeniden dener.
+   */
+  private startLive(): void {
+    this.stopLive();
+    if (!this.code) return;
+    if (typeof EventSource === 'undefined') {
+      this.startPolling(); // tarayıcı SSE bilmiyor → yalnız polling
+      return;
+    }
+    let opened = false;
+    try {
+      const es = new EventSource(
+        `${this.base}/events?code=${encodeURIComponent(this.code)}&playerId=${encodeURIComponent(this.playerId)}`,
+      );
+      this.es = es;
+      es.onopen = () => {
+        opened = true;
+        this.stopPolling(); // SSE canlı → yedek polling'i durdur
+      };
+      es.onmessage = (e) => this.applyLive(e.data);
+      es.addEventListener('gone', () => this.onRoomGone()); // oda silindi (herkes çıktı/süre doldu)
+      es.onerror = () => {
+        // Bağlantı kurulamadı/koptu → yedek polling başlat (bugünkü davranış).
+        if (!this.poll) this.startPolling();
+        // Hiç açılmadıysa uç nokta yok/engelli demektir → ES'yi kapat (sonsuz yeniden
+        // deneme + boşa istek olmasın), sadece polling'e güven. Açıldıysa ES kendi
+        // yeniden bağlanmayı sürdürür; bağlanınca onopen polling'i tekrar durdurur.
+        if (!opened && this.es) {
+          this.es.close();
+          this.es = null;
+        }
+      };
+    } catch {
+      this.startPolling();
+    }
+  }
+
+  private stopLive(): void {
+    if (this.es) {
+      this.es.close();
+      this.es = null;
+    }
+    this.stopPolling();
+  }
+
+  /** SSE mesajı ({room}) — refresh()'in başarı yolunun aynısı (closed dâhil). */
+  private applyLive(data: string): void {
+    let room: RoomView | undefined;
+    try {
+      room = (JSON.parse(data) as { room?: RoomView }).room;
+    } catch {
+      return; // bozuk kare → yok say
+    }
+    if (!room) return;
+    if (room.status === 'closed') {
+      this.stopLive();
+      this._room.set(null);
+      this.clearCreds();
+      this._error.set(room.closedReason || this.i18n.t('roomerr.closed'));
+      return;
+    }
+    this._room.set(room);
+  }
+
+  /** Sunucu "gone" olayı → oda artık yok; sessizce menüye düş. */
+  private onRoomGone(): void {
+    this.stopLive();
+    this._room.set(null);
+    this.clearCreds();
+    this.code = this.playerId = this.token = '';
+  }
 
   private startPolling(): void {
     this.stopPolling();
@@ -336,7 +415,7 @@ export class RoomService {
       );
       // Oda yönetici tarafından kapatıldı → anlamlı mesaj göster, sessizce atma.
       if (r.room.status === 'closed') {
-        this.stopPolling();
+        this.stopLive();
         this._room.set(null);
         this.clearCreds();
         this._error.set(r.room.closedReason || this.i18n.t('roomerr.closed'));
@@ -346,7 +425,7 @@ export class RoomService {
     } catch (e) {
       // Oda silinmişse (herkes çıkmış / süresi dolmuş) temizle
       if (e instanceof Error && e.message === 'not_found') {
-        this.stopPolling();
+        this.stopLive();
         this._room.set(null);
         this.clearCreds();
       }

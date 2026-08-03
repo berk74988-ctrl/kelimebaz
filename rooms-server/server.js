@@ -459,6 +459,9 @@ function roomView(room, viewerId) {
 
 function touch(room) {
   room.updatedAt = now();
+  // Monotonik revizyon — SSE push'u değişikliği ms'ten bağımsız algılasın (aynı
+  // ms içinde iki mutasyon olsa bile rev artar → güncelleme kaçmaz).
+  room.rev = (room.rev || 0) + 1;
 }
 
 /** Herkes bitince odayı sonlandır. */
@@ -482,6 +485,56 @@ setInterval(() => {
     if (expired || closedDone) rooms.delete(code);
   }
 }, 60 * 1000).unref?.();
+
+// --- SSE (Server-Sent Events): canlı oda güncellemesi (istemci polling'i yerine push) ---
+// İstemci GET /events ile TEK kalıcı bağlantı açar; oda her değiştiğinde (rev artınca)
+// güncel görünüm push edilir. Böylece her istemcinin 1.5 sn'de bir /state çekmesi biter;
+// sohbet ve canlı sıralama anında yansır. Değişiklik yoksa veri gönderilmez.
+// nginx'in yanıtı tamponlamaması için X-Accel-Buffering: no; idle timeout'a düşmesin
+// diye 25 sn'de bir keepalive yorumu. İstemci SSE kuramazsa polling'e düşer (bkz. istemci).
+const SSE_PUSH_MS = Number(process.env.SSE_PUSH_MS || 600);
+const sseClients = new Set();
+
+function sseWriteState(c, room) {
+  try {
+    c.res.write(`data: ${JSON.stringify({ room: roomView(room, c.viewerId) })}\n\n`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Tek paylaşımlı döngü (abone sayısından bağımsız): oda değiştiyse push, silindiyse kapat.
+setInterval(() => {
+  for (const c of sseClients) {
+    const room = rooms.get(c.code);
+    if (!room) {
+      try {
+        c.res.write('event: gone\ndata: {}\n\n');
+        c.res.end();
+      } catch {
+        /* zaten kapalı */
+      }
+      sseClients.delete(c);
+      continue;
+    }
+    if (room.rev !== c.lastRev) {
+      c.lastRev = room.rev;
+      if (!sseWriteState(c, room)) sseClients.delete(c);
+    }
+  }
+}, SSE_PUSH_MS).unref?.();
+
+// Keepalive: idle bağlantıyı proxy 60 sn'de kapatmasın (veri değil, ': ' yorumu).
+setInterval(() => {
+  for (const c of sseClients) {
+    try {
+      c.res.write(': ka\n\n');
+    } catch {
+      sseClients.delete(c);
+    }
+  }
+}, 25000).unref?.();
 
 // --- HTTP yardımcıları ---
 
@@ -622,6 +675,28 @@ const routes = {
     const room = rooms.get(code);
     if (!room) return send(res, 404, { error: 'not_found' });
     send(res, 200, { room: roomView(room, viewerId) });
+  },
+
+  // SSE canlı akış — oda değiştikçe güncel görünümü push eder (polling yerine).
+  // writeHead sonrası ASLA throw etme (send(500) başlık gönderilmişken çöker).
+  'GET /events': async (req, res, url) => {
+    const code = String(url.searchParams.get('code') || '').toUpperCase();
+    const viewerId = url.searchParams.get('playerId') || '';
+    const room = rooms.get(code);
+    if (!room) return send(res, 404, { error: 'not_found' });
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-store',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no', // nginx: bu yanıtı tamponlama → SSE anında aksın
+      'Access-Control-Allow-Origin': res.corsOrigin || ALLOWED_ORIGINS[0],
+      Vary: 'Origin',
+    });
+    res.write('retry: 3000\n\n'); // istemci EventSource yeniden bağlanma aralığı (ms)
+    const client = { res, code, viewerId, lastRev: room.rev };
+    sseClients.add(client);
+    if (!sseWriteState(client, room)) sseClients.delete(client); // ilk durumu hemen gönder
+    req.on('close', () => sseClients.delete(client));
   },
 
   'POST /settings': async (req, res) => {

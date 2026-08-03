@@ -58,6 +58,10 @@ jobs:
       - name: Oda akışı senaryoları
         run: npm run check:rooms-flow
 
+      # SSE canlı akış: /events push (sohbet/katılım anında yansıyor mu, gone olayı).
+      - name: Oda SSE canlı akış
+        run: npm run check:rooms-sse
+
       - name: Derleme çıktısını yükle (artefakt)
         if: always()
         uses: actions/upload-artifact@v4
