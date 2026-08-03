@@ -45,7 +45,7 @@
 
       <div class="vs-sep">{{ i18n.t('vsai.orPickFixed') }}</div>
 
-      @for (p of personas; track p.id) {
+      @for (p of personas(); track p.id) {
         <button
           class="vs-card"
           [attr.data-d]="p.tier"

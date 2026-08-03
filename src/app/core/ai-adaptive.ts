@@ -28,6 +28,28 @@ const AVG_HI = 4.46; // pos 1'de botun ortalama tahmini (en zayıf) — ölçül
 const STEP = 0.15; // pos'un tek maçta en fazla değişimi (kademeli geçiş)
 const CHALLENGE = 0.2; // "hafif zorlayıcı": bot hedefi oyuncu ortalamasının biraz ALTINDA
 
+/**
+ * Uyarlanabilir zorluk eşikleri — panelden ayarlanabilir (varsayılan = gömülü).
+ * Fonksiyonlara opsiyonel verilir; VERİLMEZSE gömülü değerler kullanılır → mevcut
+ * davranış birebir korunur (geriye dönük uyumlu).
+ */
+export interface AdaptTuning {
+  startPos: number;
+  step: number;
+  challenge: number;
+  avgLo: number;
+  avgHi: number;
+  window: number;
+}
+export const ADAPT_DEFAULTS: AdaptTuning = {
+  startPos: ADAPT_START_POS,
+  step: STEP,
+  challenge: CHALLENGE,
+  avgLo: AVG_LO,
+  avgHi: AVG_HI,
+  window: ADAPT_WINDOW,
+};
+
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 /** Bir maçtaki oyuncu performansı: çözdüyse tahmin sayısı, çözemediyse ceza (MAX+1). */
@@ -35,9 +57,13 @@ export function perfScore(attempts: number, solved: boolean, max = 6): number {
   return solved ? clamp(Math.round(attempts), 1, max) : max + 1;
 }
 
-/** Pencereye yeni skoru ekler, son ADAPT_WINDOW maçı tutar. */
-export function pushPerf(recent: readonly number[], score: number): number[] {
-  return [...recent, score].slice(-ADAPT_WINDOW);
+/** Pencereye yeni skoru ekler, son `window` maçı tutar (varsayılan ADAPT_WINDOW). */
+export function pushPerf(
+  recent: readonly number[],
+  score: number,
+  window: number = ADAPT_WINDOW,
+): number[] {
+  return [...recent, score].slice(-Math.max(1, Math.round(window)));
 }
 
 /** Penceredeki ortalama (boşsa null). */
@@ -51,15 +77,17 @@ export function windowAvg(recent: readonly number[]): number | null {
  * (hafif zorlayıcı), [AVG_LO, AVG_HI]'ye kırpılır, oradan pos'a (doğrusal) çevrilir.
  * Düşük ortalama → düşük pos (güçlü bot); yüksek ortalama → yüksek pos (rahat bot).
  */
-export function targetPos(playerAvg: number): number {
-  const targetAvg = clamp(playerAvg - CHALLENGE, AVG_LO, AVG_HI);
-  return clamp((targetAvg - AVG_LO) / (AVG_HI - AVG_LO), MIN_POS, MAX_POS);
+export function targetPos(playerAvg: number, t: AdaptTuning = ADAPT_DEFAULTS): number {
+  const lo = t.avgLo;
+  const hi = t.avgHi > t.avgLo ? t.avgHi : t.avgLo + 0.01; // sıfıra bölme koruması
+  const targetAvg = clamp(playerAvg - t.challenge, lo, hi);
+  return clamp((targetAvg - lo) / (hi - lo), MIN_POS, MAX_POS);
 }
 
-/** Kademeli geçiş — prev'den target'a doğru en fazla STEP'lik adım (sert sıçrama yok). */
-export function smoothStep(prev: number, target: number): number {
-  if (target > prev) return Math.min(target, prev + STEP);
-  if (target < prev) return Math.max(target, prev - STEP);
+/** Kademeli geçiş — prev'den target'a doğru en fazla `step` adım (sert sıçrama yok). */
+export function smoothStep(prev: number, target: number, step: number = STEP): number {
+  if (target > prev) return Math.min(target, prev + step);
+  if (target < prev) return Math.max(target, prev - step);
   return prev;
 }
 
@@ -69,11 +97,15 @@ export function smoothStep(prev: number, target: number): number {
  * GEÇERLİ (en güçlü) → geçmiş varken 0'ı başlangıca sıçratma (yoksa güçlü oyuncuda
  * salınım olur); yalnız pencere boş VE prev anlamsızken (0/tanımsız) başlangıca dön.
  */
-export function nextAdaptPos(recent: readonly number[], prev: number): number {
-  const p = Number.isFinite(prev) ? clamp(prev, MIN_POS, MAX_POS) : ADAPT_START_POS;
+export function nextAdaptPos(
+  recent: readonly number[],
+  prev: number,
+  t: AdaptTuning = ADAPT_DEFAULTS,
+): number {
+  const p = Number.isFinite(prev) ? clamp(prev, MIN_POS, MAX_POS) : t.startPos;
   const avg = windowAvg(recent);
-  if (avg == null) return Number.isFinite(prev) && prev > 0 ? p : ADAPT_START_POS;
-  return smoothStep(p, targetPos(avg)); // geçmiş var → prev (0 dâhil) korunur, kademeli git
+  if (avg == null) return Number.isFinite(prev) && prev > 0 ? p : t.startPos;
+  return smoothStep(p, targetPos(avg, t), t.step); // geçmiş var → prev (0 dâhil) korunur, kademeli
 }
 
 /** Konumu çözücü bandına çevirir — konum çevresinde dar bir dilim (uçlarda kırpılır). */

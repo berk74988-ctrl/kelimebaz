@@ -1,5 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { ADAPT_START_POS, nextAdaptPos, perfScore, pushPerf } from '../core/ai-adaptive';
+import { AiBehaviorService } from './ai-behavior.service';
 import { LevelInfo, levelInfo } from '../core/level';
 import { scoreFor } from '../core/score';
 import { EMPTY_STATS, MAX_ATTEMPTS, Stats } from '../models/game.model';
@@ -21,6 +22,8 @@ function emptyStats(): Stats {
  */
 @Injectable({ providedIn: 'root' })
 export class StatsService {
+  // Uyarlanabilir zorluk eşikleri panelden gelir (sunucu yoksa gömülü varsayılan).
+  private readonly aiBehavior = inject(AiBehaviorService);
   private readonly _stats = signal<Stats>(this.load());
   readonly stats = this._stats.asReadonly();
 
@@ -73,11 +76,16 @@ export class StatsService {
 
     // 🎯 Uyarlanabilir zorluk: oyuncunun bu maçtaki performansını pencereye ekle,
     // bot ayarını (yüzdelik konum) KADEMELİ güncelle (tek maçta sert sıçrama yok).
+    const tune = this.aiBehavior.adaptive(); // panel eşikleri (yoksa gömülü varsayılan)
     let vsaiRecent = s.vsaiRecent;
-    let vsaiAdaptPos = s.vsaiAdaptPos ?? ADAPT_START_POS; // pos=0 geçerli → ?? kullan (|| değil)
+    let vsaiAdaptPos = s.vsaiAdaptPos ?? tune.startPos; // pos=0 geçerli → ?? kullan (|| değil)
     if (perf) {
-      vsaiRecent = pushPerf(s.vsaiRecent, perfScore(perf.attempts, perf.solved, MAX_ATTEMPTS));
-      vsaiAdaptPos = nextAdaptPos(vsaiRecent, vsaiAdaptPos);
+      vsaiRecent = pushPerf(
+        s.vsaiRecent,
+        perfScore(perf.attempts, perf.solved, MAX_ATTEMPTS),
+        tune.window,
+      );
+      vsaiAdaptPos = nextAdaptPos(vsaiRecent, vsaiAdaptPos, tune);
     }
 
     const next: Stats = {

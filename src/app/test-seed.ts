@@ -19,6 +19,7 @@ import words from './data/words.json';
 import { Hint, HintService } from './services/hint.service';
 import { WordService } from './services/word.service';
 import { BalanceService } from './services/balance.service';
+import { AiBehaviorService } from './services/ai-behavior.service';
 
 // Telemetri testlerde KAPALI — birim testler ağ isteği tetiklemesin (deterministik).
 try {
@@ -27,6 +28,7 @@ try {
   /* jsdom yoksa yoksay */
 }
 BalanceService.skipNetwork = true; // denge servisi de testte ağ atmasın
+AiBehaviorService.skipNetwork = true; // YZ davranış servisi de testte ağ atmasın
 
 WordService.seedForTest({
   tr: {

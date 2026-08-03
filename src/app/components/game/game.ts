@@ -11,6 +11,7 @@ import { guessAnnouncement, resultAnnouncement } from '../../core/a11y';
 import { voiceToLetters } from '../../core/voice';
 import { GameMode } from '../../models/game.model';
 import { AiHintService } from '../../services/ai-hint.service';
+import { AiBehaviorService } from '../../services/ai-behavior.service';
 import { AudioService } from '../../services/audio.service';
 import { ContrastService } from '../../services/contrast.service';
 import { GameService } from '../../services/game.service';
@@ -49,6 +50,7 @@ export class Game {
   private readonly audio = inject(AudioService);
   protected readonly gold = inject(GoldService);
   private readonly aiHint = inject(AiHintService);
+  private readonly aiBehavior = inject(AiBehaviorService);
   private readonly stats = inject(StatsService);
   protected readonly voice = inject(VoiceInputService);
 
@@ -134,8 +136,14 @@ export class Game {
   protected readonly hintShown = signal(false);
 
   // 🆘 "Takıldım" — çalışma zamanı YZ ipucu (rooms-server üzerinden, altınla).
-  protected readonly HINT_COST = 20; // ipucu başına altın
-  private readonly HINT_MAX_PER_GAME = 2; // oyun başına en fazla
+  // Maliyet + oyun başına hak PANELDEN ayarlanabilir (aiBehavior); sunucu yoksa
+  // gömülü varsayılan (20 altın / 2 hak). Her okuma anlıktır → yeni ayar hemen geçer.
+  protected get HINT_COST(): number {
+    return this.aiBehavior.hint().goldCost;
+  }
+  private get HINT_MAX_PER_GAME(): number {
+    return this.aiBehavior.hint().perGame;
+  }
   protected readonly aiHintText = signal('');
   protected readonly aiHintLoading = signal(false);
   protected readonly aiHintError = signal('');
@@ -145,6 +153,7 @@ export class Game {
   protected stuckAvailable(): boolean {
     return (
       this.aiHint.available() &&
+      this.aiBehavior.hint().enabled && // panelden ipucu koçu kapatılabilir
       !this.game.isOver() &&
       !this.isRoom() &&
       this.mode() !== 'vsai' &&

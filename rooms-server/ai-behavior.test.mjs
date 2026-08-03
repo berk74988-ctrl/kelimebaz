@@ -27,6 +27,41 @@ ok(
   'her SPEC parametresi geçerli (key/def/aralık/grup)',
 );
 
+// PARITY: src/app/core/ai-behavior.ts AI_BEHAVIOR_SPEC ile AYNI (drift olursa ikisi de).
+const GOLDEN = [
+  ['bandHardLo', 0, 0, 1, false],
+  ['bandHardHi', 0, 0, 1, false],
+  ['bandMedLo', 0.4, 0, 1, false],
+  ['bandMedHi', 0.65, 0, 1, false],
+  ['bandEasyLo', 0.85, 0, 1, false],
+  ['bandEasyHi', 1, 0, 1, false],
+  ['tempoHardMin', 1700, 200, 8000, true],
+  ['tempoHardMax', 2600, 200, 8000, true],
+  ['tempoMedMin', 2400, 200, 8000, true],
+  ['tempoMedMax', 3600, 200, 8000, true],
+  ['tempoEasyMin', 3200, 200, 8000, true],
+  ['tempoEasyMax', 5200, 200, 8000, true],
+  ['pOnTemkinli', 1, 0, 1, true],
+  ['pOnUnlu', 1, 0, 1, true],
+  ['pOnHarfsayar', 1, 0, 1, true],
+  ['pOnKumarbaz', 1, 0, 1, true],
+  ['pwUnlu', 1.5, 0, 5, false],
+  ['pwHarfsayar', 2.5, 0, 5, false],
+  ['pgKumarbaz', 0.5, 0, 1, false],
+  ['adaptStartPos', 0.45, 0, 1, false],
+  ['adaptStep', 0.15, 0.01, 1, false],
+  ['adaptChallenge', 0.2, 0, 2, false],
+  ['adaptAvgLo', 3.1, 1, 6, false],
+  ['adaptAvgHi', 4.46, 1, 7, false],
+  ['adaptWindow', 10, 1, 50, true],
+  ['hintPerGame', 2, 0, 10, true],
+  ['hintGoldCost', 20, 0, 500, true],
+  ['hintRlPerMin', 8, 1, 120, true],
+  ['hintOn', 1, 0, 1, true],
+];
+const gotSpec = AB.SPEC.map((p) => [p.key, p.def, p.min, p.max, p.int]);
+ok(JSON.stringify(gotSpec) === JSON.stringify(GOLDEN), 'SPEC istemci golden ile eşleşir (parity)');
+
 const dir = mkdtempSync(join(tmpdir(), 'kbab-'));
 try {
   const s = AB.open({ file: join(dir, 'b.json') });

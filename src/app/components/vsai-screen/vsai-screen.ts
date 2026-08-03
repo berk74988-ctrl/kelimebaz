@@ -18,6 +18,7 @@ import {
 import { raceOutcome } from '../../core/vsai-race';
 import { LetterState, MAX_ATTEMPTS } from '../../models/game.model';
 import { AudioService } from '../../services/audio.service';
+import { AiBehaviorService } from '../../services/ai-behavior.service';
 import { BalanceService } from '../../services/balance.service';
 import { GameService } from '../../services/game.service';
 import { GoldService } from '../../services/gold.service';
@@ -62,11 +63,15 @@ export class VsaiScreen {
   protected readonly i18n = inject(LanguageService);
   private readonly telemetry = inject(TelemetryService);
   private readonly balance = inject(BalanceService);
+  private readonly aiBehavior = inject(AiBehaviorService);
 
   readonly back = output<void>();
 
   protected readonly MAX = MAX_ATTEMPTS;
-  protected readonly personas = PERSONAS;
+  // Karakter listesi panelden aç/kapa edilebilir (aiBehavior); kapalı olanlar gizlenir.
+  protected readonly personas = computed(() =>
+    PERSONAS.filter((p) => this.aiBehavior.personaEnabled(p.id)),
+  );
 
   protected readonly phase = signal<Phase>('pick');
   protected readonly personaId = signal<PersonaId>(PERSONAS[0].id);
@@ -162,7 +167,10 @@ export class VsaiScreen {
       Math.max(0, Math.min(1, lo + shift)),
       Math.max(0, Math.min(1, hi + shift)),
     ];
-    const cfg = { ...p.config, band };
+    // Karakter ağırlığı panelden ayarlanabilir (biasWeight/gamble) — band gömülü kalır.
+    // AiSolver config'i BURADA sabitlenir → sonraki override süren maçı bozmaz.
+    const wo = this.aiBehavior.personaWeightOverride(p.id);
+    const cfg = { ...p.config, band, ...wo };
     this.solver = new AiSolver(
       w,
       this.words.answersOfLength(len),
