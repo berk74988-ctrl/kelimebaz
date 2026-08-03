@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { ADAPT_START_TOPK, nextAdaptTopK, perfScore, pushPerf } from '../core/ai-adaptive';
+import { ADAPT_START_POS, nextAdaptPos, perfScore, pushPerf } from '../core/ai-adaptive';
 import { LevelInfo, levelInfo } from '../core/level';
 import { scoreFor } from '../core/score';
 import { EMPTY_STATS, MAX_ATTEMPTS, Stats } from '../models/game.model';
@@ -44,7 +44,7 @@ export class StatsService {
       vsaiWon: s.vsaiWon,
       vsaiByPersona: s.vsaiByPersona,
       vsaiRecent: s.vsaiRecent,
-      vsaiAdaptTopK: s.vsaiAdaptTopK,
+      vsaiAdaptPos: s.vsaiAdaptPos,
       aiHintsUsed: s.aiHintsUsed,
     };
 
@@ -72,12 +72,12 @@ export class StatsService {
     }
 
     // 🎯 Uyarlanabilir zorluk: oyuncunun bu maçtaki performansını pencereye ekle,
-    // bot ayarını (topK) KADEMELİ güncelle (tek maçta sert sıçrama yok).
+    // bot ayarını (yüzdelik konum) KADEMELİ güncelle (tek maçta sert sıçrama yok).
     let vsaiRecent = s.vsaiRecent;
-    let vsaiAdaptTopK = s.vsaiAdaptTopK || ADAPT_START_TOPK;
+    let vsaiAdaptPos = s.vsaiAdaptPos ?? ADAPT_START_POS; // pos=0 geçerli → ?? kullan (|| değil)
     if (perf) {
       vsaiRecent = pushPerf(s.vsaiRecent, perfScore(perf.attempts, perf.solved, MAX_ATTEMPTS));
-      vsaiAdaptTopK = nextAdaptTopK(vsaiRecent, vsaiAdaptTopK);
+      vsaiAdaptPos = nextAdaptPos(vsaiRecent, vsaiAdaptPos);
     }
 
     const next: Stats = {
@@ -87,7 +87,7 @@ export class StatsService {
       vsaiWon: s.vsaiWon + (won ? 1 : 0),
       vsaiByPersona: byPersona,
       vsaiRecent,
-      vsaiAdaptTopK,
+      vsaiAdaptPos,
     };
     this._stats.set(next);
     this.persist(next);
@@ -116,9 +116,9 @@ export class StatsService {
     this.persist(next);
   }
 
-  /** 🎯 Uyarlanabilir modun güncel bot ayarı (topK). */
-  adaptiveTopK(): number {
-    return this._stats().vsaiAdaptTopK || ADAPT_START_TOPK;
+  /** 🎯 Uyarlanabilir modun güncel bot ayarı (entropi sıralamasındaki yüzdelik konum). */
+  adaptivePos(): number {
+    return this._stats().vsaiAdaptPos ?? ADAPT_START_POS; // pos=0 geçerli → ?? (|| değil)
   }
 
   /** Puandan hesaplanan seviye ve ilerleme (core/level.ts). */
@@ -193,7 +193,13 @@ export class StatsService {
         vsaiRecent: Array.isArray(parsed.vsaiRecent)
           ? parsed.vsaiRecent.filter((n) => typeof n === 'number' && Number.isFinite(n))
           : [],
-        vsaiAdaptTopK: num(parsed.vsaiAdaptTopK) || ADAPT_START_TOPK,
+        // Yeni anahtar: eski kayıtlardaki topK değeri (vsaiAdaptTopK) bilerek okunmaz →
+        // eski oyuncular başlangıç konumundan taze başlar (topK ile pos ölçekleri uyumsuz).
+        // DİKKAT: pos=0 GEÇERLİ (en güçlü) → num()||START yanlış olurdu; varlık kontrolü şart.
+        vsaiAdaptPos:
+          typeof parsed.vsaiAdaptPos === 'number' && Number.isFinite(parsed.vsaiAdaptPos)
+            ? Math.max(0, Math.min(1, parsed.vsaiAdaptPos))
+            : ADAPT_START_POS,
         aiHintsUsed: num(parsed.aiHintsUsed),
         // Eski/bozuk kayıtlarda dağılım dizisi hatalı olabilir
         distribution:

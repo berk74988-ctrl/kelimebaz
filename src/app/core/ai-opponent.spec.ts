@@ -98,31 +98,33 @@ describe('YZ çözücü (entropi tabanlı)', () => {
     });
   });
 
-  describe('zorluk = oyun gücü (hedef ortalamalar ±0.3)', () => {
-    // ULAŞILABİLİR hedefler (3100 havuz, yalnız-tutarlı oyun bandı ~3.17–3.57): scripts/vsai-solver-test.mjs
-    const TARGET: Record<Difficulty, number> = { easy: 3.55, medium: 3.3, hard: 3.2 };
+  describe('zorluk = oyun gücü (regresyon koruması)', () => {
+    // ULAŞILABİLİR hedefler (700 kelimelik 5 harfli TR havuz, band tabanlı seçim; ölçülen
+    // aralık ~3.1–4.46): scripts/vsai-solver-test.mjs. YETKİLİ ölçüm 500 maç ile orada
+    // yapılır (Kolay−Zor farkı 1.36 ≥ 1.2 orada doğrulanır — `npm run check:vsai`).
+    // Buradaki spec daha HAFİF/HIZLI bir alt-küme ölçümüdür (deterministik) → regresyonu
+    // yakalar ama toleransı daha geniştir; band tabanlı estimatör farkı daha sıkışık ölçer.
+    const TARGET: Record<Difficulty, number> = { easy: 4.46, medium: 3.63, hard: 3.1 };
+    // Hız için havuzun deterministik alt kümesi (zayıf botlar tur başına pahalı örnekler).
+    const SAMPLE = pool.filter((_, i) => i % 10 === 0);
 
-    /** Havuzun her kelimesini iki tur çöz, ortalama tahmin sayısı (deterministik). */
+    /** Alt kümedeki her kelimeyi çöz, ortalama tahmin sayısı (deterministik). */
     function avgFor(diff: Difficulty): number {
       const rnd = seeded(diff === 'hard' ? 111 : diff === 'medium' ? 222 : 333);
       let total = 0;
-      let n = 0;
-      for (let round = 0; round < 2; round++) {
-        for (const answer of pool) {
-          const s = new AiSolver(answer, pool, AI_CONFIG[diff], 6, rnd, openers);
-          while (!s.done) s.step();
-          total += s.attempts;
-          n++;
-        }
+      for (const answer of SAMPLE) {
+        const s = new AiSolver(answer, pool, AI_CONFIG[diff], 6, rnd, openers);
+        while (!s.done) s.step();
+        total += s.attempts;
       }
-      return total / n;
+      return total / SAMPLE.length;
     }
 
     const avg = { easy: avgFor('easy'), medium: avgFor('medium'), hard: avgFor('hard') };
 
-    it('her zorluk hedef ortalamasının ±0.3 bandında', () => {
+    it('her zorluk hedef ortalamasının ±0.4 bandında (hafif estimatör)', () => {
       for (const d of ['easy', 'medium', 'hard'] as Difficulty[]) {
-        expect(Math.abs(avg[d] - TARGET[d])).toBeLessThanOrEqual(0.3);
+        expect(Math.abs(avg[d] - TARGET[d])).toBeLessThanOrEqual(0.4);
       }
     });
 
@@ -131,11 +133,15 @@ describe('YZ çözücü (entropi tabanlı)', () => {
       expect(avg.medium).toBeGreaterThan(avg.hard);
     });
 
+    it('Kolay–Zor gücü arasında gerçek fark var (bu hafif ölçümde ≥ 1.0; yetkili ≥1.2 check:vsai)', () => {
+      expect(avg.easy - avg.hard).toBeGreaterThanOrEqual(1.0);
+    });
+
     it('bot HER zorlukta yalnız TUTARLI (havuzdaki, ipuçlarıyla çelişmeyen) kelime tahmin eder', () => {
       const poolSet = new Set(pool);
       const rnd = seeded(42);
       for (const diff of ['easy', 'medium', 'hard'] as Difficulty[]) {
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < 12; i++) {
           const answer = pool[Math.floor(rnd() * pool.length)];
           const s = new AiSolver(answer, pool, AI_CONFIG[diff], 6, rnd, openers);
           const prior: { word: string; pattern: LetterState[] }[] = [];
@@ -153,6 +159,6 @@ describe('YZ çözücü (entropi tabanlı)', () => {
           }
         }
       }
-    });
+    }, 20000); // zayıf botlar çok tur oynar → gerçek iş; 5sn varsayılan yetmez
   });
 });

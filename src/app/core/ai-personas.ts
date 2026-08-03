@@ -44,8 +44,8 @@ export const PERSONAS: readonly Persona[] = [
     avatar: '🛡️',
     tier: 'hard',
     // Hep en güvenli (en çok eleyen) tahmin → riske girmez, istikrarlı, güçlü.
-    config: { minMs: 1900, maxMs: 2900, topK: 1 },
-    avgGuesses: 3.19, // ölçüldü (3100'lük havuz): scripts/vsai-persona-test.mjs
+    config: { minMs: 1900, maxMs: 2900, band: [0, 0] },
+    avgGuesses: 3.19, // ölçüldü: scripts/vsai-persona-test.mjs
   },
   {
     id: 'unlu',
@@ -53,9 +53,9 @@ export const PERSONAS: readonly Persona[] = [
     descKey: 'persona.unlu.desc',
     avatar: '🎯',
     tier: 'medium',
-    // Açılışta ünlü yoğun kelime, sonra hızlı daraltır (topK küçük).
-    config: { minMs: 1600, maxMs: 2500, topK: 4, bias: 'vowel', openerBias: true },
-    avgGuesses: 3.3,
+    // Ünlü yoğun kelimelere kayar (açılış dâhil), orta dilimden seçer → dengeli.
+    config: { minMs: 1600, maxMs: 2500, band: [0.4, 0.65], bias: 'vowel', biasWeight: 1.5 },
+    avgGuesses: 3.66,
   },
   {
     id: 'harfsayar',
@@ -63,16 +63,15 @@ export const PERSONAS: readonly Persona[] = [
     descKey: 'persona.harfsayar.desc',
     avatar: '🔢',
     tier: 'medium',
-    // Sık kullanılan harfleri önceliklendirir (tüm turlarda) → biraz daha zayıf.
+    // Sık kullanılan harfleri önceliklendirir (tüm turlarda), orta dilim → biraz zayıf.
     config: {
       minMs: 2100,
       maxMs: 3100,
-      topK: 3,
+      band: [0.45, 0.7],
       bias: 'frequent',
-      openerBias: true,
       biasWeight: 2.5,
     },
-    avgGuesses: 3.32,
+    avgGuesses: 3.66,
   },
   {
     id: 'kumarbaz',
@@ -80,9 +79,9 @@ export const PERSONAS: readonly Persona[] = [
     descKey: 'persona.kumarbaz.desc',
     avatar: '🎲',
     tier: 'easy',
-    // Erken turda doğrudan cevabı dener: tutarsa çok hızlı, tutmazsa tur harcar (değişken).
-    config: { minMs: 900, maxMs: 1700, topK: 24, gamble: 0.5 },
-    avgGuesses: 3.44,
+    // Zayıf dilimden oynar + erken turda doğrudan cevabı dener: değişken, kolay.
+    config: { minMs: 900, maxMs: 1700, band: [0.85, 1], gamble: 0.5 },
+    avgGuesses: 4.12,
   },
 ];
 

@@ -14,11 +14,14 @@ import { Lang } from './lang';
  *
  * ZORLUK = OYUN GÜCÜ. Bot her zorlukta MANTIKLI oynar (asla ipuçlarıyla çelişen
  * tahmin yapmaz); sadece optimallikten uzaklaşır. Ölçü: entropi sıralamasında
- * kaçıncı en iyi tahmini seçtiği (`topK`).
- *   - Zor  (topK 1)  → hep en iyi tahmin (en çok eleyen).
- *   - Orta (topK ~6) → ilk birkaç iyi tahminden biri.
- *   - Kolay(topK ~24)→ ilk yirmi küsur tahminden biri — hâlâ geçerli, ama daha
- *     az bilgi çıkaran → daha çok tur harcar (zayıf ama tutarlı bir oyuncu gibi).
+ * hangi YÜZDELİK DİLİMDEN seçtiği (`band` = [lo, hi], 0 = en iyi entropi … 1 = en
+ * zayıf tutarlı aday). topK (sabit sayı) yerine dilim → HAVUZ BÜYÜKLÜĞÜNDEN BAĞIMSIZ.
+ *   - Zor  [0, 0]      → hep en iyi tahmin (en çok eleyen).
+ *   - Orta [0.4, 0.65] → orta güçte adaylardan biri.
+ *   - Kolay[0.85, 1]   → en zayıf dilimden — hâlâ geçerli (ipuçlarına uyar), ama
+ *                        çok az bilgi çıkarır → belirgin biçimde daha çok tur harcar.
+ * GÜVENLİK FRENİ: son 2 hakta bot EN İYİ tutarlı adayı seçer → çıkmaza girmez
+ * (zayıflık erken/orta turda kalır; hiçbir zorluk maçları çözümsüz bırakmaz).
  * Düşünme SÜRESİ (nextDelay) artık zorluğun kaynağı DEĞİL — yalnız tempo hissi.
  * ============================================================
  */
@@ -28,39 +31,51 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 /** Aday sayısı bunu aşarsa entropi örneklemeyle tahmin edilir (tarayıcıda < 100 ms). */
 const SAMPLE_THRESHOLD = 300;
 
+/** Yüzdelik dilim: [lo, hi] ∈ [0,1]. 0 = en iyi (en çok eleyen), 1 = en zayıf. */
+export type Band = readonly [number, number];
+
 export interface AiConfig {
   minMs: number; // düşünme aralığı alt sınır (ms) — yalnız tempo
   maxMs: number; // üst sınır (ms)
-  /** Entropi sıralamasında İLK KAÇ aday arasından seçim yapılır (1 = hep en iyi). */
-  topK: number;
+  /** Entropi sıralamasında seçim dilimi ([0,0] = hep en iyi; [0.85,1] = en zayıf). */
+  band: Band;
   /**
    * KARAKTER STRATEJİSİ (opsiyonel — botlara kişilik verir):
    *   bias        — tahminleri hangi harf tipine kayırsın: 'vowel' (ünlü yoğun) veya
    *                 'frequent' (havuzda sık harf). Yok → saf entropi.
-   *   biasWeight  — kayırmanın gücü (entropiye eklenir; 0 = sonraki turlarda etkisiz).
-   *   openerBias  — açılış kelimesi de bias'a göre seçilsin mi (Ünlü Avcısı: true).
+   *   biasWeight  — kayırmanın gücü (entropiye eklenir; açılış dâhil her turda etkili).
    *   gamble      — erken turda (çok aday varken) doğrudan bir cevabı deneme olasılığı
    *                 (0..1). Tutarsa hızlı kazanır, tutmazsa tur harcar (Kumarbaz).
    */
   bias?: 'vowel' | 'frequent';
   biasWeight?: number;
-  openerBias?: boolean;
   gamble?: number;
 }
 
 /** Ünlü harfler (TR üst kümesi EN'i de kapsar: A E I İ O Ö U Ü). */
 const VOWELS = new Set([...'AEIİOÖUÜ']);
 
-// topK, ULAŞILABİLİR hedef ortalamaya göre kalibre edildi (scripts/vsai-solver-test.mjs,
-// 5 harfli TR havuz, 500 maç): Kolay ≈ 3.15 · Orta ≈ 2.9 · Zor ≈ 2.75.
-// NOT: Yalnız-tutarlı (ipuçlarına uyan) oyunla ulaşılabilir tavan bu havuzda ~3.3'tür;
-// daha yüksek "Kolay" ortalaması ancak botun ipucunu boşa harcamasıyla (anlamsız
-// tahmin) olurdu — bilinçli olarak yapılmadı. Fark ~0.4 tahmin; hız/tempo destekler.
+// Band, ULAŞILABİLİR hedeflere göre ÖLÇÜLEREK kalibre edildi (scripts/vsai-solver-test.mjs,
+// 5 harfli TR havuz = 700 kelime, 500 maç/band, güvenlik freni açık):
+//   Zor [0,0] = 3.10 · Orta [0.4,0.65] = 3.63 · Kolay [0.85,1] = 4.46 · Kolay−Zor = 1.36
+//   Çözememe: Zor %0 · Orta %0 · Kolay %1.6 (hepsi ≤ %3 kabul sınırında).
+// ESKİ YORUM DÜZELTİLDİ: "yalnız-tutarlı tavan ~3.3" İDDİASI ÖLÇÜLEREK ÇÜRÜTÜLDÜ.
+// Sıralamanın ALT ucundan (anti-entropi yönü) seçmek, botun hiç anlamsız tahmin
+// yapmadan (hep ipuçlarına uyar) Kolay'ı ~4.46'ya çıkarır. Aşırı zayıflığın çözümsüz
+// maça dönmesini "son 2 tur en iyi" freni engeller (çözememe %1.6).
 export const AI_CONFIG: Record<Difficulty, AiConfig> = {
-  easy: { minMs: 3200, maxMs: 5200, topK: 140 }, // geniş seçim → zayıf ama HÂLÂ tutarlı
-  medium: { minMs: 2400, maxMs: 3600, topK: 8 }, // ilk ~8'den biri → dengeli
-  hard: { minMs: 1700, maxMs: 2600, topK: 1 }, // hep en iyi → zorlu ama adil
+  easy: { minMs: 3200, maxMs: 5200, band: [0.85, 1] }, // en zayıf dilim → belirgin zayıf, HÂLÂ tutarlı
+  medium: { minMs: 2400, maxMs: 3600, band: [0.4, 0.65] }, // orta dilim → dengeli
+  hard: { minMs: 1700, maxMs: 2600, band: [0, 0] }, // hep en iyi → zorlu ama adil
 };
+
+/** Bir yüzdelik dilim bandından rastgele indeks (0 = en iyi … n−1 = en zayıf). */
+export function bandIndex(band: Band, n: number, rnd: () => number): number {
+  if (n <= 1) return 0;
+  const a = Math.floor(band[0] * (n - 1));
+  const b = Math.floor(band[1] * (n - 1));
+  return Math.min(n - 1, a + Math.floor(rnd() * (b - a + 1)));
+}
 
 /** İki renk deseni birebir aynı mı? */
 function samePattern(a: readonly LetterState[], b: readonly LetterState[]): boolean {
@@ -128,7 +143,10 @@ export class AiSolver {
     private readonly cfg: AiConfig,
     private readonly maxAttempts: number,
     private readonly rnd: () => number = Math.random,
-    /** Derleme zamanı SIRALI açılış listesi — ilk tur gecikmesiz (topK ile seçilir). */
+    /**
+     * Derleme zamanı TAM SIRALI açılış listesi (en iyi entropi → en zayıf). İlk tur
+     * band bu listeden seçer → gecikmesiz VE zayıf uç erişilebilir (Kolay merdiveni).
+     */
     private readonly openers: readonly string[] = [],
     /** Renk mantığında büyük-harf kuralı için dil (varsayılan 'tr', geriye dönük). */
     private readonly lang: Lang = 'tr',
@@ -171,25 +189,32 @@ export class AiSolver {
     // Son düzlük: 1-2 aday kaldıysa doğrudan dene (biri cevaptır).
     if (c.length <= 2)
       return c.length ? c[0] : this.pool[Math.floor(this.rnd() * this.pool.length)];
-    // İlk tur: açılış derleme zamanında SIRALI hesaplandı → hesap yok, gecikme yok.
+    // 🛑 GÜVENLİK FRENİ: son 2 hakta EN İYİ tutarlı adayı seç → bot çıkmaza girmez
+    // (zayıf zorluklar bile maçı bitirir; çözememe oranı düşük kalır).
+    if (this.attempts >= this.maxAttempts - 2) return this.rankedGuess(true);
+    // İlk tur: açılış derleme zamanında TAM SIRALI hesaplandı → band'dan seç, gecikme yok.
+    // (Tam liste zayıf ucu da içerir → Kolay zayıf açılış yapabilir, gerçek merdiven.)
     if (this.attempts === 0 && this.openers.length) return this.pickOpener();
     // 🎲 Kumarbaz: erken/orta turda (çok aday) doğrudan bir cevabı dene.
     if (this.cfg.gamble && c.length > 8 && this.rnd() < this.cfg.gamble) {
       return c[Math.floor(this.rnd() * c.length)]; // rastgele aday = "cevabı deneme"
     }
-    // Sonraki turlar: entropi (+ karakter kayırması) sıralamasında ilk topK'dan seç.
-    return this.rankedGuess();
+    // Sonraki turlar: entropi (+ karakter kayırması) sıralamasında BANDDAN seç.
+    return this.rankedGuess(false);
   }
 
-  /** Açılış kelimesi — karaktere göre (Ünlü Avcısı ünlü yoğun açar). */
+  /** İlk tur: derleme zamanı TAM SIRALI açılış listesinden band ile seç (bias'a göre yeniden sırala). */
   private pickOpener(): string {
     let list: readonly string[] = this.openers;
-    if (this.cfg.openerBias && this.cfg.bias) {
-      // Açılış listesi (hepsi zaten yüksek entropi) harf tipine göre yeniden sıralanır.
-      list = [...this.openers].sort((a, b) => this.letterScore(b) - this.letterScore(a));
+    if (this.cfg.bias) {
+      // Kayıran karakter (Ünlü Avcısı / Harf Sayar) açılışı da harf tipine göre sıralar.
+      const bw = this.cfg.biasWeight || 0;
+      list = [...this.openers]
+        .map((w, i) => ({ w, rank: i - bw * this.letterScore(w) })) // düşük rank = üstte
+        .sort((a, b) => a.rank - b.rank)
+        .map((x) => x.w);
     }
-    const k = Math.min(this.cfg.topK, list.length);
-    return list[Math.floor(this.rnd() * k)];
+    return list[bandIndex(this.cfg.band, list.length, this.rnd)];
   }
 
   /** Bir kelimenin karakter kayırma skoru (0..1) — 'vowel' ünlü oranı, 'frequent' sık-harf. */
@@ -225,18 +250,21 @@ export class AiSolver {
 
   /**
    * ENTROPİ SIRALAMASINDAN SEÇİM — adayları "havuzu ne kadar eler" (entropi)
-   * ölçüsüne göre sıralar, ilk `topK` arasından RASTGELE birini seçer.
-   *   topK 1  → hep en iyi tahmin (Zor).
-   *   topK N  → ilk N iyi tahminden biri (Orta/Kolay) — hâlâ MANTIKLI (ipuçlarıyla
-   *             çelişmez), sadece daha az bilgi çıkarır → daha çok tur.
-   * Beraberlikte cevap havuzunda olan üste alınır (o tur kazanma şansı). Aday
-   * çoksa örnekleme yapar → tarayıcıda < 100 ms.
+   * ölçüsüne göre sıralar, entropi sırasında YÜZDELİK DİLİM (band) içinden RASTGELE
+   * birini seçer. Band, havuz büyüklüğünden bağımsızdır (0 = en iyi/en yüksek entropi,
+   * 1 = en zayıf).
+   *   band [0,0]      → hep en iyi tahmin (Zor).
+   *   band [0.4,0.65] → orta güçte tahmin (Orta).
+   *   band [0.85,1]   → zayıf tahmin (Kolay) — hâlâ MANTIKLI (ipuçlarıyla çelişmez),
+   *                     sadece daha az bilgi çıkarır → daha çok tur.
+   * `best=true` ise band'ı yok say, EN İYİ tutarlı adayı seç (güvenlik freni — son 2
+   * hakta çağrılır → bot çıkmaza girmez). Beraberlikte cevap havuzunda olan üste alınır
+   * (o tur kazanma şansı). Aday çoksa örnekleme yapar → tarayıcıda < 100 ms.
    */
-  private rankedGuess(): string {
+  private rankedGuess(best: boolean): string {
     const c = this.candidates;
     // Aday çoksa hem tahmin hem skorlama kümesini örnekle → maliyet O(SAMPLE²).
-    // (İlk tur önceden hesaplanmış açılışı kullanır; buraya küçük aday kümeleriyle
-    //  gelinir — örnekleme pratikte devreye girmez, güvenlik ağı.)
+    // İlk tur tüm havuzla (aday elenmemiş) gelir; örnekleme burada devreye girer.
     const guesses = c.length > SAMPLE_THRESHOLD ? this.sample(c, SAMPLE_THRESHOLD) : c;
     const scoreSet = c.length > SAMPLE_THRESHOLD ? this.sample(c, SAMPLE_THRESHOLD) : c;
     const answerPool = this.poolSet();
@@ -251,8 +279,8 @@ export class AiSolver {
     // Skor azalan; eşitlikte cevap havuzundaki (kazanma şansı) üstte.
     scored.sort((a, b) => b.s - a.s || Number(b.inPool) - Number(a.inPool));
 
-    const k = Math.min(this.cfg.topK, scored.length);
-    return scored[Math.floor(this.rnd() * k)].g;
+    if (best) return scored[0].g; // güvenlik freni: en iyi tutarlı aday
+    return scored[bandIndex(this.cfg.band, scored.length, this.rnd)].g;
   }
 
   private _poolSet: Set<string> | null = null;

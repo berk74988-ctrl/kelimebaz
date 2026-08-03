@@ -6,10 +6,11 @@
  * hesaplanıp `src/app/core/ai-openers.ts` sabitine gömülür → çalışma zamanında
  * ilk tur maliyeti SIFIRA iner (tarayıcıda gecikme olmaz).
  *
- * Neden LİSTE (tek kelime değil): zorluk = entropi sıralamasında kaçıncı en iyiyi
- * seçtiğin (topK). Zor bot listenin başını (en iyi açılış), Kolay bot ilk N'den
- * birini alır. Tek açılış olsaydı tüm zorluklar aynı açılışı yapar, güç farkı
- * kaybolurdu. Renk deseni mantığı `core/evaluate.ts` ile birebir aynıdır.
+ * Neden TAM SIRALI LİSTE (tek kelime değil): zorluk = entropi sıralamasında hangi
+ * YÜZDELİK DİLİMDEN (band) seçtiğin. Zor bot listenin BAŞINI (en iyi açılış), Kolay
+ * bot SONUNU (en zayıf ama hâlâ geçerli açılış) alır. Bu yüzden havuzun TAMAMI sıralı
+ * saklanır — yalnız en iyi N olsaydı Kolay'ın zayıf ucu erişilemez, güç farkı daralırdı.
+ * Renk deseni mantığı `core/evaluate.ts` ile birebir aynıdır.
  *
  * Kullanım: node scripts/build-ai-openers.mjs
  */
@@ -17,7 +18,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 
 const LANGS = /** @type {const} */ (['tr', 'en']);
 const LENGTHS = [4, 5, 6, 7];
-const TOP_N = 128; // her uzunluk için saklanan sıralı açılış sayısı (Kolay'ın en yüksek topK'sını karşılar)
+// Havuzun TAMAMI sıralı saklanır (band en-zayıf uca erişebilsin) — üst sınır yok.
+const TOP_N = Infinity;
 const SCORE_CAP = 600; // entropiyi bu kadar adaya karşı örnekle (build hızı; sonuç kararlı)
 
 // Dile göre büyük harf — core/lang.ts upperFor ile aynı.
@@ -83,7 +85,7 @@ function sample(list, k, rnd) {
   return out;
 }
 
-/** Havuzu entropiye göre SIRALAR, en iyi TOP_N açılışı döndürür. */
+/** Havuzu entropiye göre TAMAMEN SIRALAR (en iyi → en zayıf), TOP_N ile sınırlar. */
 function rankedOpeners(pool, rnd) {
   if (pool.length <= 1) return [...pool];
   const scoreSet = pool.length > SCORE_CAP ? sample(pool, SCORE_CAP, rnd) : pool;
@@ -128,9 +130,9 @@ const body =
   `/**\n` +
   ` * OTOMATİK ÜRETİLDİ — scripts/build-ai-openers.mjs (elle düzenleme).\n` +
   ` *\n` +
-  ` * YZ açılış kelimeleri: her dil × uzunluk için entropiye göre SIRALI liste\n` +
-  ` * (en iyi açılıştan aşağıya, en fazla ${TOP_N} kelime). Zorluk (topK) bu listenin\n` +
-  ` * ilk kaçından seçtiğini belirler. Derleme zamanında hesaplanır → çalışma\n` +
+  ` * YZ açılış kelimeleri: her dil × uzunluk için entropiye göre TAM SIRALI liste\n` +
+  ` * (en iyi açılıştan en zayıfına). Zorluk (band = yüzdelik dilim) bu listenin hangi\n` +
+  ` * bölümünden seçtiğini belirler. Derleme zamanında hesaplanır → çalışma\n` +
   ` * zamanında ilk tur gecikmesi yok. Yeniden üretmek: node scripts/build-ai-openers.mjs\n` +
   ` */\n` +
   `export const AI_OPENERS: Record<'tr' | 'en', Record<number, readonly string[]>> = {\n` +

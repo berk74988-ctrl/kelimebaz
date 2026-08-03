@@ -1,29 +1,31 @@
+import type { Band } from './ai-opponent';
+
 /**
  * ===========================================================================
  * 🎯 UYARLANABİLİR ZORLUK — "Bana uygun rakip" (saf mantık, test edilebilir)
  *
  * Oyuncunun son N maçındaki tahmin sayısını kayan pencerede tutar, bundan bota
- * BAŞA BAŞ (hafif zorlayıcı) bir hedef türetir ve hedefi bot parametresine (topK)
- * çevirir. Amaç: maçların çoğunun kıl payı bitmesi.
+ * BAŞA BAŞ (hafif zorlayıcı) bir hedef türetir ve hedefi bot parametresine —
+ * entropi sıralamasındaki YÜZDELİK KONUM (pos ∈ [0,1]) — çevirir. Amaç: maçların
+ * çoğunun kıl payı bitmesi.
  *
- * KISIT: Bot yalnız TUTARLI (ipuçlarına uyan) oynar; 3100'lük havuzda ulaşılabilir
- * ortalama ~3.17 (topK 1, en güçlü) – ~3.57 (topK büyük, en rahat). Hedef bu banda
- * kırpılır — çok zayıf oyuncuya karşı bot "en rahat" ayarında kalır (aptallaşmaz).
- * (Havuz 860→3100 büyüyünce aday çoğaldı, band ~0.4 tahmin yukarı kaydı — yeniden
- *  kalibre edildi: scripts/vsai-solver-test.mjs · vsai-persona-test.mjs.)
+ * pos 0 = en güçlü (en iyi entropi, band [0,0]) · pos 1 = en zayıf (band [~,1]).
+ * KISIT: Bot yalnız TUTARLI (ipuçlarına uyan) oynar; ulaşılabilir ortalama
+ * ~3.10 (pos 0) – ~4.46 (pos 1) arası (ÖLÇÜLDÜ: scripts/vsai-solver-test.mjs).
+ * Hedef bu banda kırpılır — çok zayıf oyuncuya karşı bot "en rahat" ucunda kalır.
  *
- * Aşırı salınım engellenir: hem 10 maçlık pencere yumuşatır, hem topK tek maçta
- * en fazla kademeli değişir (smoothStep) → tek sonuçla sert sıçrama olmaz.
+ * Aşırı salınım engellenir: hem 10 maçlık pencere yumuşatır, hem pos tek maçta
+ * en fazla STEP kadar değişir (smoothStep) → tek sonuçla sert sıçrama olmaz.
  * ===========================================================================
  */
 
 export const ADAPT_WINDOW = 10; // kayan pencere boyu
-export const ADAPT_START_TOPK = 8; // yeni oyuncu: ortalama (Dengeli) başlangıç
-const MIN_TOPK = 1;
-const MAX_TOPK = 200;
-const TARGET_LO = 3.17; // botun ulaşabileceği en düşük ortalama (topK 1, en güçlü)
-const TARGET_HI = 3.57; // en yüksek ortalama (topK büyük, en rahat)
-const TARGET_K = 13; // üstel eşleme katsayısı (band genişliği 0.40'a göre kalibre)
+export const ADAPT_START_POS = 0.45; // yeni oyuncu: orta (Dengeli) başlangıç konumu
+const MIN_POS = 0;
+const MAX_POS = 1;
+const AVG_LO = 3.1; // pos 0'da botun ortalama tahmini (en güçlü) — ölçüldü
+const AVG_HI = 4.46; // pos 1'de botun ortalama tahmini (en zayıf) — ölçüldü
+const STEP = 0.15; // pos'un tek maçta en fazla değişimi (kademeli geçiş)
 const CHALLENGE = 0.2; // "hafif zorlayıcı": bot hedefi oyuncu ortalamasının biraz ALTINDA
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -45,42 +47,44 @@ export function windowAvg(recent: readonly number[]): number | null {
 }
 
 /**
- * Oyuncu ortalamasından HEDEF topK. Bot hedefi = oyuncu ort − CHALLENGE (hafif
- * zorlayıcı), [3.17, 3.57]'ye kırpılır, oradan topK'ya (üstel eşleme) çevrilir.
- * Ölçülen eğri (3100 havuz): topK 1→3.17 · 8→3.31 · 140→3.57.
+ * Oyuncu ortalamasından HEDEF konum. Bot hedef ortalaması = oyuncu ort − CHALLENGE
+ * (hafif zorlayıcı), [AVG_LO, AVG_HI]'ye kırpılır, oradan pos'a (doğrusal) çevrilir.
+ * Düşük ortalama → düşük pos (güçlü bot); yüksek ortalama → yüksek pos (rahat bot).
  */
-export function targetTopK(playerAvg: number): number {
-  const target = clamp(playerAvg - CHALLENGE, TARGET_LO, TARGET_HI);
-  const topK = Math.round(Math.exp(TARGET_K * (target - TARGET_LO)));
-  return clamp(topK, MIN_TOPK, MAX_TOPK);
+export function targetPos(playerAvg: number): number {
+  const targetAvg = clamp(playerAvg - CHALLENGE, AVG_LO, AVG_HI);
+  return clamp((targetAvg - AVG_LO) / (AVG_HI - AVG_LO), MIN_POS, MAX_POS);
 }
 
-/**
- * Kademeli geçiş — prev'den target'a doğru SINIRLI adım (tek maçta sert sıçrama yok).
- * Yukarı en fazla ~%60+3, aşağı ~%40+2 → birkaç maçta yumuşakça yeni seviyeye oturur.
- */
+/** Kademeli geçiş — prev'den target'a doğru en fazla STEP'lik adım (sert sıçrama yok). */
 export function smoothStep(prev: number, target: number): number {
-  if (target > prev) return Math.round(Math.min(target, prev + Math.max(3, prev * 0.6)));
-  if (target < prev) return Math.round(Math.max(target, prev - Math.max(2, prev * 0.4)));
+  if (target > prev) return Math.min(target, prev + STEP);
+  if (target < prev) return Math.max(target, prev - STEP);
   return prev;
 }
 
 /**
- * Yeni uyarlanabilir topK: pencere ortalamasından hedefi bul, prev'den kademeli git.
- * Pencere boşsa (yeni oyuncu) makul başlangıçta kalır.
+ * Yeni uyarlanabilir konum: pencere ortalamasından hedefi bul, prev'den kademeli git.
+ * Pencere boşsa (yeni oyuncu, geçmiş yok) makul başlangıca çekilir. DİKKAT: pos=0
+ * GEÇERLİ (en güçlü) → geçmiş varken 0'ı başlangıca sıçratma (yoksa güçlü oyuncuda
+ * salınım olur); yalnız pencere boş VE prev anlamsızken (0/tanımsız) başlangıca dön.
  */
-export function nextAdaptTopK(recent: readonly number[], prev: number): number {
+export function nextAdaptPos(recent: readonly number[], prev: number): number {
+  const p = Number.isFinite(prev) ? clamp(prev, MIN_POS, MAX_POS) : ADAPT_START_POS;
   const avg = windowAvg(recent);
-  if (avg == null) return clamp(Math.round(prev) || ADAPT_START_TOPK, MIN_TOPK, MAX_TOPK);
-  return smoothStep(
-    clamp(Math.round(prev) || ADAPT_START_TOPK, MIN_TOPK, MAX_TOPK),
-    targetTopK(avg),
-  );
+  if (avg == null) return Number.isFinite(prev) && prev > 0 ? p : ADAPT_START_POS;
+  return smoothStep(p, targetPos(avg)); // geçmiş var → prev (0 dâhil) korunur, kademeli git
 }
 
-/** topK'yı oyuncuya gösterilecek kaba zorluk etiketine çevirir. */
-export function adaptTierLabel(topK: number): 'hard' | 'medium' | 'easy' {
-  if (topK <= 3) return 'hard';
-  if (topK <= 25) return 'medium';
+/** Konumu çözücü bandına çevirir — konum çevresinde dar bir dilim (uçlarda kırpılır). */
+export function adaptBand(pos: number): Band {
+  const p = clamp(pos, MIN_POS, MAX_POS);
+  return [clamp(p - 0.05, 0, 1), clamp(p + 0.05, 0, 1)];
+}
+
+/** Konumu oyuncuya gösterilecek kaba zorluk etiketine çevirir. */
+export function adaptTierLabel(pos: number): 'hard' | 'medium' | 'easy' {
+  if (pos <= 0.3) return 'hard';
+  if (pos <= 0.72) return 'medium';
   return 'easy';
 }

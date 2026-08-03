@@ -77,7 +77,7 @@ export const BALANCE_SPEC: readonly BalanceParam[] = [
     min: 0.25,
     max: 4,
     int: false,
-    label: 'YZ zorluk çarpanı (topK; >1 kolay, <1 zor)',
+    label: 'YZ zorluk çarpanı (entropi dilimini kaydırır; >1 kolay, <1 zor)',
     group: 'ai',
   },
 ];

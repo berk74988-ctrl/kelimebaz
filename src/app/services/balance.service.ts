@@ -49,7 +49,7 @@ export class BalanceService {
     };
   }
 
-  /** YZ zorluk çarpanı (persona topK'sına uygulanır). */
+  /** YZ zorluk çarpanı (persona bandını entropi diliminde kaydırır; anahtar korunur). */
   aiTopKMul(): number {
     return this.get('aiTopKMul');
   }

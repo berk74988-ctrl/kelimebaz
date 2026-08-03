@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { AiSolver, aiOpeners } from '../../core/ai-opponent';
-import { adaptTierLabel } from '../../core/ai-adaptive';
+import { adaptTierLabel, adaptBand } from '../../core/ai-adaptive';
 import {
   Persona,
   PERSONAS,
@@ -73,14 +73,14 @@ export class VsaiScreen {
   protected readonly adaptive = signal(false); // 🎯 "Bana uygun rakip" modu mu?
   /** 🎯 Uyarlanabilir rakip — oyuncunun seviyesine göre ayarlanan sözde-karakter. */
   protected readonly adaptivePersona = computed<Persona>(() => {
-    const topK = this.stats.adaptiveTopK();
+    const pos = this.stats.adaptivePos();
     return {
       id: 'adaptive' as PersonaId,
       nameKey: 'vsai.adaptiveName',
       descKey: 'vsai.adaptiveDesc',
       avatar: '🎯',
-      tier: adaptTierLabel(topK),
-      config: { minMs: 1400, maxMs: 2400, topK },
+      tier: adaptTierLabel(pos),
+      config: { minMs: 1400, maxMs: 2400, band: adaptBand(pos) },
       avgGuesses: 0,
     };
   });
@@ -151,10 +151,18 @@ export class VsaiScreen {
     this.aiTimeMs = 0;
     this.matchStart = performance.now();
     const len = [...w].length;
-    // YZ zorluğu sunucudan ayarlanabilir: topK çarpanı (>1 daha çok aday = kolay,
-    // <1 = zor). En az 1. Diğer strateji parametreleri korunur.
+    // YZ zorluğu sunucudan ayarlanabilir: aiTopKMul çarpanı (>1 = kolay, <1 = zor).
+    // Artık band tabanlı → çarpanı entropi diliminde KAYMAYA çeviririz: mul>1 dilimi
+    // zayıf uca (kolay), mul<1 güçlü uca (zor) kaydırır. Varsayılan 1 → kayma yok.
+    // Diğer strateji parametreleri (bias/gamble) korunur.
     const mul = this.balance.aiTopKMul();
-    const cfg = { ...p.config, topK: Math.max(1, Math.round(p.config.topK * mul)) };
+    const shift = Math.max(-0.5, Math.min(0.5, (mul - 1) * 0.3));
+    const [lo, hi] = p.config.band;
+    const band: [number, number] = [
+      Math.max(0, Math.min(1, lo + shift)),
+      Math.max(0, Math.min(1, hi + shift)),
+    ];
+    const cfg = { ...p.config, band };
     this.solver = new AiSolver(
       w,
       this.words.answersOfLength(len),

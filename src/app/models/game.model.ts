@@ -83,8 +83,8 @@ export interface Stats {
   vsaiByPersona: Record<string, { played: number; won: number }>;
   /** 🎯 Uyarlanabilir zorluk: son N YZ maçındaki oyuncu tahmin sayıları (kayan pencere). */
   vsaiRecent: number[];
-  /** 🎯 Uyarlanabilir modun güncel bot ayarı (topK) — kademeli güncellenir. */
-  vsaiAdaptTopK: number;
+  /** 🎯 Uyarlanabilir modun güncel bot ayarı (entropi yüzdelik konumu 0..1) — kademeli güncellenir. */
+  vsaiAdaptPos: number;
   /**
    * 🆘 Toplam kullanılan "Takıldım" YZ ipucu sayısı. Galibiyet/seri BOZULMAZ
    * (yardım alınan oyun da geçerli sayılır) — yalnızca kaç kez yardım istendiğini
@@ -106,7 +106,7 @@ export const EMPTY_STATS: Stats = {
   vsaiWon: 0,
   vsaiByPersona: {},
   vsaiRecent: [],
-  vsaiAdaptTopK: 8,
+  vsaiAdaptPos: 0.45,
   aiHintsUsed: 0,
 };
 
