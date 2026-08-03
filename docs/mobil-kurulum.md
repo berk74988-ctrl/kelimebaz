@@ -147,6 +147,21 @@ Bu komut **Capacitor paketi eklendikten sonra** (bir sonraki iş) anlamlı çal�
 projede `@capacitor/cli` + `capacitor.config` gerektirir. Ortamın kendisi yukarıdaki
 `java -version` / `adb --version` ile doğrulandı.
 
+## ✅ Kurulum sonucu (bu makinede doğrulandı — 3 Ağu 2026)
+
+- `java -version` → **openjdk 21.0.12** (eski Java 8 yerine, PATH sırası düzeldi)
+- `adb --version` → **1.0.41 / 37.0.1**
+- `JAVA_HOME`, `ANDROID_HOME`, `ANDROID_SDK_ROOT` tanımlı + PATH (adb/sdkmanager)
+- Android Studio **2026.1.3.7** kuruldu; ilk açılışta mevcut SDK'yı buldu (baştan
+  indirmedi) ve emülatör motorunu (37.1.11) ekledi.
+- Emülatör: **Pixel_8** AVD (Android 17 / API 37.1, x86_64, Google Play) oluşturuldu.
+  `emulator -accel-check` → **WHPX installed and usable** (donanım hızlandırma açık).
+  Emülatör açıldı, `boot_completed=1`, `adb devices` → `emulator-5554 device`,
+  ana ekran (NexusLauncher) geldi → **kullanılabilir hızda çalışıyor.** ✅
+- **Gerçek cihaz:** bu kurulumda telefon bağlanmadı (emülatör yeterli oldu). Gerçek
+  telefonla test için yukarıdaki "Gerçek cihaz" adımları izlenir.
+- **`npx cap doctor`:** Capacitor paketi eklendikten sonra (bir sonraki iş) çalışır.
+
 ## 🍎 iOS — ENGEL (donanım)
 
 iOS derlemesi **yalnız macOS + Xcode** ile mümkün. **Bu makinede Mac YOK** → iOS
