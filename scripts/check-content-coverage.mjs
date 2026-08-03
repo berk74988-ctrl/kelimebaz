@@ -44,8 +44,10 @@ const load = async (name) => JSON.parse(await readFile(new URL(name, DIR), 'utf8
 const [
   wordsTr,
   wordsEn,
+  wordsDe,
   hintsTr,
   hintsEn,
+  hintsDe,
   cardsTr,
   cardsEn,
   diffTr,
@@ -57,8 +59,10 @@ const [
 ] = await Promise.all([
   load('words.json'),
   load('words-en.json'),
+  load('words-de.json'),
   load('hints-tr-native.json'),
   load('hints-en.json'),
+  load('hints-de.json'),
   load('word-cards-tr.json'),
   load('word-cards-en.json'),
   load('word-difficulty-tr.json'),
@@ -85,7 +89,8 @@ const hasDiff = (obj, w) => {
 };
 
 // ── Denetlenecek kategoriler ─────────────────────────────────────────────────
-// NOT: DE bu bilet kapsamında değil (TR+EN). İleride eklenebilir (word-cards-de yok).
+// DE için yalnız ipucu denetlenir (kart/zorluk-kapsamı DE için ayrı ele alınır;
+// word-cards-de yok, word-difficulty-de kaynağı farklı).
 const categories = [
   {
     id: 'tr.hint',
@@ -122,6 +127,12 @@ const categories = [
     label: 'EN zorluk (word-difficulty-en)',
     items: pool(wordsEn),
     covered: (w) => hasDiff(diffEn, w),
+  },
+  {
+    id: 'de.hint',
+    label: 'DE ipucu (hints-de)',
+    items: pool(wordsDe),
+    covered: (w) => hasHint(hintsDe, w),
   },
   {
     id: 'theme.tr',

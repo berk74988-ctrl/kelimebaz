@@ -32,6 +32,8 @@
     "review:apply": "node tools/content-review/apply-reviews.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
     "check:coverage": "node scripts/check-content-coverage.mjs",
+    "check:hint-tr": "node scripts/hint-check-tr-native.mjs",
+    "check:hint-de": "node scripts/hint-check-de.mjs",
     "build:dictionary": "node scripts/build-dictionary.mjs",
     "build:icons": "node scripts/build-pwa-icons.mjs",
     "build:word-difficulty": "node scripts/build-word-difficulty.mjs",
