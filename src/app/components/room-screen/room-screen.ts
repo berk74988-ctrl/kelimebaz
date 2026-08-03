@@ -142,13 +142,15 @@ export class RoomScreen {
   protected readonly playerOptions = [2, 3, 4, 5, 6, 7, 8];
 
   constructor() {
-    // Yeni bir tur başladığında (startedAt değişince) "bitirdim" bayrağını sıfırla
-    // ki oyun tahtası yeniden görünsün.
+    // Yeni bir tur başladığında (startedAt değişince) "bitirdim" bayrağını ayarla.
+    // Normalde false → oyun tahtası görünür. AMA sayfa yenilenip odaya geri dönüldüyse
+    // ve bu turu ZATEN bitirmişsem (sunucudaki me().finished), doğrudan lider tablosuna
+    // düş — beni tahtaya geri atıp tekrar oynatmaz / puanı çift göndertmez.
     effect(() => {
       const r = this.room();
       if (r?.status === 'playing' && r.startedAt && r.startedAt !== this.lastStarted) {
         this.lastStarted = r.startedAt;
-        this.myDone.set(false);
+        this.myDone.set(this.me()?.finished ?? false);
       }
     });
   }

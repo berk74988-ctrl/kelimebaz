@@ -102,8 +102,30 @@ export class RoomService {
   private token = '';
   private poll: ReturnType<typeof setInterval> | null = null;
 
+  /**
+   * Açılışta kayıtlı bir oda oturumu (sessionStorage kimliği) VAR MIYDI?
+   * App bunu okuyup, oturum geri yüklenince kullanıcıyı odasına döndürür
+   * (view kalıcı değil → yenilemede başlığa döner; buysa onu telafi eder).
+   */
+  readonly hadSession: boolean;
+
   constructor() {
     this.restoreCreds();
+    // Sayfa yenilendiyse kimlik burada dolu olur → odaya geri bağlan.
+    this.hadSession = !!(this.code && this.playerId && this.token);
+    if (this.hadSession) void this.resume();
+  }
+
+  /**
+   * Sayfa yenilendiğinde odaya geri bağlan: kimlik geçerliyse önce durumu bir kez
+   * çeker (refresh), oda hâlâ duruyorsa polling'i başlatır → RoomScreen durumdan
+   * doğru aşamayı (lobi/oyun/bitiş) çizer. Sunucu not_found/closed derse refresh()
+   * kimliği temizler, _room null kalır → SESSİZCE menüye düşülür (hata gösterilmez).
+   */
+  private async resume(): Promise<void> {
+    if (!this.code || !this.playerId || !this.token) return;
+    await this.refresh();
+    if (this._room()) this.startPolling();
   }
 
   /** Bu istemcinin oyuncu kimliği (kendini listede bulmak için). */

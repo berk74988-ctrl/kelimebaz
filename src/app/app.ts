@@ -14,6 +14,7 @@ import { GameMode } from './models/game.model';
 import { AudioService } from './services/audio.service';
 import { ContrastService } from './services/contrast.service';
 import { LanguageService } from './services/language.service';
+import { RoomService } from './services/room.service';
 import { SeoService } from './services/seo.service';
 import { TelemetryService } from './services/telemetry.service';
 import { ThemeService } from './services/theme.service';
@@ -49,6 +50,8 @@ export class App {
   private readonly audio = inject(AudioService);
   private readonly seo = inject(SeoService); // dile göre başlık/meta/OG günceller
   private readonly telemetry = inject(TelemetryService);
+  // Erken enjekte: yapıcısında kayıtlı oda oturumunu geri yüklemeyi dener (resume).
+  private readonly rooms = inject(RoomService);
 
   constructor() {
     // Müziği açılışta başlatmayı dener. Tarayıcı sesli otomatik oynatmayı
@@ -58,6 +61,19 @@ export class App {
     effect(() => {
       if (this.words.status() === 'error') this.telemetry.error('dict_load_fail');
     });
+    // 🔄 Sayfa yenilendiyse ve aktif bir oda oturumu geri yüklendiyse, kullanıcıyı
+    // odasına döndür (view kalıcı değil → başlığa döner). Yalnız bir kez ve yalnız
+    // kullanıcı henüz başka yere gitmemişken (view hâlâ 'title'). Oturum yoksa veya
+    // sunucu not_found derse room() null kalır → hiçbir şey yapılmaz (menüde kalınır).
+    if (this.rooms.hadSession) {
+      let navigated = false;
+      effect(() => {
+        if (!navigated && this.rooms.room() && this.view() === 'title') {
+          navigated = true;
+          this.view.set('room');
+        }
+      });
+    }
   }
 
   /**
