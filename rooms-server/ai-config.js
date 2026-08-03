@@ -104,6 +104,16 @@ const EFFORT_RANK = new Map(EFFORTS.map((e, i) => [e, i]));
 
 // Varsayılan = mevcut çalışma zamanı davranışı (ucuz, tek cümlelik iş).
 const DEFAULTS = { model: 'claude-opus-5', thinking: 'disabled', effort: 'low', maxTokens: 400 };
+
+/**
+ * Model FİYATI (1M token başına USD giriş/çıkış) — TEK KAYNAK (model tablosu).
+ * Maliyet izleme paketi bunu kullanır → "iki yerde farklı fiyat olmasın".
+ * Bilinmeyen model → null (maliyet hesabı 0 sayar, ama tokeni yine gösterir).
+ */
+function priceOf(modelId) {
+  const m = MODEL_BY.get(String(modelId || ''));
+  return m ? { inUsd: m.inUsd, outUsd: m.outUsd, label: m.label } : null;
+}
 const MAX_TOKENS_MIN = 64;
 const MAX_TOKENS_MAX = 2000;
 
@@ -227,4 +237,4 @@ function open(opts = {}) {
   return api;
 }
 
-module.exports = { open, validate, MODELS, EFFORTS, DEFAULTS };
+module.exports = { open, validate, priceOf, MODELS, EFFORTS, DEFAULTS };

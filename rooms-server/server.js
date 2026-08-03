@@ -109,6 +109,21 @@ try {
   console.error('[yz-güç] başlatılamadı:', e.message);
 }
 
+// YZ KULLANIM SAYAÇLARI — hacim + maliyet (toplu, gizlilik-güvenli). Fiyat ai-config'ten.
+const aiUsageMod = require('./ai-usage');
+let aiUsage = null;
+try {
+  aiUsage = aiUsageMod.open({ file: process.env.AI_USAGE_FILE });
+  console.log('[yz-maliyet] kullanım sayaçları hazır');
+} catch (e) {
+  console.error('[yz-maliyet] başlatılamadı:', e.message);
+}
+
+/** Aylık bütçe aşıldı VE oto-kapat açık mı? (ipucu koçu güvenlik anahtarı) */
+function budgetAutoOff() {
+  return !!(aiUsage && aiUsage.budget().autoOff && aiUsage.budgetExceeded(aiConfigMod.priceOf));
+}
+
 // --- YZ ölçümü: tek eşzamanlı çalıştırma + maç sınırı + kısa önbellek ---
 const MEASURE_MATCHES_DEF = Number(process.env.MEASURE_MATCHES || 120); // band başına varsayılan
 const MEASURE_MATCHES_CAP = Number(process.env.MEASURE_MATCHES_CAP || 300); // üst sınır (CPU koruması)
@@ -910,8 +925,13 @@ const routes = {
   // sunucuda sızıntı denetimi için kullanılır — modele GÖNDERİLMEZ.
   'POST /hint': async (req, res) => {
     if (!HINT_ENABLED) return send(res, 503, { error: 'disabled' });
+    // Bütçe güvenlik anahtarı: aylık eşik aşıldı + oto-kapat açıksa ipucu kapalı.
+    if (budgetAutoOff()) return send(res, 503, { error: 'budget' });
     const ip = clientIp(req);
-    if (!rlHint(ip)) return send(res, 429, { error: 'rate_limited' });
+    if (!rlHint(ip)) {
+      if (aiUsage) aiUsage.recordRateLimited({ kind: 'hint' }); // sınıra takılanı say
+      return send(res, 429, { error: 'rate_limited' });
+    }
 
     const body = await readJson(req);
     const v = hintUtil.validateInput(body);
@@ -919,12 +939,22 @@ const routes = {
 
     let text;
     try {
-      const raw = await callAnthropic(
+      const out = await callAnthropicRaw(
         hintUtil.systemPrompt(v.lang),
         hintUtil.userPrompt(v.length, v.guesses, v.lang),
       );
-      text = hintUtil.sanitizeHint(raw);
+      if (aiUsage)
+        aiUsage.record({
+          kind: 'hint',
+          model: out.model,
+          inputTokens: out.inputTokens,
+          outputTokens: out.outputTokens,
+          latencyMs: out.latencyMs,
+        });
+      text = hintUtil.sanitizeHint(out.text);
     } catch {
+      if (aiUsage)
+        aiUsage.record({ kind: 'hint', model: anthropicRequestBase().model, error: true });
       return send(res, 502, { error: 'ai_unavailable' });
     }
 
@@ -1381,6 +1411,14 @@ const routes = {
         25_000, // test: daha uzun bekle (yüksek effort seçilmiş olabilir)
       );
       const text = hintUtil.sanitizeHint(out.text) || hintUtil.genericHint(lang);
+      if (aiUsage)
+        aiUsage.record({
+          kind: 'test',
+          model: out.model,
+          inputTokens: out.inputTokens,
+          outputTokens: out.outputTokens,
+          latencyMs: out.latencyMs,
+        });
       audit(req, 'ai_test', true, `${out.model} · ${out.latencyMs}ms`);
       send(res, 200, {
         ok: true,
@@ -1527,6 +1565,34 @@ const routes = {
     }));
     send(res, 200, { generatedAt: idx.generatedAt, categories });
   },
+
+  // --- YZ KULLANIM + MALİYET ---
+  // ADMIN: son N günün özeti (tür başına istek/token/gecikme/hata/rl + maliyet) +
+  // aylık maliyet + bütçe durumu. Fiyat model tablosundan (ai-config) — TEK KAYNAK.
+  // GİZLİLİK: yalnız toplu sayaç; kişiye bağlı veri yok.
+  'GET /admin/ai/usage': async (req, res, url) => {
+    if (!requireSession(req, res, 'ai_usage')) return;
+    if (!aiUsage) return send(res, 503, { error: 'no_usage' });
+    const days = Math.max(1, Math.min(120, Math.floor(Number(url.searchParams.get('days')) || 30)));
+    send(res, 200, {
+      summary: aiUsage.summary(aiConfigMod.priceOf, days),
+      budget: aiUsage.budget(),
+      monthCostUsd: aiUsage.monthCostUsd(aiConfigMod.priceOf),
+      exceeded: aiUsage.budgetExceeded(aiConfigMod.priceOf),
+      autoOff: budgetAutoOff(),
+      keyDefined: HINT_ENABLED,
+    });
+  },
+
+  // ADMIN: aylık bütçe eşiği (USD) + eşik aşımında ipucu koçunu oto-kapat.
+  'POST /admin/ai/budget/set': async (req, res) => {
+    if (!requireSession(req, res, 'ai_budget')) return;
+    if (!aiUsage) return send(res, 503, { error: 'no_usage' });
+    const body = await readJson(req);
+    const r = aiUsage.setBudget({ monthlyUsd: Number(body.monthlyUsd), autoOff: body.autoOff });
+    audit(req, 'ai_budget', true, `aylık=$${r.budget.monthlyUsd} oto=${r.budget.autoOff}`);
+    send(res, 200, { ok: true, budget: r.budget });
+  },
 };
 
 // --- Telemetri bakımı: açılışta + günde bir kez (eski kayıt temizliği + yedek) ---
@@ -1613,7 +1679,7 @@ const server = http.createServer(async (req, res) => {
       ok: true,
       rooms: rooms.size,
       uptime: process.uptime(),
-      hint: HINT_ENABLED,
+      hint: HINT_ENABLED && !budgetAutoOff(), // bütçe oto-kapalıysa özellik gizlenir
       telemetry: telemetry ? telemetry.backend : false,
       admin: ADMIN_ENABLED,
     });

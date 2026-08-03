@@ -62,6 +62,7 @@ rooms-server/daily-overrides.json
 rooms-server/balance-overrides.json
 rooms-server/ai-config.json
 rooms-server/ai-behavior.json
+rooms-server/ai-usage.json
 rooms-server/content-index.json
 
 # Sıkıştırılmamış müzik KAYNAĞI — yayına gitmez, çıktı (public/music.*) zaten depoda.
