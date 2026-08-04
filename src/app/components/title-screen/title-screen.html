@@ -21,31 +21,32 @@
     </div>
   </div>
 
-  <!-- ── Üst çubuk: oyuncu · profil · ayarlar ── -->
-  <header class="bar">
+  <!-- ══════════ ÜST ÇUBUK ══════════ -->
+  <header class="topbar">
+    <!-- Sol: oyuncu kartı -->
     <button
       class="who"
       type="button"
       [attr.aria-label]="i18n.t('title.profile')"
       (click)="openProfile.emit()"
     >
-      <!-- Fotoğraf yüklenmişse o, yoksa emoji avatar -->
-      @if (profile.hasPhoto()) {
-        <img class="who-av ph" [src]="profile.photo()" alt="" />
-      } @else {
-        <span class="who-av" aria-hidden="true">{{ profile.avatar() }}</span>
-      }
+      <span class="who-av-wrap">
+        @if (profile.hasPhoto()) {
+          <img class="who-av ph" [src]="profile.photo()" alt="" />
+        } @else {
+          <span class="who-av" aria-hidden="true">{{ profile.avatar() }}</span>
+        }
+        @if (stats.played > 0) {
+          <span class="who-lvl" aria-hidden="true">{{ statsService.level().level }}</span>
+        }
+      </span>
 
       <span class="who-tx">
         <b>{{ profile.displayName() }}</b>
-        <span>
+        <span class="who-sub">
           @if (stats.played > 0) {
-            {{
-              i18n.t('title.levelPoints', {
-                level: statsService.level().level,
-                points: i18n.num(stats.points),
-              })
-            }}
+            <span class="who-rank">{{ i18n.t('tier.' + league.tier().id) }}</span>
+            <span class="who-pts">🏆 {{ i18n.num(stats.points) }}</span>
           } @else {
             {{ i18n.t('title.welcome') }}
           }
@@ -53,8 +54,16 @@
       </span>
     </button>
 
+    <!-- Orta: marka -->
+    <div class="brand">
+      <h1 class="wordmark" [attr.aria-label]="title()">
+        <span class="wm-a">KELİME</span><span class="wm-b">BAZ</span>
+      </h1>
+      <p class="brand-sub">{{ i18n.t('title.eyebrow') }}</p>
+    </div>
+
+    <!-- Sağ: altın + araçlar -->
     <div class="tools">
-      <!-- 🪙 Altın rozeti — tıklayınca mağaza açılır -->
       <button
         class="coin"
         type="button"
@@ -65,21 +74,23 @@
         <b>{{ i18n.num(gold.balance()) }}</b>
       </button>
 
+      @if (league.pending()) {
+        <button
+          class="tool reward"
+          type="button"
+          [attr.aria-label]="i18n.t('title.reward')"
+          (click)="openLeague.emit()"
+        >
+          🎁
+        </button>
+      }
       <button
         class="tool"
         type="button"
-        [attr.aria-label]="i18n.t('title.shop')"
-        (click)="openShop.emit()"
-      >
-        🛒
-      </button>
-      <button
-        class="tool"
-        type="button"
-        [attr.aria-label]="i18n.t('title.profile')"
+        [attr.aria-label]="i18n.t('title.statsAria')"
         (click)="openProfile.emit()"
       >
-        👤
+        📊
       </button>
       <button
         class="tool"
@@ -92,187 +103,172 @@
     </div>
   </header>
 
-  <!-- ── İçerik ── -->
-  <div class="content">
-    <!-- Kahraman bölüm -->
-    <section class="hero">
-      <p class="eyebrow">{{ i18n.t('title.eyebrow') }}</p>
+  <!-- ══════════ BÖLÜM BAŞLIĞI ══════════ -->
+  <div class="section-head">
+    <span class="dash"></span>
+    <h2>{{ i18n.t('title.chooseMode') }}</h2>
+    <span class="dash"></span>
+  </div>
+  <p class="section-sub">{{ i18n.t('title.chooseModeSub') }}</p>
 
-      <h1 class="logo" [attr.aria-label]="title()">
-        @for (ch of title().split(''); track $index) {
-          <span class="tile" aria-hidden="true" [style.animation-delay.ms]="120 + $index * 55">
-            {{ ch }}
-          </span>
-        }
-      </h1>
+  <!-- ══════════ MOD KARTLARI (tek satır) ══════════ -->
+  <nav class="modes" [attr.aria-label]="i18n.t('title.gameMode')">
+    <!-- Günün Kelimesi (yeşil, birincil) -->
+    @if (dailyDone()) {
+      <button
+        class="mode m-daily is-done"
+        [class.won]="dailyWon()"
+        type="button"
+        (click)="play.emit('daily')"
+      >
+        <span class="m-ico">{{ dailyWon() ? '✓' : '✕' }}</span>
+        <span class="m-body">
+          <b class="m-title">
+            {{ dailyWon() ? i18n.t('title.dailyWon') : i18n.t('title.dailyLost') }}
+          </b>
+          <span class="m-desc"><app-countdown /></span>
+        </span>
+        <span class="m-cta">
+          <span class="m-cta-lbl">{{ i18n.t('title.viewResult') }}</span>
+          <span class="m-arw" aria-hidden="true">→</span>
+        </span>
+      </button>
+    } @else {
+      <button class="mode m-daily" type="button" (click)="play.emit('daily')">
+        <span class="m-star" aria-hidden="true">★</span>
+        <span class="m-ico">📅</span>
+        <span class="m-body">
+          <b class="m-title">{{ i18n.t('title.dailyWord') }}</b>
+          <span class="m-desc">{{ i18n.t('title.dailyWordSub') }}</span>
+        </span>
+        <span class="m-cta">
+          <span class="m-cta-lbl">#{{ dayNo() }}</span>
+          <span class="m-arw" aria-hidden="true">→</span>
+        </span>
+      </button>
+    }
 
-      <p class="tagline">
-        {{ i18n.t('title.taglineBefore') }} <b>{{ i18n.t('title.taglineBold') }}</b>
-        {{ i18n.t('title.taglineAfter') }}
-      </p>
+    <!-- Serbest Oyna (turkuaz) -->
+    <button class="mode m-practice" type="button" (click)="play.emit('practice')">
+      <span class="m-ico">🎲</span>
+      <span class="m-body">
+        <b class="m-title">{{ i18n.t('title.practice') }}</b>
+        <span class="m-desc">{{ i18n.t('title.practiceSub') }}</span>
+      </span>
+      <span class="m-cta"><span class="m-arw" aria-hidden="true">→</span></span>
+    </button>
 
-      <ul class="legend">
-        <li class="chip correct"><span class="sw"></span> {{ i18n.t('title.legendCorrect') }}</li>
-        <li class="chip present"><span class="sw"></span> {{ i18n.t('title.legendPresent') }}</li>
-        <li class="chip absent"><span class="sw"></span> {{ i18n.t('title.legendAbsent') }}</li>
-      </ul>
-    </section>
+    <!-- Arkadaşlarla Oyna (camgöbeği) -->
+    <button
+      class="mode m-friends"
+      type="button"
+      [class.disabled]="!pwa.online()"
+      [disabled]="!pwa.online()"
+      [attr.aria-disabled]="!pwa.online()"
+      (click)="openRoom.emit()"
+    >
+      <span class="m-ico">🎮</span>
+      <span class="m-body">
+        <b class="m-title">{{ i18n.t('title.friends') }}</b>
+        <span class="m-desc">
+          {{ pwa.online() ? i18n.t('title.friendsSub') : i18n.t('title.friendsOffline') }}
+        </span>
+      </span>
+      @if (!pwa.online()) {
+        <span class="m-tag offline">{{ i18n.t('pwa.offlineTag') }}</span>
+      }
+      <span class="m-cta"><span class="m-arw" aria-hidden="true">→</span></span>
+    </button>
 
-    <!-- Mod seçimi -->
-    <nav class="modes" [attr.aria-label]="i18n.t('title.gameMode')">
-      @if (dailyDone()) {
-        <!-- Bugün oynandı: sonuç + geri sayım + tahtayı görüntüle, tek kart içinde -->
-        <div class="done" [class.won]="dailyWon()">
-          <div class="d-head">
-            <span class="d-badge">{{ dailyWon() ? '✓' : '✕' }}</span>
-            <span class="d-tx">
-              <b>{{ dailyWon() ? i18n.t('title.dailyWon') : i18n.t('title.dailyLost') }}</b>
-              <span>
-                @if (dailyWon()) {
-                  {{ i18n.t('title.dailyWonMeta', { n: dailyTries(), day: dayNo() }) }}
-                } @else {
-                  {{ i18n.t('title.puzzleNo', { day: dayNo() }) }}
-                }
-              </span>
-            </span>
-          </div>
+    <!-- Yapay Zekâya Karşı (amber) -->
+    <button class="mode m-vsai" type="button" (click)="openVsAi.emit()">
+      <span class="m-ico">🤖</span>
+      <span class="m-body">
+        <b class="m-title">{{ i18n.t('title.vsai') }}</b>
+        <span class="m-desc">{{ i18n.t('title.vsaiSub') }}</span>
+      </span>
+      <span class="m-cta"><span class="m-arw" aria-hidden="true">→</span></span>
+    </button>
 
-          <app-countdown />
+    <!-- Tema Modu (magenta) — Almanca kelime seti yok, o dilde gizli -->
+    @if (i18n.lang() !== 'de') {
+      <button class="mode m-theme" type="button" (click)="openTheme.emit()">
+        <span class="m-ico">🎨</span>
+        <span class="m-body">
+          <b class="m-title">{{ i18n.t('title.theme') }}</b>
+          <span class="m-desc">{{ i18n.t('title.themeSub') }}</span>
+        </span>
+        <span class="m-cta"><span class="m-arw" aria-hidden="true">→</span></span>
+      </button>
+    }
+  </nav>
 
-          <button class="mode ghost inset" type="button" (click)="play.emit('daily')">
-            <span class="m-ico">📋</span>
-            <span class="m-tx">
-              <b>{{ i18n.t('title.viewResult') }}</b>
-              <span>{{ i18n.t('title.todaysBoard') }}</span>
-            </span>
-            <span class="m-arw" aria-hidden="true">→</span>
-          </button>
-        </div>
+  <!-- ══════════ ALT BİLGİ ŞERİDİ ══════════ -->
+  <section class="strip" [attr.aria-label]="i18n.t('title.statsAria')">
+    <!-- Ustalık Yolu (Lig / Sezon) -->
+    <button class="panel p-league" type="button" (click)="openLeague.emit()">
+      <span class="p-ico">{{ league.tier().icon }}</span>
+      <span class="p-tx">
+        <b>{{ i18n.t('title.league') }}</b>
+        <span
+          >{{ i18n.t('tier.' + league.tier().id) }} · {{ i18n.num(league.lp()) }} ·
+          {{ i18n.t('title.seasonShort', { season: league.season() }) }}</span
+        >
+      </span>
+      @if (league.pending()) {
+        <span class="p-badge">🎁</span>
       } @else {
-        <button class="mode primary" type="button" (click)="play.emit('daily')">
-          <span class="m-ico">📅</span>
-          <span class="m-tx">
-            <b>{{ i18n.t('title.dailyWord') }}</b>
-            <span>{{ i18n.t('title.dailyWordSub') }}</span>
-          </span>
-          <span class="m-tag">#{{ dayNo() }}</span>
-          <span class="m-arw" aria-hidden="true">→</span>
-        </button>
+        <span class="p-arw" aria-hidden="true">→</span>
       }
+    </button>
 
-      <button class="mode ghost" type="button" (click)="play.emit('practice')">
-        <span class="m-ico">🎲</span>
-        <span class="m-tx">
-          <b>{{ i18n.t('title.practice') }}</b>
-          <span>{{ i18n.t('title.practiceSub') }}</span>
-        </span>
-        <span class="m-arw" aria-hidden="true">→</span>
-      </button>
-
-      <!-- Oda modu internet ister — çevrimdışıyken kapalı, nedeni açıklanır. -->
-      <button
-        class="mode ghost"
-        type="button"
-        [class.disabled]="!pwa.online()"
-        [disabled]="!pwa.online()"
-        [attr.aria-disabled]="!pwa.online()"
-        (click)="openRoom.emit()"
-      >
-        <span class="m-ico">🎮</span>
-        <span class="m-tx">
-          <b>{{ i18n.t('title.friends') }}</b>
-          <span>{{
-            pwa.online() ? i18n.t('title.friendsSub') : i18n.t('title.friendsOffline')
-          }}</span>
-        </span>
-        @if (!pwa.online()) {
-          <span class="m-tag offline">{{ i18n.t('pwa.offlineTag') }}</span>
-        }
-        <span class="m-arw" aria-hidden="true">→</span>
-      </button>
-
-      <button class="mode ghost" type="button" (click)="openVsAi.emit()">
-        <span class="m-ico">🤖</span>
-        <span class="m-tx">
-          <b>{{ i18n.t('title.vsai') }}</b>
-          <span>{{ i18n.t('title.vsaiSub') }}</span>
-        </span>
-        <span class="m-arw" aria-hidden="true">→</span>
-      </button>
-
-      <!-- Tema Modu — Almanca tema kelime seti henüz yok; o dilde gizlenir. -->
-      @if (i18n.lang() !== 'de') {
-        <button class="mode ghost" type="button" (click)="openTheme.emit()">
-          <span class="m-ico">🎨</span>
-          <span class="m-tx">
-            <b>{{ i18n.t('title.theme') }}</b>
-            <span>{{ i18n.t('title.themeSub') }}</span>
-          </span>
-          <span class="m-arw" aria-hidden="true">→</span>
-        </button>
-      }
-
-      <button class="mode ghost" type="button" (click)="openLeague.emit()">
-        <span class="m-ico">{{ league.tier().icon }}</span>
-        <span class="m-tx">
-          <b>{{ i18n.t('title.league') }}</b>
-          <span>{{
-            i18n.t('title.leagueSub', {
-              tier: i18n.t('tier.' + league.tier().id),
-              lp: league.lp(),
-              season: league.season(),
-            })
-          }}</span>
-        </span>
-        @if (league.pending()) {
-          <span class="m-tag reward">🎁 {{ i18n.t('title.reward') }}</span>
-        }
-        <span class="m-arw" aria-hidden="true">→</span>
-      </button>
-    </nav>
-
-    <!-- İstatistikler — hep görünür (boşken 0), tıklayınca profil SAYFASI açılır -->
-    <section class="stats" [attr.aria-label]="i18n.t('title.statsAria')">
-      <button
-        class="stat"
-        type="button"
-        [attr.aria-label]="i18n.t('title.showStats')"
-        (click)="openProfile.emit()"
-      >
-        <b>{{ stats.played }}</b>
-        <span>{{ i18n.t('title.statGames') }}</span>
-      </button>
-      <button
-        class="stat"
-        type="button"
-        [attr.aria-label]="i18n.t('title.showStats')"
-        (click)="openProfile.emit()"
-      >
+    <!-- İstatistik -->
+    <button class="panel p-stats" type="button" (click)="openProfile.emit()">
+      <span class="p-num">
+        <b>{{ stats.played }}</b
+        ><small>{{ i18n.t('title.statGames') }}</small>
+      </span>
+      <span class="p-num">
         <b>{{
           i18n.lang() !== 'tr' ? statsService.winRate() + '%' : '%' + statsService.winRate()
-        }}</b>
-        <span>{{ i18n.t('title.statWinRate') }}</span>
-      </button>
-      <button
-        class="stat"
-        type="button"
-        [attr.aria-label]="i18n.t('title.showStats')"
-        (click)="openProfile.emit()"
-      >
-        <b>🔥 {{ stats.currentStreak }}</b>
-        <span>{{ i18n.t('title.statStreak') }}</span>
-      </button>
-    </section>
+        }}</b
+        ><small>{{ i18n.t('title.statWinRate') }}</small>
+      </span>
+      <span class="p-num">
+        <b>🔥 {{ stats.currentStreak }}</b
+        ><small>{{ i18n.t('title.statStreak') }}</small>
+      </span>
+    </button>
 
-    <p class="foot">
-      📚
-      {{
-        i18n.t('title.dictFoot', {
-          n: dictSize().toLocaleString(i18n.lang() === 'en' ? 'en' : 'tr'),
-        })
-      }}
-    </p>
-  </div>
+    <!-- Mağaza -->
+    <button class="panel p-shop" type="button" (click)="openShop.emit()">
+      <span class="p-ico">🛒</span>
+      <span class="p-tx">
+        <b>{{ i18n.t('title.shop') }}</b>
+        <span>{{ i18n.t('title.shopSub') }}</span>
+      </span>
+      <span class="p-arw" aria-hidden="true">→</span>
+    </button>
+
+    <!-- Profil -->
+    <button class="panel p-profile" type="button" (click)="openProfile.emit()">
+      <span class="p-ico">👤</span>
+      <span class="p-tx">
+        <b>{{ i18n.t('title.profile') }}</b>
+        <span>{{ i18n.t('title.showStats') }}</span>
+      </span>
+      <span class="p-arw" aria-hidden="true">→</span>
+    </button>
+  </section>
+
+  <p class="foot">
+    📚
+    {{
+      i18n.t('title.dictFoot', {
+        n: dictSize().toLocaleString(i18n.lang() === 'en' ? 'en' : 'tr'),
+      })
+    }}
+  </p>
 
   @if (settingsOpen()) {
     <app-settings-modal (close)="settingsOpen.set(false)" />
