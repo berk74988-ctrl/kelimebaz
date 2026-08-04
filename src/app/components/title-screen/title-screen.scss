@@ -236,7 +236,7 @@
 
   background: color-mix(in srgb, var(--present) 16%, var(--surface));
   border: 1px solid color-mix(in srgb, var(--present) 45%, var(--border));
-  border-radius: 13px;
+  border-radius: 15px;
   backdrop-filter: blur(8px);
 
   transition:
@@ -267,7 +267,7 @@
 
   background: color-mix(in srgb, var(--surface) 78%, transparent);
   border: 1px solid var(--border);
-  border-radius: 13px;
+  border-radius: 15px;
   backdrop-filter: blur(8px);
 
   transition:
@@ -300,16 +300,16 @@
   max-width: 440px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 
-  padding: 22px 20px 18px;
+  padding: 24px 22px 20px;
 
   background: color-mix(in srgb, var(--surface) 55%, transparent);
   border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
-  border-radius: 26px;
+  border-radius: 30px;
   backdrop-filter: blur(18px);
   box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.35),
+    0 26px 64px rgba(0, 0, 0, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.05); // üstte ince ışık çizgisi → cam hissi
 }
 
@@ -377,9 +377,9 @@
   font-size: clamp(14px, 3.6vw, 21px);
   font-weight: 800;
 
-  border-radius: 11px;
+  border-radius: 13px;
   color: var(--text);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
 
   animation: flip-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
@@ -455,22 +455,22 @@
 
 .modes {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .mode {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 13px;
+  gap: 14px;
   width: 100%;
-  padding: 15px 16px;
+  padding: 17px 18px;
   text-align: left;
 
-  border-radius: 16px;
+  border-radius: 20px;
   border: 1px solid var(--border);
   background: var(--surface);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.13);
   overflow: hidden;
 
   transition:
@@ -497,7 +497,7 @@
   &:hover {
     transform: translateY(-3px);
     border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
-    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.2);
 
     &::before {
       transform: translateX(120%);
@@ -516,7 +516,7 @@
 
   // Birincil kart — günün kelimesi. Görsel ağırlığı en yüksek olan öğe.
   &.primary {
-    padding: 17px 16px;
+    padding: 19px 18px;
     background: linear-gradient(
       135deg,
       var(--correct),
@@ -578,7 +578,7 @@
   display: grid;
   place-items: center;
   font-size: 20px;
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 .m-tx {
@@ -645,11 +645,11 @@
 /* ---------- Bugün oynandı kartı ---------- */
 
 .done {
-  padding: 15px;
+  padding: 16px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 18px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  border-radius: 22px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.13);
 }
 
 .d-head {
@@ -712,8 +712,8 @@
 
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 
   transition:
     transform 0.16s cubic-bezier(0.34, 1.5, 0.64, 1),
@@ -760,9 +760,9 @@
   }
 
   .content {
-    gap: 15px;
-    padding: 18px 14px 15px;
-    border-radius: 22px;
+    gap: 16px;
+    padding: 20px 16px 16px;
+    border-radius: 26px;
   }
 
   .blob {
@@ -868,7 +868,7 @@
   }
   .tile {
     max-width: 36px;
-    border-radius: 9px;
+    border-radius: 11px;
   }
   .tagline {
     margin-top: 8px;

@@ -18,7 +18,8 @@
   --cols: 5;
 
   // Mobil temel ölçüler — ekranın hem genişliğine hem yüksekliğine bakar
-  --tile-gap: clamp(4px, 1.1vw, 6px);
+  // "Yumuşak & Ferah": kutular arası biraz daha nefes payı (formül taşmayı önler).
+  --tile-gap: clamp(5px, 1.2vw, 7px);
   // Kutu boyutu = min(estetik/yükseklik tavanı, GENİŞLİĞE sığan boyut).
   // Genişlik terimi sütun sayısına bağlı → 7 harfli kelime bile dar ekranda taşmaz.
   --tile-cap: clamp(40px, min(15.5vw, 7.6dvh), 62px);
