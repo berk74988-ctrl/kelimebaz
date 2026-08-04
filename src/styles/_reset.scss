@@ -25,7 +25,7 @@
 
   --tile-bg: transparent;
   --tile-border: #{v.$border};
-  --tile-border-filled: #55617a;
+  --tile-border-filled: #3f6367;
 
   --key-bg: #{v.$surface-2};
 
@@ -42,11 +42,11 @@
    * Değişken olarak ve DÜZ HEX yazılıyorlar ki contrast-check.mjs onları
    * gerçekten okuyup ölçebilsin; color-mix() ifadesi ölçülemezdi.
    */
-  --share-1: #546dc7;
-  --share-2: #7a60c7;
+  --share-1: #0e7490;
+  --share-2: #1560a8;
   --on-share: #ffffff;
 
-  --backdrop: rgba(6, 9, 16, 0.72);
+  --backdrop: rgba(4, 14, 16, 0.74);
   --toast-bg: #{v.$text};
   --on-toast: #{v.$bg};
 
@@ -58,13 +58,18 @@
 }
 
 :root[data-theme='light'] {
-  --bg: #f6f7fb;
+  // "Okyanus" açık teması: açık deniz tonları
+  --bg: #eef6f6;
   --surface: #ffffff;
-  --surface-2: #e8eaef;
-  --border: #d3d6de;
+  --surface-2: #dbeceb;
+  --border: #c3dcdb;
 
-  --text: #131720;
-  --text-muted: #667085;
+  --text: #131f1f;
+  --text-muted: #5a7d7d;
+
+  // Turkuaz beyaz üstünde okunmaz → açık temada KOYU teal vurgu (kontrast güvenli)
+  --accent: #0d9488;
+  --accent-2: #0284c7;
 
   /**
    * Kutu renkleri — KONTRAST ÖLÇÜLDÜ (WCAG).
@@ -85,12 +90,12 @@
   --on-absent: #ffffff;
 
   --tile-bg: transparent;
-  --tile-border: #cdd2dc;
-  --tile-border-filled: #8b93a3;
+  --tile-border: #bcd3d2;
+  --tile-border-filled: #6f9694;
 
-  --key-bg: #dfe2e9;
+  --key-bg: #d3e6e5;
 
-  --backdrop: rgba(20, 24, 33, 0.45);
+  --backdrop: rgba(10, 26, 26, 0.45);
   --toast-bg: #131720;
   --on-toast: #ffffff;
 
