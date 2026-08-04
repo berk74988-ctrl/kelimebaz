@@ -2,6 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
+  ElementRef,
   inject,
   output,
   signal,
@@ -64,6 +66,8 @@ export class TitleScreen {
   protected readonly league = inject(LeagueService);
   protected readonly i18n = inject(LanguageService);
   protected readonly pwa = inject(PwaService); // çevrimdışıyken oda modunu kapatmak için
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly play = output<GameMode>();
 
@@ -99,6 +103,30 @@ export class TitleScreen {
   });
 
   protected readonly settingsOpen = signal(false);
+
+  constructor() {
+    // TÜM CİHAZLARDA TEK EKRAN: gerçek görünür yüksekliği ölç → --app-height.
+    // dvh/svh desteklemeyen Android tarayıcılarında/WebView'larında bile çalışır;
+    // visualViewport adres çubuğu/klavye açılışını ve güvenli alanı doğru yansıtır.
+    // CSS: mobilde .screen { height: var(--app-height, 100svh) } → asla taşma/scroll.
+    if (typeof window !== 'undefined') {
+      const vv = window.visualViewport;
+      const setH = () => {
+        const h = Math.round(vv?.height ?? window.innerHeight);
+        if (h > 0) this.host.nativeElement.style.setProperty('--app-height', `${h}px`);
+      };
+      setH();
+      const opts: AddEventListenerOptions = { passive: true };
+      window.addEventListener('resize', setH, opts);
+      window.addEventListener('orientationchange', setH, opts);
+      vv?.addEventListener('resize', setH, opts);
+      this.destroyRef.onDestroy(() => {
+        window.removeEventListener('resize', setH);
+        window.removeEventListener('orientationchange', setH);
+        vv?.removeEventListener('resize', setH);
+      });
+    }
+  }
 
   protected get stats() {
     return this.statsService.stats();
