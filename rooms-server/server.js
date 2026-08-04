@@ -119,6 +119,16 @@ try {
   console.error('[yz-maliyet] başlatılamadı:', e.message);
 }
 
+// İÇERİK ÜRETİMİ DEPOSU — LLM içerik paketi Faz B: taslaklar + günlük bütçe (diske kalıcı).
+const contentGenMod = require('./content-gen');
+let contentGen = null;
+try {
+  contentGen = contentGenMod.open({ file: process.env.CONTENT_GEN_FILE });
+  console.log('[icerik] uretim deposu hazir');
+} catch (e) {
+  console.error('[icerik] baslatilamadi:', e.message);
+}
+
 /** Aylık bütçe aşıldı VE oto-kapat açık mı? (ipucu koçu güvenlik anahtarı) */
 function budgetAutoOff() {
   return !!(aiUsage && aiUsage.budget().autoOff && aiUsage.budgetExceeded(aiConfigMod.priceOf));
@@ -1564,6 +1574,149 @@ const routes = {
       missingSample: (c.missing || []).slice(0, MAX),
     }));
     send(res, 200, { generatedAt: idx.generatedAt, categories });
+  },
+
+  // --- İÇERİK ÜRETİMİ (LLM içerik paketi · Faz B) ---
+  // ADMIN: üretim durumu — günlük bütçe/harcama + kategori-başı taslak sayıları.
+  'GET /admin/content/gen': async (req, res) => {
+    if (!requireSession(req, res, 'content_gen')) return;
+    if (!contentGen) return send(res, 503, { error: 'no_store' });
+    send(res, 200, {
+      ...contentGen.schema(now()),
+      keyDefined: HINT_ENABLED,
+      budgetOff: budgetAutoOff(),
+      history: contentGen.history(),
+    });
+  },
+
+  // ADMIN: günlük üretim bütçesi (USD) + parti üst sınırı.
+  'POST /admin/content/gen/budget': async (req, res) => {
+    if (!requireSession(req, res, 'content_gen_budget')) return;
+    if (!contentGen) return send(res, 503, { error: 'no_store' });
+    const body = await readJson(req);
+    const r = contentGen.setBudget(
+      { dailyUsd: body.dailyUsd, batchMax: body.batchMax },
+      now(),
+    );
+    audit(req, 'content_gen_budget', true, `gunluk=$${r.config.dailyBudgetUsd} parti=${r.config.batchMax}`);
+    send(res, 200, { ok: true, config: r.config });
+  },
+
+  // ADMIN: ÜRETİM. İki aşamalı — confirm YOKSA yalnız maliyet TAHMİNİ döner (para
+  // harcamaz); confirm=true ise EKSİK kelimeler için parti üretir (yalnız taslağı
+  // olmayanlar), her çıktıyı ön denetimden geçirir (sızıntı/boş/kısa → reddedilir),
+  // gerçek maliyeti günlük bütçeye işler. Anahtar yoksa / bütçe aşımında reddeder.
+  'POST /admin/content/generate': async (req, res) => {
+    if (!requireSession(req, res, 'content_generate')) return;
+    if (!contentGen) return send(res, 503, { error: 'no_store' });
+    const body = await readJson(req, 4096);
+    const category = String(body.category || '');
+    if (!contentGenMod.isGeneratable(category)) return send(res, 400, { error: 'bad_category' });
+    const cat = contentGenMod.CATS[category];
+    const batchMax = contentGen.batchMax();
+    const count = Math.floor(Number(body.count) || 0);
+    if (!(count >= 1 && count <= batchMax)) {
+      return send(res, 400, { error: 'bad_count', batchMax });
+    }
+
+    // Eksik kelimeler content-index'ten; yalnız henüz taslağı OLMAYANLAR.
+    let idx;
+    try {
+      idx = JSON.parse(fs.readFileSync(path.join(__dirname, 'content-index.json'), 'utf8'));
+    } catch {
+      return send(res, 200, { error: 'no_index' });
+    }
+    const cidx = (idx.categories || []).find((x) => x.id === category);
+    const missing = (cidx && cidx.missing) || [];
+    const todo = missing.filter((w) => !contentGen.hasDraft(category, w)).slice(0, count);
+    if (todo.length === 0) return send(res, 200, { todo: 0, note: 'no_missing' });
+
+    const model = anthropicRequestBase().model;
+    const estimate = contentGenMod.estimateCost(category, todo.length, model, aiConfigMod.priceOf);
+
+    // 1. AŞAMA — onay yoksa yalnız TAHMİN (para harcamaz).
+    if (!body.confirm) {
+      return send(res, 200, { needsConfirm: true, estimate, words: todo, batchMax });
+    }
+
+    // 2. AŞAMA — canlı ön koşullar + bütçe kapıları.
+    if (!HINT_ENABLED) return send(res, 503, { error: 'no_key' }); // ANTHROPIC_API_KEY yok
+    if (budgetAutoOff()) return send(res, 402, { error: 'budget_off' }); // aylık bütçe aşımı
+    if (contentGen.wouldExceedDaily(estimate.estUsd, now())) {
+      return send(res, 402, {
+        error: 'daily_budget',
+        dailySpent: contentGen.dailySpent(now()),
+        dailyBudgetUsd: contentGen.dailyBudgetUsd(),
+      });
+    }
+
+    const at = now();
+    let generated = 0;
+    let rejected = 0;
+    let errors = 0;
+    let spentUsd = 0;
+    const results = [];
+    for (const word of todo) {
+      let out;
+      try {
+        out = await callAnthropicRaw(
+          contentGenMod.genSystem(cat.lang, cat.type),
+          contentGenMod.genUser(word, cat.lang, cat.type),
+        );
+      } catch {
+        if (aiUsage) aiUsage.record({ kind: 'content', model, error: true, at });
+        errors++;
+        results.push({ word, status: 'error' });
+        continue;
+      }
+      const price = aiConfigMod.priceOf(out.model) || { inUsd: 0, outUsd: 0 };
+      const costUsd =
+        (out.inputTokens / 1e6) * price.inUsd + (out.outputTokens / 1e6) * price.outUsd;
+      spentUsd += costUsd;
+      contentGen.addSpend(costUsd, at);
+      if (aiUsage) {
+        aiUsage.record({
+          kind: 'content',
+          model: out.model,
+          inputTokens: out.inputTokens,
+          outputTokens: out.outputTokens,
+          latencyMs: out.latencyMs,
+          at,
+        });
+      }
+
+      const parsed = contentGenMod.parseOutput(cat.type, out.text);
+      if (parsed.error) {
+        contentGen.addDraft({ category, word, status: 'rejected', reason: 'parse', inputTokens: out.inputTokens, outputTokens: out.outputTokens, costUsd, at }); // prettier-ignore
+        rejected++;
+        results.push({ word, status: 'rejected', reason: 'parse' });
+      } else {
+        const chk = contentGenMod.precheck(word, cat.type, parsed.content);
+        if (chk.rejected) {
+          contentGen.addDraft({ category, word, status: 'rejected', content: parsed.content, reason: chk.reason, inputTokens: out.inputTokens, outputTokens: out.outputTokens, costUsd, at }); // prettier-ignore
+          rejected++;
+          results.push({ word, status: 'rejected', reason: chk.reason });
+        } else {
+          contentGen.addDraft({ category, word, status: 'generated', content: parsed.content, inputTokens: out.inputTokens, outputTokens: out.outputTokens, costUsd, at }); // prettier-ignore
+          generated++;
+          results.push({ word, status: 'generated' });
+        }
+      }
+
+      // Birikimli günlük tavan aşıldıysa kalanları bırak (koruma).
+      if (contentGen.wouldExceedDaily(0, at)) break;
+    }
+
+    audit(req, 'content_generate', true, `${category} uretildi=${generated} reddedildi=${rejected} hata=${errors} $${spentUsd.toFixed(4)}`); // prettier-ignore
+    send(res, 200, {
+      category,
+      generated,
+      rejected,
+      errors,
+      spentUsd: Math.round(spentUsd * 100000) / 100000,
+      dailySpent: contentGen.dailySpent(at),
+      results,
+    });
   },
 
   // --- YZ KULLANIM + MALİYET ---
