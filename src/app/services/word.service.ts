@@ -1,4 +1,5 @@
 import { effect, inject, Injectable, signal } from '@angular/core';
+import { serverBase } from '../core/server-base';
 import { levelBand, pickDaily } from '../core/daily-rotation';
 import { Lang, upperFor } from '../core/lang';
 import { pickLength, WORD_LENGTHS } from '../core/word-length';
@@ -119,10 +120,7 @@ export class WordService {
 
   /** RoomService ile aynı köken: canlıda /berk/rooms, yerelde :4243. */
   private overrideBase(): string {
-    if (typeof location === 'undefined') return 'http://localhost:4243';
-    const host = location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:4243';
-    return '/berk/rooms';
+    return serverBase();
   }
 
   private loadOverridesCache(): void {

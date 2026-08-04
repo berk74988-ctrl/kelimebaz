@@ -1,5 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { LanguageService } from './language.service';
+import { serverBase } from '../core/server-base';
 
 /** Bir tahmin: kelime + renk deseni ('2'=yeşil,'1'=sarı,'0'=gri). */
 export interface HintGuess {
@@ -34,10 +35,7 @@ export class AiHintService {
 
   /** RoomService ile aynı köken çözümü: canlıda /berk/rooms, yerelde :4243. */
   private resolveBase(): string {
-    if (typeof location === 'undefined') return 'http://localhost:4243';
-    const host = location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:4243';
-    return '/berk/rooms';
+    return serverBase();
   }
 
   /** Sağlık kontrolü — sunucu YZ ipucunu destekliyor mu? */

@@ -10,6 +10,7 @@ import {
   personaEnabled,
   personaWeightOverride,
 } from '../core/ai-behavior';
+import { serverBase } from '../core/server-base';
 
 /**
  * ===========================================================================
@@ -79,10 +80,7 @@ export class AiBehaviorService {
   }
 
   private base(): string {
-    if (typeof location === 'undefined') return 'http://localhost:4243';
-    const host = location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:4243';
-    return '/berk/rooms';
+    return serverBase();
   }
 
   private loadCache(): Partial<AiBehavior> | null {

@@ -1,4 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
+import { serverBase } from '../core/server-base';
 import { LanguageService } from './language.service';
 
 /** Sunucudan gelen tek oyuncu görünümü. */
@@ -137,13 +138,7 @@ export class RoomService {
   }
 
   private resolveBase(): string {
-    if (typeof location === 'undefined') return 'http://localhost:4243';
-    const host = location.hostname;
-    // Yerel geliştirmede oda sunucusu doğrudan :4243'te çalışır.
-    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:4243';
-    // Canlıda nginx /berk/rooms/ yolunu 127.0.0.1:4243'e proxy'ler (aynı köken).
-    // Backend internete doğrudan açık değil; her istek nginx üzerinden geçer.
-    return '/berk/rooms';
+    return serverBase(); // native APK → gerçek sunucu; web → aynı köken/localhost
   }
 
   /**

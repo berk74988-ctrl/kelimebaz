@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Kelimebaz</string>
+    <string name="title_activity_main">Kelimebaz</string>
+    <string name="package_name">com.berk.kelimebaz</string>
+    <string name="custom_url_scheme">com.berk.kelimebaz</string>
+</resources>

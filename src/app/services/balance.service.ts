@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Balance, BALANCE_DEFAULTS, mergeBalance } from '../core/balance';
+import { serverBase } from '../core/server-base';
 import { GoldConfig } from '../core/gold';
 
 /**
@@ -79,10 +80,7 @@ export class BalanceService {
   }
 
   private base(): string {
-    if (typeof location === 'undefined') return 'http://localhost:4243';
-    const host = location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:4243';
-    return '/berk/rooms';
+    return serverBase();
   }
 
   private loadCache(): Partial<Balance> | null {

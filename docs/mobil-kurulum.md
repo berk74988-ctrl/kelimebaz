@@ -169,3 +169,83 @@ adımı burada durur. Bu bir kod sorunu değil, donanım gereksinimidir. Mac eri
 olursa: Xcode 26+ + Command Line Tools (`xcode-select --install`) + CocoaPods
 (`brew install cocoapods`). Cihazda test için ücretsiz Apple ID yeter; App Store
 için ücretli geliştirici hesabı şart.
+
+## 📦 Capacitor + Android APK (4 Ağu 2026 — çalışır durumda)
+
+Kelimebaz'ı Android'e paketlemek için **Capacitor** kullanıldı. Uygulama Angular
+(web) → WebView içinde çalışır; sunucuya bağlı özellikler (oda/ipucu/denge) gerçek
+sunucuya (34.158.136.9) gider.
+
+### Kurulum
+
+```
+npm install @capacitor/core @capacitor/cli @capacitor/android    # v8.5.0
+npx cap init "Kelimebaz" "com.berk.kelimebaz" --web-dir "dist/kelimebaz/browser"
+npx cap add android
+```
+
+`capacitor.config.ts` (kritik ayarlar):
+```ts
+server: {
+  androidScheme: 'http',  // WebView kökeni http://localhost → http backend'e mixed-content YOK
+  cleartext: true,        // sunucu HTTPS değil
+}
+```
++ `android/app/src/main/AndroidManifest.xml` `<application>` içine
+`android:usesCleartextTraffic="true"` (http sunucuya izin).
+
+### ⚠️ EN BÜYÜK TUZAK: base href (boş/koyu ekran)
+
+Yayın (web) derlemesi `angular.json`'da `baseHref: "/berk/kelimebaz/"` kullanır.
+APK içinde uygulama `http://localhost/`'ta çalışır → JS/CSS'i
+`http://localhost/berk/kelimebaz/...`'tan arar, **bulamaz** → sadece koyu arka plan
+görünür, içerik gelmez. **Çözüm:** mobil derlemede base href `/` olmalı. Bunun için
+`build:mobile` scripti eklendi:
+```
+"build:mobile": "ng build --base-href / && npx cap sync android"
+```
+Belirti: APK açılıyor ama boş/koyu ekran + logcat'te asset 404 → base href yanlış.
+
+### Kod tarafı değişiklikleri
+
+- **`src/app/core/server-base.ts` (YENİ):** tek kaynak `serverBase()`. Native APK'da
+  (`window.Capacitor.isNativePlatform()`) sunucuya **mutlak adres** (`http://34.158.136.9/berk/rooms`);
+  web'de eskisi gibi (`/berk/rooms` ya da `localhost:4243`). 6 servis (room, telemetry,
+  word, balance, ai-hint, ai-behavior) buna bağlandı — yoksa APK'da göreli `/berk/rooms`
+  telefonda çözülemez.
+- **Service worker native'de KAPALI** (`app.config.ts`, `isCapacitorNative()`): Capacitor
+  içinde SW gereksiz + beyaz-ekran/güncelleme sorunu çıkarabilir.
+
+### APK derleme
+
+```
+npm run build:mobile                                  # base-href / + sync
+cd android && ./gradlew.bat assembleDebug --no-daemon # → app/build/outputs/apk/debug/app-debug.apk (~8.8 MB)
+```
+Emülatöre/cihaza kur + başlat:
+```
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb shell monkey -p com.berk.kelimebaz -c android.intent.category.LAUNCHER 1
+```
+
+### 🖱️ Android Studio'da tek tık APK
+
+1. Android Studio → **Open** → projedeki **`android/`** klasörünü aç (kök değil).
+2. Önce `npm run build:mobile` (web varlıklarını güncelle) — kod değişince her sefer.
+3. Studio: **Build → Build App Bundle(s) / APK(s) → Build APK(s)** → biten APK linkine tıkla.
+4. Ya da ▶ (Run) ile bağlı cihaza/emülatöre doğrudan kur+çalıştır.
+
+### Sonuç (doğrulandı)
+
+`BUILD SUCCESSFUL`, `app-debug.apk` (8.8 MB) emülatöre (Pixel 8) kuruldu; uygulama
+**eksiksiz açıldı** — ana menü, Günün Kelimesi, Serbest/Arkadaşlarla/YZ'ye Karşı,
+Tema, Ustalık, istatistikler, ayarlar hepsi render oldu. JS hatası yok. (Logcat'te
+tek zararsız uyarı: Capacitor "safe area CSS" enjeksiyonu — işlevi etkilemiyor.)
+
+### Notlar
+
+- **Kod değişince:** `npm run build:mobile` şart (web'i yeniden derler + `cap sync`).
+  Sadece Gradle build yeni JS'i almaz.
+- **Tablet:** uygulama responsive (ortalanmış kapsayıcı) → telefon + tablette düzgün.
+- **HTTPS gelirse:** `androidScheme`'i `https` yapıp `serverBase` native adresini
+  `https://...` yapmak daha güvenli olur (o zaman cleartext gerekmez).
