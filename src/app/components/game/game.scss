@@ -20,17 +20,24 @@
   // Mobil temel ölçüler — ekranın hem genişliğine hem yüksekliğine bakar
   // "Yumuşak & Ferah": kutular arası biraz daha nefes payı (formül taşmayı önler).
   --tile-gap: clamp(5px, 1.2vw, 7px);
-  // Kutu boyutu = min(estetik/yükseklik tavanı, GENİŞLİĞE sığan boyut).
-  // Genişlik terimi sütun sayısına bağlı → 7 harfli kelime bile dar ekranda taşmaz.
-  --tile-cap: clamp(40px, min(15.5vw, 7.6dvh), 62px);
+  // Yükseklik terimi: dvh yerine JS ile ÖLÇÜLEN yükseklik (--app-height). Böylece
+  // dvh/svh desteklemeyen Android tarayıcı/WebView'da da tahta+klavye doğru boyutlanır
+  // (yoksa 100vh yedeği). Genişlik terimi sütun sayısına bağlı → 7 harf bile taşmaz.
+  --vh-full: var(--app-height, 100vh);
+  // Yükseklik terimi biraz daha kısık (0.066): kısa ekranda tahta küçülür, klavye
+  // rahat kalır ve taşma olmaz. Uzun ekranda genişlik/62px tavanı zaten baskın.
+  --tile-cap: clamp(36px, min(15.5vw, calc(var(--vh-full) * 0.066)), 62px);
   --tile-size: min(
     var(--tile-cap),
     calc((min(100vw, 640px) - 26px - (var(--cols) - 1) * var(--tile-gap)) / var(--cols))
   );
-  --key-h: clamp(46px, 7dvh, 58px);
+  // Klavye tuşu ölçülen yüksekliğe oranlı + rahat taban (48px) → asla çökmez/küçülmez.
+  --key-h: clamp(48px, calc(var(--vh-full) * 0.072), 62px);
   --key-gap: clamp(3px, 1vw, 6px);
 
-  min-height: 100dvh;
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: var(--app-height, 100svh);
   display: grid;
   grid-template-rows: auto auto 1fr auto; // başlık / uyarı / tahta / klavye
   gap: 6px;

@@ -984,3 +984,25 @@
     animation: none;
   }
 }
+
+/* DOKUNMATİK CİHAZLAR: "yapışkan hover" olmasın — dokunduktan sonra kart/panel
+   kalkık/vurgulu kalmasın (tek dokunuş temiz hissettirsin). Fare cihazında (hover)
+   tüm hover efektleri aynen kalır. Basma geri bildirimi :active ile zaten var. */
+@media (hover: none) {
+  .mode:hover,
+  .panel:hover,
+  .who:hover,
+  .tool:hover,
+  .coin:hover {
+    transform: none;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+    border-color: var(--border);
+  }
+  .mode:hover .m-ico {
+    transform: none;
+    box-shadow: 0 0 22px color-mix(in srgb, var(--mc) 20%, transparent);
+  }
+  .mode:hover .m-cta {
+    background: color-mix(in srgb, var(--mc) 15%, transparent);
+  }
+}

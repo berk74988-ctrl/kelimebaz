@@ -243,6 +243,11 @@ textarea {
 
 button {
   cursor: pointer;
+  // Her butonda TEK DOKUNUŞ güvenilir olsun: çift-dokun-yakınlaştırma bekleme
+  // gecikmesini kaldırır (mobilde "iki kez basma" sorununu önler). touch-action
+  // miras almaz → butonda açıkça tanımlanmalı.
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 ul,

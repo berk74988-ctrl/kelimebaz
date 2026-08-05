@@ -15,7 +15,12 @@
   position: relative;
   width: 100%;
   max-width: 400px;
-  max-height: 96dvh;
+  // Ölçülen yüksekliğe bağla (dvh yoksa da doğru) → modal ekrandan taşmaz;
+  // içerik uzunsa modal İÇİNDE kayar, "Yeni Oyun" butonu asla ekran dışında kalmaz.
+  max-height: 96vh;
+  max-height: calc(var(--app-height, 96vh) - 12px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 22px 20px 18px;
   text-align: center;
 
@@ -273,6 +278,12 @@
   grid-template-columns: 1fr 1fr;
   gap: 9px;
   margin-top: 14px;
+  // Uzun modalda (küçük ekran) içerik kayarken bile butonlar ALT kenarda hep
+  // görünür ve basılabilir kalır — "Yeni Oyun" asla ekran dışında kalmaz.
+  position: sticky;
+  bottom: 0;
+  padding-top: 12px;
+  background: linear-gradient(to top, var(--surface) 78%, transparent);
 }
 
 .btn {

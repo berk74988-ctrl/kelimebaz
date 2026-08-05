@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { ErrorScreen } from './components/error-screen/error-screen';
 import { Game } from './components/game/game';
 import { LeagueScreen } from './components/league-screen/league-screen';
@@ -52,8 +59,31 @@ export class App {
   private readonly telemetry = inject(TelemetryService);
   // Erken enjekte: yapıcısında kayıtlı oda oturumunu geri yüklemeyi dener (resume).
   private readonly rooms = inject(RoomService);
+  private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
+    // 📐 TÜM EKRANLAR TEK EKRAN: gerçek görünür yüksekliği ölç → :root --app-height.
+    // Menü VE oyun ekranı bunu kullanır (game.scss min-height/tile/key, title-screen
+    // .screen). dvh/svh desteklemeyen Android tarayıcı/WebView'larında bile çalışır;
+    // visualViewport adres çubuğu/klavye açılışını + güvenli alanı doğru yansıtır.
+    if (typeof window !== 'undefined') {
+      const vv = window.visualViewport;
+      const setAppHeight = () => {
+        const h = Math.round(vv?.height ?? window.innerHeight);
+        if (h > 0) document.documentElement.style.setProperty('--app-height', `${h}px`);
+      };
+      setAppHeight();
+      const opts: AddEventListenerOptions = { passive: true };
+      window.addEventListener('resize', setAppHeight, opts);
+      window.addEventListener('orientationchange', setAppHeight, opts);
+      vv?.addEventListener('resize', setAppHeight, opts);
+      this.destroyRef.onDestroy(() => {
+        window.removeEventListener('resize', setAppHeight);
+        window.removeEventListener('orientationchange', setAppHeight);
+        vv?.removeEventListener('resize', setAppHeight);
+      });
+    }
+
     // Müziği açılışta başlatmayı dener. Tarayıcı sesli otomatik oynatmayı
     // engellerse (standart politika) ilk dokunuş/tıklamada kendiliğinden başlar.
     this.audio.init();
