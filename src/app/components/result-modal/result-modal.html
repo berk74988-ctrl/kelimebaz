@@ -4,6 +4,7 @@
     #dialog
     class="modal"
     [class.won]="status() === 'won'"
+    [class.lost]="status() !== 'won'"
     role="dialog"
     aria-modal="true"
     tabindex="-1"
@@ -19,7 +20,7 @@
       ✕
     </button>
 
-    <!-- Başlık: sonuç + kaç tahminde -->
+    <!-- ── Sonuç ── -->
     <header class="hero">
       <span class="emoji" aria-hidden="true">{{ status() === 'won' ? '🎉' : '😔' }}</span>
       <h2 class="head">
@@ -34,129 +35,71 @@
       </p>
     </header>
 
-    <!-- Cevap: oyunun kendi kutu diliyle -->
-    <div class="answer" [attr.aria-label]="i18n.t('result.answerAria', { word: answer() })">
-      @for (ch of answerLetters(); track $index) {
-        <span class="a-tile" aria-hidden="true" [style.animation-delay.ms]="$index * 60">{{
-          ch
-        }}</span>
-      }
+    <!-- ── Doğru kelime ── -->
+    <div class="answer-wrap">
+      <span class="a-label">{{ i18n.t('result.correctWord') }}</span>
+      <div class="answer" [attr.aria-label]="i18n.t('result.answerAria', { word: answer() })">
+        @for (ch of answerLetters(); track $index) {
+          <span class="a-tile" aria-hidden="true" [style.animation-delay.ms]="$index * 55">{{
+            ch
+          }}</span>
+        }
+      </div>
     </div>
 
-    <!-- 📖 Öğretici kelime kartı — kaybedince varsayılan açık, kazanınca kapalı; kartı yoksa hiç görünmez -->
-    <app-word-card [word]="answer()" [openByDefault]="status() === 'lost'" />
-
-    <!-- 🪙 Bu oyunda kazanılan altın (oyun + tamamlanan günlük görevler) -->
-    @if (goldEarned() > 0) {
-      <div class="gold">
-        <span class="gc-ico" aria-hidden="true">🪙</span>
-        <span class="gc-tx">
-          <b>{{ i18n.t('result.goldEarned', { n: goldEarned() }) }}</b>
-          <span>
-            @if (levelGold() > 0) {
-              🏅 {{ i18n.t('result.levelReward', { n: levelGold() }) }}
-            }
-            @if (levelGold() > 0 && questGold() > 0) {
-              ·
-            }
-            @if (questGold() > 0) {
-              🎯 {{ i18n.t('result.questReward', { n: questGold() }) }}
-            }
-            @if (levelGold() === 0 && questGold() === 0) {
-              {{ i18n.t('result.goldTotal', { n: i18n.num(gold.balance()) }) }}
-            }
-          </span>
-        </span>
+    <!-- ── Ödüller: altın + ustalık puanı (yalnız varsa) ── -->
+    @if (goldEarned() > 0 || lpDelta() !== 0) {
+      <div class="rewards">
+        @if (goldEarned() > 0) {
+          <div class="rw gold">
+            <span class="rw-ico" aria-hidden="true">🪙</span>
+            <span class="rw-v">+{{ i18n.num(goldEarned()) }}</span>
+          </div>
+        }
+        @if (lpDelta() !== 0) {
+          <div class="rw pts" [class.down]="lpDelta() < 0">
+            <span class="rw-ico" aria-hidden="true">{{ league.tier().icon }}</span>
+            <span class="rw-v">{{ lpDelta() > 0 ? '+' : '' }}{{ lpDelta() }}</span>
+          </div>
+        }
       </div>
     }
 
-    <!-- 🏆 Ustalık puanı değişimi -->
-    @if (lpDelta() !== 0) {
-      <div class="lp" [class.down]="lpDelta() < 0">
-        <span class="lp-ico" aria-hidden="true">{{ league.tier().icon }}</span>
-        <span class="lp-tx">
-          <b>{{ lpDelta() > 0 ? '+' : '' }}{{ lpDelta() }} {{ i18n.t('league.pts') }}</b>
-          <span
-            >{{ i18n.t('tier.' + league.tier().id) }} · {{ league.lp() }}
-            {{ i18n.t('league.pts') }}</span
-          >
-        </span>
-      </div>
-    }
-
+    <!-- ── Günlük: yarın yenilenir geri sayımı ── -->
     @if (isDaily()) {
       <div class="next">
         <app-countdown />
-        <p class="note">{{ i18n.t('result.dailyNote') }}</p>
       </div>
     }
 
-    <div class="rule"></div>
-
-    <section class="stats" [attr.aria-label]="i18n.t('result.statsAria')">
-      <!-- Kazanılan oyunun satırı grafikte vurgulanır -->
-      <app-stats-panel [highlight]="status() === 'won' ? attempts() : null" />
-    </section>
-
-    <!-- 🔎 Maç analizi — her tahminin kalitesi (aday eleme + en iyi alternatif). Aç/kapa -->
-    @if (analysis().length) {
-      <section class="analysis">
-        <button
-          class="an-toggle"
-          type="button"
-          (click)="toggleAnalysis()"
-          [attr.aria-expanded]="analysisOpen()"
-        >
-          <span>🔎 {{ i18n.t('analysis.title') }}</span>
-          <span class="an-acc">{{ i18n.t('analysis.accuracy', { n: accuracy() }) }}</span>
-          <span class="chev" aria-hidden="true">{{ analysisOpen() ? '▲' : '▼' }}</span>
-        </button>
-        @if (analysisOpen()) {
-          <ol class="an-list">
-            @for (a of analysis(); track $index) {
-              <li class="an-row" [class]="'q-' + a.quality">
-                <span class="an-word">{{ a.word }}</span>
-                <span class="an-badge">{{ i18n.t('analysis.q.' + a.quality) }}</span>
-                <span class="an-meta">
-                  {{ i18n.t('analysis.eliminated', { n: a.eliminated, of: a.candidatesBefore }) }}
-                  @if (!a.solved && a.quality !== 'optimal' && a.bestWord !== a.word) {
-                    <span class="an-best">· {{ i18n.t('analysis.best', { w: a.bestWord }) }}</span>
-                  }
-                </span>
-              </li>
-            }
-          </ol>
-        }
-      </section>
-    }
-
-    <!-- Paylaşılacak ızgaranın önizlemesi — harf yok, spoiler yok -->
-    <pre class="preview" [attr.aria-label]="i18n.t('result.previewAria')">{{ shareGrid() }}</pre>
-
+    <!-- ── Butonlar ── -->
     <div class="actions">
-      <button
-        class="btn share"
-        type="button"
-        [class.ok]="shareState() === 'copied'"
-        [class.err]="shareState() === 'failed'"
-        (click)="share()"
-      >
-        @switch (shareState()) {
-          @case ('copied') {
-            <span class="b-ico" aria-hidden="true">✓</span> {{ i18n.t('result.copied') }}
-          }
-          @case ('failed') {
-            <span class="b-ico" aria-hidden="true">✕</span> {{ i18n.t('result.copyFailed') }}
-          }
-          @default {
-            <span class="b-ico" aria-hidden="true">📋</span> {{ i18n.t('result.share') }}
-          }
-        }
-      </button>
-
-      <button class="btn again" type="button" (click)="playAgain.emit()">
+      <button class="btn primary" type="button" (click)="playAgain.emit()">
         <span class="b-ico" aria-hidden="true">🔄</span> {{ i18n.t('result.playAgain') }}
       </button>
+      <button class="btn home" type="button" (click)="home.emit()">
+        <span class="b-ico" aria-hidden="true">🏠</span> {{ i18n.t('result.home') }}
+      </button>
     </div>
+
+    <button
+      class="btn share"
+      type="button"
+      [class.ok]="shareState() === 'copied'"
+      [class.err]="shareState() === 'failed'"
+      (click)="share()"
+    >
+      @switch (shareState()) {
+        @case ('copied') {
+          <span class="b-ico" aria-hidden="true">✓</span> {{ i18n.t('result.copied') }}
+        }
+        @case ('failed') {
+          <span class="b-ico" aria-hidden="true">✕</span> {{ i18n.t('result.copyFailed') }}
+        }
+        @default {
+          <span class="b-ico" aria-hidden="true">📋</span> {{ i18n.t('result.share') }}
+        }
+      }
+    </button>
   </div>
 </div>

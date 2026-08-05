@@ -192,6 +192,8 @@
   "result.copyFailed": "Couldn't copy",
   "result.share": "Share Result",
   "result.playAgain": "New Game",
+  "result.home": "Main Menu",
+  "result.correctWord": "The word",
   "analysis.title": "Match analysis",
   "analysis.accuracy": "{n}% accuracy",
   "analysis.eliminated": "ruled out {n} of {of}",

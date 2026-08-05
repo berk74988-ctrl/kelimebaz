@@ -192,6 +192,8 @@
   "result.copyFailed": "Kopyalanamadı",
   "result.share": "Sonucu Paylaş",
   "result.playAgain": "Yeni Oyun",
+  "result.home": "Ana Menü",
+  "result.correctWord": "Doğru kelime",
   "analysis.title": "Maç analizi",
   "analysis.accuracy": "isabet %{n}",
   "analysis.eliminated": "{n}/{of} adayı eledi",

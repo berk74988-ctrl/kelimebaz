@@ -1,5 +1,10 @@
 @use '../../../styles/variables' as v;
 
+/* =============================================================
+   SONUÇ EKRANI — sade, modern, tek bakışta anlaşılır.
+   Sonuç · doğru kelime · altın + puan · belirgin butonlar.
+   ============================================================= */
+
 .backdrop {
   position: fixed;
   inset: 0;
@@ -14,31 +19,29 @@
 .modal {
   position: relative;
   width: 100%;
-  max-width: 400px;
-  // Ölçülen yüksekliğe bağla (dvh yoksa da doğru) → modal ekrandan taşmaz;
-  // içerik uzunsa modal İÇİNDE kayar, "Yeni Oyun" butonu asla ekran dışında kalmaz.
+  max-width: 380px;
+  // Ölçülen yüksekliğe bağlı (dvh yoksa da doğru) → taşmaz; uzunsa içte kayar.
   max-height: 96vh;
   max-height: calc(var(--app-height, 96vh) - 12px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 22px 20px 18px;
+  padding: 26px 22px 18px;
   text-align: center;
 
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 22px;
+  border-radius: 24px;
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
   animation: rise 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 
-  // Sonucu tepeden gelen bir renk sızıntısıyla belli et — kazandın mı kaybettin mi,
-  // metni okumadan anlaşılsın.
+  // Sonuç rengini tepeden bir ışıltıyla belli et (okumadan anlaşılsın).
   &::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 120px;
+    height: 130px;
     pointer-events: none;
     background: radial-gradient(
       120% 100% at 50% 0%,
@@ -46,11 +49,10 @@
       transparent 70%
     );
   }
-
   &.won::before {
     background: radial-gradient(
       120% 100% at 50% 0%,
-      color-mix(in srgb, var(--correct) 24%, transparent),
+      color-mix(in srgb, var(--correct) 26%, transparent),
       transparent 70%
     );
   }
@@ -58,11 +60,11 @@
 
 .x {
   position: absolute;
-  top: 10px;
-  right: 12px;
-  z-index: 1;
-  width: 32px;
-  height: 32px;
+  top: 12px;
+  right: 14px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   color: var(--text-muted);
   font-size: 15px;
@@ -73,107 +75,256 @@
   }
 }
 
-/* ---------- Başlık ---------- */
-
+/* ---------- Sonuç başlığı ---------- */
 .hero {
   position: relative;
 }
-
 .emoji {
   display: block;
-  font-size: 34px;
+  font-size: 44px;
   line-height: 1;
   animation: pop 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) both;
 }
-
 .head {
-  margin-top: 6px;
-  font-size: 21px;
+  margin-top: 8px;
+  font-size: 24px;
   font-weight: 800;
+  letter-spacing: -0.01em;
   color: var(--danger);
 
   .modal.won & {
     color: var(--correct);
   }
 }
-
 .sub {
-  margin-top: 3px;
-  font-size: 13px;
+  margin-top: 4px;
+  font-size: 13.5px;
   color: var(--text-muted);
 
   b {
     color: var(--text);
+    font-weight: 800;
   }
 }
 
-/* ---------- Cevap (harf kutuları) ---------- */
-
+/* ---------- Doğru kelime ---------- */
+.answer-wrap {
+  margin-top: 20px;
+}
+.a-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
 .answer {
   display: flex;
   justify-content: center;
-  gap: 5px;
-  margin-top: 12px;
+  gap: 6px;
 }
-
 .a-tile {
-  flex: 0 1 44px;
+  flex: 0 1 48px;
   min-width: 0;
   aspect-ratio: 1;
-
   display: grid;
   place-items: center;
 
-  font-size: clamp(16px, 4.5vw, 20px);
+  font-size: clamp(17px, 5vw, 22px);
   font-weight: 800;
-
-  color: var(--on-correct);
-  background: var(--correct);
-  border-radius: 10px;
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--correct) 22%, transparent);
+  text-transform: uppercase;
+  border-radius: 12px;
 
   animation: flip-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  // Kazanınca yeşil (kutlama)
+  color: var(--on-correct);
+  background: var(--correct);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--correct) 24%, transparent);
+
+  // Kaybedince NÖTR açığa çıkarma (yeşil sanılmasın)
+  .modal.lost & {
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid color-mix(in srgb, var(--border) 90%, var(--text-muted));
+    box-shadow: none;
+  }
 }
 
-/* ---------- 🪙 Kazanılan altın ---------- */
+/* ---------- Ödüller (altın + puan) ---------- */
+.rewards {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+.rw {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 15px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  animation: coin-pop 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) 0.3s both;
 
-.gold {
+  &.gold {
+    border-color: color-mix(in srgb, var(--present) 42%, var(--border));
+    background: color-mix(in srgb, var(--present) 14%, var(--surface-2));
+  }
+  &.pts {
+    border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+  }
+  &.pts.down {
+    border-color: color-mix(in srgb, var(--danger) 42%, var(--border));
+    background: color-mix(in srgb, var(--danger) 12%, var(--surface-2));
+  }
+}
+.rw-ico {
+  font-size: 20px;
+  line-height: 1;
+}
+.rw-v {
+  font-size: 19px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+
+  .rw.gold & {
+    color: var(--present);
+  }
+  .rw.pts & {
+    color: var(--accent);
+  }
+  .rw.pts.down & {
+    color: var(--danger);
+  }
+}
+
+/* ---------- Günlük geri sayım ---------- */
+.next {
+  margin-top: 16px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* ---------- Butonlar ---------- */
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 22px;
+  // Uzun modalda (küçük ekran) kaydırılsa da butonlar hep erişilebilir kalsın.
+  position: sticky;
+  bottom: 0;
+  padding-top: 10px;
+  background: linear-gradient(to top, var(--surface) 82%, transparent);
+}
+
+.btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  margin-top: 12px;
-  padding: 10px 14px;
+  gap: 8px;
+  min-height: 52px;
+  padding: 13px 12px;
 
-  background: color-mix(in srgb, var(--present) 14%, var(--surface-2));
-  border: 1px solid color-mix(in srgb, var(--present) 40%, var(--border));
-  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 800;
 
-  animation: coin-pop 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) 0.35s both;
-}
+  border: 1px solid transparent;
+  border-radius: 15px;
 
-.gc-ico {
-  font-size: 22px;
-  line-height: 1;
-}
+  transition:
+    transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1),
+    box-shadow 0.16s ease,
+    filter 0.16s ease,
+    background 0.16s ease;
 
-.gc-tx {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-
-  b {
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--present);
+  &:hover {
+    transform: translateY(-2px);
+  }
+  &:active {
+    transform: translateY(0) scale(0.97);
   }
 
-  span {
-    font-size: 10.5px;
+  .b-ico {
+    font-size: 16px;
+  }
+
+  // Yeni Oyun — birincil (vurgu gradyanı)
+  &.primary {
+    color: var(--on-share, #fff);
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 32%, transparent);
+
+    &:hover {
+      box-shadow: 0 12px 28px color-mix(in srgb, var(--accent) 40%, transparent);
+    }
+  }
+
+  // Ana Menü — belirgin ama ikincil
+  &.home {
+    color: var(--text);
+    background: var(--surface-2);
+    border-color: var(--border);
+
+    &:hover {
+      border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+      background: color-mix(in srgb, var(--surface-2) 80%, var(--accent));
+    }
+  }
+
+  // Paylaş — üçüncül, tam genişlik, sade
+  &.share {
+    width: 100%;
+    margin-top: 10px;
+    min-height: 46px;
+    font-size: 14px;
     color: var(--text-muted);
+    background: transparent;
+    border-color: var(--border);
+
+    &:hover {
+      color: var(--text);
+      border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+    }
+    &.ok {
+      color: var(--correct);
+      border-color: var(--correct);
+    }
+    &.err {
+      color: var(--danger);
+      border-color: var(--danger);
+    }
   }
 }
 
+/* ---------- Animasyonlar ---------- */
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+}
+@keyframes pop {
+  from {
+    transform: scale(0);
+  }
+}
+@keyframes flip-in {
+  from {
+    opacity: 0;
+    transform: rotateX(-90deg);
+  }
+}
 @keyframes coin-pop {
   from {
     opacity: 0;
@@ -181,315 +332,11 @@
   }
 }
 
-/* 🏆 Lig puanı (LP) satırı — kazanınca yeşil, kaybedince kırmızı vurgulu */
-.lp {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
-  padding: 10px 14px;
-
-  background: color-mix(in srgb, var(--correct) 13%, var(--surface-2));
-  border: 1px solid color-mix(in srgb, var(--correct) 40%, var(--border));
-  border-radius: var(--radius);
-
-  animation: coin-pop 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) 0.45s both;
-
-  &.down {
-    background: color-mix(in srgb, var(--danger) 13%, var(--surface-2));
-    border-color: color-mix(in srgb, var(--danger) 40%, var(--border));
-
-    .lp-tx b {
-      color: var(--danger);
-    }
-  }
-}
-
-.lp-ico {
-  font-size: 22px;
-  line-height: 1;
-}
-
-.lp-tx {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-
-  b {
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--correct);
-  }
-
-  span {
-    font-size: 10.5px;
-    color: var(--text-muted);
-  }
-}
-
-/* ---------- Günlük: geri sayım ---------- */
-
-.next {
-  margin-top: 15px;
-  padding: 13px 12px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.note {
-  margin-top: 7px;
-  font-size: 11px;
-  line-height: 1.5;
-  color: var(--text-muted);
-}
-
-.rule {
-  height: 1px;
-  margin: 14px 0 12px;
-  background: var(--border);
-}
-
-/* ---------- Paylaşım önizlemesi ---------- */
-
-.preview {
-  margin-top: 12px;
-  padding: 10px;
-
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1.2;
-  letter-spacing: 2px;
-  text-align: center;
-  white-space: pre;
-
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-/* ---------- Eylem butonları ----------
-   İkisi de büyük ve dolgun: paylaşmak ve tekrar oynamak bu ekranın
-   tek amacı; kenarda duran soluk butonlar bunu iletmiyordu. */
-
-.actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
-  margin-top: 14px;
-  // Uzun modalda (küçük ekran) içerik kayarken bile butonlar ALT kenarda hep
-  // görünür ve basılabilir kalır — "Yeni Oyun" asla ekran dışında kalmaz.
-  position: sticky;
-  bottom: 0;
-  padding-top: 12px;
-  background: linear-gradient(to top, var(--surface) 78%, transparent);
-}
-
-.btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 52px;
-  padding: 12px 10px;
-
-  font-size: 14px;
-  font-weight: 800;
-
-  border: 1px solid transparent;
-  border-radius: 14px;
-
-  transition:
-    transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1),
-    box-shadow 0.16s ease,
-    filter 0.16s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.08);
-  }
-
-  &:active {
-    transform: translateY(0) scale(0.97);
-  }
-
-  // Paylaş — vurgu rengi. Uçlar WCAG için koyulaştırılmış (bkz. _reset.scss).
-  &.share {
-    color: var(--on-share);
-    background: linear-gradient(135deg, var(--share-1), var(--share-2));
-    box-shadow: 0 8px 22px color-mix(in srgb, var(--share-1) 40%, transparent);
-
-    &:hover {
-      box-shadow: 0 12px 30px color-mix(in srgb, var(--share-1) 50%, transparent);
-    }
-  }
-
-  /* Yeni oyun — oyunun ana rengi.
-     DÜZ renk, gradyan değil: koyulaştırılmış uçta koyu yazının kontrastı
-     3.21:1'e düşüyordu. Düz --correct üzerinde 6.36:1. Dikkat çekiciliği
-     renkli parıltı gölgesi sağlıyor. */
-  &.again {
-    color: var(--on-correct);
-    background: var(--correct);
-    box-shadow: 0 8px 22px color-mix(in srgb, var(--correct) 34%, transparent);
-
-    &:hover {
-      box-shadow: 0 12px 30px color-mix(in srgb, var(--correct) 46%, transparent);
-    }
-  }
-
-  // Kopyalama geri bildirimi — paylaş butonunun üstüne biner
-  &.ok {
-    background: var(--correct);
-    color: var(--on-correct);
-    box-shadow: 0 8px 22px color-mix(in srgb, var(--correct) 30%, transparent);
-  }
-
-  &.err {
-    background: var(--danger);
-    color: #fff;
-    box-shadow: 0 8px 22px color-mix(in srgb, var(--danger) 30%, transparent);
-  }
-}
-
-.b-ico {
-  font-size: 15px;
-  line-height: 1;
-}
-
-/* ---------- Mobil ---------- */
-
-@media (max-width: 400px) {
-  .modal {
-    padding: 22px 15px 16px;
-  }
-
-  .btn {
-    min-height: 50px;
-    font-size: 13px;
-    gap: 5px;
-  }
-}
-
-/* Çok dar ekranda iki buton yan yana sıkışıyor → alt alta ve tam genişlik */
-@media (max-width: 340px) {
-  .actions {
-    grid-template-columns: 1fr;
-  }
-}
-
-@keyframes fade {
-  from {
-    opacity: 0;
-  }
-}
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(18px) scale(0.96);
-  }
-}
-
-@keyframes pop {
-  from {
-    opacity: 0;
-    transform: scale(0.4);
-  }
-}
-
-@keyframes flip-in {
-  from {
-    opacity: 0;
-    transform: rotateX(-90deg) translateY(10px);
-  }
-}
-
-/* 🔎 Maç analizi — her tahminin kalitesi (aç/kapa) */
-.analysis {
-  margin-top: 4px;
-}
-.an-toggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface-2);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-
-  .an-acc {
-    margin-left: auto;
-    color: var(--text-muted);
-    font-weight: 600;
-  }
-  .chev {
-    color: var(--text-muted);
-    font-size: 10px;
-  }
-}
-.an-list {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.an-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: var(--surface-2);
-  border-left: 3px solid var(--absent);
-  font-size: 12px;
-
-  .an-word {
-    font-family: v.$font-mono;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    min-width: 5.5em;
-  }
-  .an-badge {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 1px 7px;
-    border-radius: 999px;
-    background: var(--absent);
-    color: var(--on-absent, #fff);
-  }
-  .an-meta {
-    color: var(--text-muted);
-    margin-left: auto;
-    text-align: right;
-  }
-  .an-best {
-    color: var(--text);
-  }
-
-  /* Kalite renkleri — oyunun semantik renkleriyle */
-  &.q-optimal,
-  &.q-great {
-    border-left-color: var(--correct);
-    .an-badge {
-      background: var(--correct);
-      color: var(--on-correct);
-    }
-  }
-  &.q-good,
-  &.q-fair {
-    border-left-color: var(--present);
-    .an-badge {
-      background: var(--present);
-      color: var(--on-present, #1a1a1a);
-    }
+@media (prefers-reduced-motion: reduce) {
+  .modal,
+  .emoji,
+  .a-tile,
+  .rw {
+    animation: none;
   }
 }

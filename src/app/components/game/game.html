@@ -194,6 +194,7 @@
       [answer]="game.answer()"
       [attempts]="game.rowIndex()"
       (playAgain)="newGame()"
+      (home)="exit.emit()"
       (close)="resultOpen.set(false)"
     />
   }

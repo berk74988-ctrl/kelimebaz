@@ -192,6 +192,8 @@
   "result.copyFailed": "Konnte nicht kopieren",
   "result.share": "Ergebnis teilen",
   "result.playAgain": "Neues Spiel",
+  "result.home": "Hauptmenü",
+  "result.correctWord": "Das Wort",
   "analysis.title": "Spielanalyse",
   "analysis.accuracy": "{n}% Treffer",
   "analysis.eliminated": "{n} von {of} ausgeschlossen",
