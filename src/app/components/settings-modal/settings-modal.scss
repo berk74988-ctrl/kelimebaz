@@ -343,12 +343,28 @@
 }
 
 /* 🌐 Dil seçici — ikili segment */
+/* Dil satırı — DİKEY: açıklama üstte, 3 dil butonu altta tam genişlik.
+   (Yan yana konunca açıklama sıkışıp "Oyun/dili/ve/kelime/havuzu" diye taşıyordu.) */
+.row.lang {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+
+  .lang-seg {
+    width: 100%;
+  }
+  .lang-opt {
+    flex: 1;
+    text-align: center;
+  }
+}
+
 .lang-seg {
   flex: none;
   display: flex;
   gap: 4px;
   padding: 3px;
-  background: var(--surface-2);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
 }

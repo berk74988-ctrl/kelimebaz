@@ -159,6 +159,14 @@
   --accent: #f43f5e;
   --accent-2: #fb7185;
 }
+:root[data-skin='gold'] {
+  --accent: #f59e0b;
+  --accent-2: #fbbf24;
+}
+:root[data-skin='mint'] {
+  --accent: #14b8a6;
+  --accent-2: #2dd4bf;
+}
 /* 🏆 Şampiyon — sezon ödülü teması (altın → mor) */
 :root[data-skin='champion'] {
   --accent: #e8b923;

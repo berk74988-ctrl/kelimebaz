@@ -41,7 +41,6 @@
         type="button"
         [class.equipped]="st === 'equipped'"
         [class.locked]="st === 'locked'"
-        [disabled]="st === 'locked'"
         [attr.aria-label]="
           i18n.t('shopitem.' + item.id) +
           (st === 'equipped'
@@ -52,6 +51,10 @@
         "
         (click)="onItem(item)"
       >
+        @if (st === 'locked') {
+          <span class="lock" aria-hidden="true">🔒</span>
+        }
+
         <!-- Önizleme -->
         <div class="pv">
           @switch (item.category) {

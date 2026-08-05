@@ -91,6 +91,22 @@ export const SHOP_ITEMS: readonly ShopItem[] = [
     preview: '#f43f5e',
     preview2: '#fb7185',
   },
+  {
+    id: 'theme.gold',
+    category: 'theme',
+    name: 'Altın',
+    price: 200,
+    preview: '#f59e0b',
+    preview2: '#fbbf24',
+  },
+  {
+    id: 'theme.mint',
+    category: 'theme',
+    name: 'Nane',
+    price: 200,
+    preview: '#2dd4bf',
+    preview2: '#34d399',
+  },
   // 🏆 Sezon ödülü — mağazada satılmaz, yalnız üst liglerde kazanılır
   {
     id: 'theme.champion',
@@ -132,6 +148,34 @@ export const SHOP_ITEMS: readonly ShopItem[] = [
     price: 350,
     preview: 'linear-gradient(135deg, #f43f5e, #eab308, #22c55e, #3b82f6, #a855f7)',
   },
+  {
+    id: 'frame.emerald',
+    category: 'frame',
+    name: 'Zümrüt',
+    price: 150,
+    preview: 'linear-gradient(135deg, #34d399, #059669)',
+  },
+  {
+    id: 'frame.coral',
+    category: 'frame',
+    name: 'Mercan',
+    price: 180,
+    preview: 'linear-gradient(135deg, #fb7185, #e11d48)',
+  },
+  {
+    id: 'frame.royal',
+    category: 'frame',
+    name: 'Kraliyet',
+    price: 220,
+    preview: 'linear-gradient(135deg, #818cf8, #6d28d9)',
+  },
+  {
+    id: 'frame.silver',
+    category: 'frame',
+    name: 'Gümüş',
+    price: 250,
+    preview: 'linear-gradient(135deg, #e5e7eb, #94a3b8)',
+  },
 
   // ---- ROZETLER (isim yanında amblem) ----
   { id: 'badge.none', category: 'badge', name: 'Rozetsiz', price: 0, preview: '' },
@@ -140,6 +184,7 @@ export const SHOP_ITEMS: readonly ShopItem[] = [
   { id: 'badge.crown', category: 'badge', name: 'Taç', price: 200, preview: '👑' },
   { id: 'badge.diamond', category: 'badge', name: 'Elmas', price: 250, preview: '💎' },
   { id: 'badge.trophy', category: 'badge', name: 'Kupa', price: 300, preview: '🏆' },
+  { id: 'badge.rocket', category: 'badge', name: 'Roket', price: 150, preview: '🚀' },
   // 🎖️ Sezon ödülü rozeti — mağazada satılmaz, lig performansıyla kazanılır
   {
     id: 'badge.league',
