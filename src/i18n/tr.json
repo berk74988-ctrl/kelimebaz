@@ -101,6 +101,7 @@
   "vsai.hardDesc": "Neredeyse kusursuz, her turda en iyi tahmini yapar (ort. ~3,1). Yenmen gerçekten zor!",
   "vsai.thinking": "düşünüyor",
   "vsai.yourTurn": "Sıra sende — bir tahmin yap",
+  "vsai.yourTurnShort": "Sıra sende",
   "vsai.aiTurn": "Yapay zekâ düşünüyor",
   "vsai.solved": "çözdü!",
   "vsai.failed": "bulamadı",

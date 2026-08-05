@@ -101,6 +101,7 @@
   "vsai.hardDesc": "Near-perfect, always the best guess each turn (~3.1 avg). Truly hard to beat!",
   "vsai.thinking": "thinking",
   "vsai.yourTurn": "Your turn — make a guess",
+  "vsai.yourTurnShort": "Your turn",
   "vsai.aiTurn": "AI is thinking",
   "vsai.solved": "solved!",
   "vsai.failed": "couldn't solve",

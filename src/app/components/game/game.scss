@@ -58,6 +58,12 @@
   border-bottom: 1px solid var(--border);
 }
 
+// vsAI modunda üstteki kompakt rakip bandına yer açar (board'u örtmesin).
+// Diğer modlarda --vs-top-inset tanımsız → 0px → hiçbir etkisi yok.
+.notice {
+  padding-top: var(--vs-top-inset, 0px);
+}
+
 .titles {
   flex: 1;
   min-width: 0;

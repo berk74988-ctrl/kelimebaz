@@ -101,6 +101,7 @@
   "vsai.hardDesc": "Nahezu perfekt, immer der beste Tipp pro Zug (~3,1). Wirklich schwer zu schlagen!",
   "vsai.thinking": "denkt nach",
   "vsai.yourTurn": "Du bist dran — rate ein Wort",
+  "vsai.yourTurnShort": "Du bist dran",
   "vsai.aiTurn": "Die KI denkt nach",
   "vsai.solved": "gelöst!",
   "vsai.failed": "nicht gelöst",

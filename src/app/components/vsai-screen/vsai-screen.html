@@ -84,15 +84,26 @@
     </div>
   </main>
 } @else if (phase() === 'playing') {
-  <!-- Rakip HUD — karakterin canlı ilerleyişi (harf yok, sadece renk → cevap sızmaz) -->
-  <div class="vs-hud" [class.won]="aiSolved()" [class.lost]="aiFailed()">
+  <!-- KOMPAKT RAKİP BANDI — tek satır: avatar · ad+seviye · ilerleme · sayaç · durum.
+       Sıra göstergesi de buraya gömüldü (ayrı pil yok → sesli butonla çakışmaz).
+       Board'a yer açmak için app-game üstten pay bırakır (--vs-top-inset). -->
+  <div
+    class="vs-hud"
+    [class.won]="aiSolved()"
+    [class.lost]="aiFailed()"
+    [class.myturn]="!botTurn() && !aiSolved() && !aiFailed()"
+    aria-live="polite"
+  >
     <span class="vs-hud-face">{{ persona().avatar }}</span>
     <div class="vs-hud-mid">
       <div class="vs-hud-name">
-        {{ i18n.t(persona().nameKey) }}
-        <b class="vs-tag" [attr.data-d]="persona().tier">{{ i18n.t('vsai.' + persona().tier) }}</b>
+        <b>{{ i18n.t(persona().nameKey) }}</b>
+        <span class="vs-tag" [attr.data-d]="persona().tier">{{
+          i18n.t('vsai.' + persona().tier)
+        }}</span>
       </div>
-      <div class="vs-hud-rows">
+      <!-- Rakip ilerleyişi — harf yok, sadece renk (cevap sızmaz), tek satır -->
+      <div class="vs-hud-rows" aria-hidden="true">
         @for (row of aiRows(); track $index) {
           <span class="vs-row">
             @for (st of row.pattern; track $index) {
@@ -106,33 +117,29 @@
       </div>
     </div>
     <div class="vs-hud-st">
-      @if (aiSolved()) {
-        <span class="vs-ok">✓ {{ i18n.t('vsai.solved') }}</span>
-      } @else if (aiFailed()) {
-        <span class="vs-fail">✕ {{ i18n.t('vsai.failed') }}</span>
-      } @else if (aiThinking()) {
-        <span class="vs-think">{{ i18n.t('vsai.thinking') }}<i></i><i></i><i></i></span>
-      }
+      <span class="vs-hud-state">
+        @if (aiSolved()) {
+          <span class="vs-ok">✓</span>
+        } @else if (aiFailed()) {
+          <span class="vs-fail">✕</span>
+        } @else if (botTurn()) {
+          <span class="vs-think">{{ i18n.t('vsai.thinking') }}<i></i><i></i><i></i></span>
+        } @else {
+          <span class="vs-myturn">🧑 {{ i18n.t('vsai.yourTurnShort') }}</span>
+        }
+      </span>
       <span class="vs-hud-n">{{ aiRows().length }}/{{ MAX }}</span>
     </div>
   </div>
 
-  <!-- Laf atma balonu (karaktere kişilik katar) -->
+  <!-- Laf atma balonu (karaktere kişilik katar) — HUD altında, kısa süre -->
   @if (taunt()) {
     <div class="vs-taunt" aria-live="polite">💬 {{ taunt() }}</div>
   }
 
-  <!-- Sıra göstergesi — kimin sırası olduğu net görünür -->
-  <div class="vs-turn" [class.ai]="botTurn()" aria-live="polite">
-    @if (botTurn()) {
-      <span class="vs-turn-ic">{{ persona().avatar }}</span> {{ i18n.t('vsai.aiTurn') }}<i></i
-      ><i></i><i></i>
-    } @else {
-      <span class="vs-turn-ic">🧑</span> {{ i18n.t('vsai.yourTurn') }}
-    }
-  </div>
-
   <app-game
+    class="vs-game"
+    style="--vs-top-inset: 58px"
     mode="vsai"
     [roomAnswer]="word()"
     [inputLocked]="botTurn()"
