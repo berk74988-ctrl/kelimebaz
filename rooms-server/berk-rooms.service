@@ -8,6 +8,10 @@ User=berk
 WorkingDirectory=/home/berk/rooms-server
 ExecStart=/usr/bin/node /home/berk/rooms-server/server.js
 Environment=PORT=4243
+# CORS beyaz listesi: yalnizca yayin kokeni (alan adi) + yerel gelistirme API'yi
+# tarayicidan cagirabilir. Tanimli DEGILSE server.js gomulu varsayilani devreye
+# girer (o da alan adiyla guncel). pickOrigin eslesmeyen kokene [0]'i doner.
+Environment=ALLOWED_ORIGINS=https://kelimebaz.aicirkit.com,http://localhost:4200,http://127.0.0.1:4200
 # YZ ipucu (Takıldım) için gizli anahtar bu dosyadan okunur. Başındaki "-":
 # dosya YOKSA servis yine de başlar → ipucu özelliği kapalı kalır (oyun bozulmaz).
 # Dosya içeriği:  ANTHROPIC_API_KEY=sk-ant-...   (ve isteğe bağlı HINT_MODEL=claude-haiku-4-5)

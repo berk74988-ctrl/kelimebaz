@@ -291,6 +291,10 @@ sudo python3 rooms-server/nginx_add_rooms.py
 ```
 Sunucu yalnızca `127.0.0.1`'de dinler — internete doğrudan açık değildir, dışarıya **aynı köken** üzerinden nginx `/berk/rooms/` yolu açar (backend maruz kalmaz). Bellek koruması: en fazla 500 oda, 3 saat hareketsizlikte oda silinir, mesaj/uzunluk sınırları var.
 
+**API kökü kararı — `/berk/rooms` KORUNUYOR (seçenek a).** Alan adına (`kelimebaz.aicirkit.com`) taşındıktan sonra da tüm servisler API'yi göreli `/berk/rooms` üzerinden çağırır (tek kaynak: `core/server-base.ts` → `serverBase()`; 6 servis onu kullanır). Neden `/rooms`'a sadeleştirmedik: nginx `/berk/rooms/` proxy'si zaten kurulu ve çalışıyor → yeni bir vhost yolu + 6 servisin hepsinin değişmesi gerekmez (biri unutulursa o özellik tek başına kırılırdı); `/berk/` öneki yalnızca XHR adresinde kalır, kullanıcı görmez. Mobil (Capacitor, OYUN-303) zaten **mutlak** adres kullanır (`NATIVE_ROOMS`), önek onu etkilemez. Web aynı-köken olduğu için çok oyunculu **taşıma sonrası kod değişmeden çalışır** (doğrulandı).
+
+**CORS beyaz listesi (`ALLOWED_ORIGINS`).** Yayın kökeni artık `https://kelimebaz.aicirkit.com`. İki katmanlı ayar: (1) `berk-rooms.service` içinde `Environment=ALLOWED_ORIGINS=https://kelimebaz.aicirkit.com,http://localhost:4200,http://127.0.0.1:4200` (birincil); (2) `server.js` gömülü varsayılanı da aynı listeyle güncel (servis dosyası unutulursa yedek). `pickOrigin()` eşleşmeyen kökene listenin ilkini döndürür → izinsiz tarayıcı isteği ACAO uyuşmazlığından engellenir. Canlıya uygulama: `sudo bash rooms-server/install_rooms_cors.sh` (idempotent; .service'e ekler → `daemon-reload` → `restart` → `/health` doğrular).
+
 **Kötüye kullanıma karşı sertleştirme** (herkese açık uç nokta):
 
 - **Hız sınırı** (IP başına, kayan pencere): `/create`, `/join`, `/chat` için ayrı eşikler + `/chat`'te oyuncu başına 10 sn'de 5 mesaj. Aşılınca **429 `rate_limited`** → istemci anlamlı mesaj gösterir. Eşikler env ile ayarlanır (`RL_CREATE`, `RL_JOIN`, `RL_CHAT_IP`, `RL_CHAT_PLAYER`).

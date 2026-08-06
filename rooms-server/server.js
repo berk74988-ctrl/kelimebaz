@@ -330,7 +330,8 @@ const rlChatPlayer = rateLimiter(Number(process.env.RL_CHAT_PLAYER || 5), 10_000
 // '*' YERİNE beyaz liste: yalnızca oyunun yayınlandığı köken ve geliştirme
 // sunucusu API'yi tarayıcıdan çağırabilir.
 const ALLOWED_ORIGINS = (
-  process.env.ALLOWED_ORIGINS || 'http://34.158.136.9,http://localhost:4200,http://127.0.0.1:4200'
+  process.env.ALLOWED_ORIGINS ||
+  'https://kelimebaz.aicirkit.com,http://localhost:4200,http://127.0.0.1:4200'
 )
   .split(',')
   .map((s) => s.trim())
