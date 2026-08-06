@@ -68,10 +68,13 @@ describe('ResultModal — sonuç ekranı', () => {
     });
   });
 
-  it('istatistik paneli gösterilir', () => {
-    // Paneli çizmek StatsPanel'in işi (kendi testleri var); burada
-    // sonuç ekranının onu yerleştirdiğini doğruluyoruz.
+  it('kelime kartı yerleştirilir; istatistik paneli 📊 modalına taşındı (OYUN-329)', () => {
     const el = render('won').nativeElement as HTMLElement;
-    expect(el.querySelector('app-stats-panel')).toBeTruthy();
+    // Kelime kartı (OYUN-192) sonuç ekranında — sadeleştirmede yanlışlıkla
+    // silinmişti, geri getirildi. Kartın içeriğini çizmek WordCard'ın işi.
+    expect(el.querySelector('app-word-card')).toBeTruthy();
+    // İstatistik paneli BİLEREK buradan çıkarıldı (058c850) → artık 📊
+    // stats-modal'da yaşıyor. Burada olmaması DOĞRU davranış.
+    expect(el.querySelector('app-stats-panel')).toBeNull();
   });
 });
