@@ -109,6 +109,15 @@ jobs:
           done
           curl -sf http://localhost:4200/ >/dev/null || (echo "ng serve başlamadı"; cat ngserve.log; exit 1)
 
+      # ── ENGELLEYİCİ: Ekran envanteri ──────────────────────────────────────
+      # Her kilit ekranda ZORUNLU bölümlerin (kelime kartı, maç analizi, butonlar…)
+      # hâlâ DOM'da olduğunu doğrular. Bir ekran yeniden tasarlanırken tamamlanmış
+      # bir özellik SESSİZCE kaldırılırsa burada KIRMIZI olur (058c850 olayı gibi).
+      # Deterministik (klavye OYNAMAZ; localStorage seed + buton) → flaky DEĞİL,
+      # bu yüzden diğer Playwright kontrollerinin aksine BUILD'i engelleyebilir.
+      - name: Ekran envanteri (ENGELLEYİCİ — sessiz özellik kaybını yakalar)
+        run: npm run check:screens
+
       # Playwright kontrolleri CI'da KOŞAR ve raporlanır, ama BUILD'i engellemez:
       # tarayıcı e2e kontrolleri zamanlamaya duyarlı (headless/yavaş koşucuda
       # klavye olayları düşebiliyor) → flaky yüzünden CI'yı yanlışlıkla kırmızıya
@@ -116,6 +125,7 @@ jobs:
       # aşağıdaki özette + artefakt loglarında görünür. Bir kontrol kararlı hâle
       # getirildikçe engelleyiciye terfi ettirilebilir.
       - name: Playwright kontrolleri (bilgilendirici — engellemez)
+        if: always() # ekran envanteri kırmızı olsa bile bilgilendirici kontroller yine koşsun
         continue-on-error: true
         run: |
           set -o pipefail

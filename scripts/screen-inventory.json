@@ -1,0 +1,107 @@
+{
+  "_doc": [
+    "EKRAN ENVANTERİ — her kilit ekranda BULUNMASI ZORUNLU bölümlerin listesi.",
+    "Amaç: bir ekran yeniden tasarlanırken tamamlanmış bir özelliğin SESSİZCE kaybolmasını imkânsız kılmak.",
+    "Bu dosya yalnız BEKLENTİ VERİSİDİR — kontrol mantığı scripts/check-screens.mjs içindedir.",
+    "",
+    "Bir bölümü BİLEREK kaldırırken: önce buradaki 'sections' listesinden çıkar, gerekçesini commit mesajına yaz.",
+    "Yani kaldırmak imkânsız değil — sadece bilinçli olmak zorunda (sessiz silme engellenir).",
+    "",
+    "YENİ EKRAN EKLERKEN: 'screens' dizisine yeni bir nesne ekle — id, name, reach (check-screens.mjs'deki REACH ile eşleşmeli), sections[].",
+    "",
+    "Not: yalnız modal/ekran açıkken KOŞULSUZ görünen bölümler listelenir. Çalışma zamanına bağlı koşullu ögeler (ör. yalnız altın>0 iken çıkan ödül rozetleri) burada tutulmaz — yanlış kırmızıya yol açar."
+  ],
+  "screens": [
+    {
+      "id": "menu",
+      "name": "Ana menü (başlık ekranı)",
+      "reach": "menu",
+      "sections": [
+        { "sel": ".wordmark", "name": "KELİMEBAZ markası" },
+        { "sel": ".modes", "name": "Mod kartları alanı" },
+        { "sel": ".mode.m-daily", "name": "Günün Kelimesi kartı" },
+        { "sel": ".mode.m-practice", "name": "Serbest Oyna kartı" },
+        { "sel": ".mode.m-friends", "name": "Arkadaşlarla Oyna kartı" },
+        { "sel": ".mode.m-vsai", "name": "Yapay Zekâya Karşı kartı" },
+        { "sel": ".p-league", "name": "Ustalık / Lig paneli" },
+        { "sel": ".p-stats", "name": "İstatistik paneli" },
+        { "sel": ".p-shop", "name": "Mağaza paneli" }
+      ]
+    },
+    {
+      "id": "game",
+      "name": "Oyun ekranı (tahta + klavye)",
+      "reach": "game",
+      "sections": [
+        { "sel": "app-board", "name": "Oyun tahtası" },
+        { "sel": ".board .row", "name": "Tahta satırları" },
+        { "sel": "app-keyboard", "name": "Ekran klavyesi" },
+        { "sel": ".key[aria-label=\"ENTER\"]", "name": "ENTER tuşu" }
+      ]
+    },
+    {
+      "id": "result-win",
+      "name": "Oyun sonu — kazanma",
+      "reach": "result-win",
+      "sections": [
+        { "sel": "app-result-modal", "name": "Sonuç modalı" },
+        { "sel": ".head", "name": "Sonuç başlığı" },
+        { "sel": ".answer", "name": "Doğru kelime kutuları" },
+        { "sel": "app-word-card", "name": "Kelime kartı (OYUN-192)" },
+        { "sel": ".analysis", "name": "Maç analizi (OYUN-208)" },
+        { "sel": ".actions .primary", "name": "Yeni Oyun butonu" },
+        { "sel": ".actions .home", "name": "Ana Menü butonu" },
+        { "sel": ".btn.share", "name": "Sonucu Paylaş butonu" }
+      ]
+    },
+    {
+      "id": "result-lose",
+      "name": "Oyun sonu — kaybetme",
+      "reach": "result-lose",
+      "sections": [
+        { "sel": "app-result-modal", "name": "Sonuç modalı" },
+        { "sel": ".head", "name": "Sonuç başlığı" },
+        { "sel": ".answer", "name": "Doğru kelime kutuları" },
+        { "sel": "app-word-card", "name": "Kelime kartı (OYUN-192)" },
+        { "sel": ".analysis", "name": "Maç analizi (OYUN-208)" },
+        { "sel": ".actions .primary", "name": "Yeni Oyun butonu" },
+        { "sel": ".actions .home", "name": "Ana Menü butonu" },
+        { "sel": ".btn.share", "name": "Sonucu Paylaş butonu" }
+      ]
+    },
+    {
+      "id": "shop",
+      "name": "Mağaza",
+      "reach": "shop",
+      "sections": [
+        { "sel": ".bar .title", "name": "Mağaza başlığı" },
+        { "sel": ".tabs .tab", "name": "Kategori sekmeleri" },
+        { "sel": ".grid .item", "name": "Ürün kartları" },
+        { "sel": ".coin", "name": "Altın göstergesi" }
+      ]
+    },
+    {
+      "id": "settings",
+      "name": "Ayarlar (⚙️)",
+      "reach": "settings",
+      "sections": [
+        { "sel": ".modal .head", "name": "Ayarlar başlığı" },
+        { "sel": ".lang-seg", "name": "Dil seçici" },
+        { "sel": ".row.audio", "name": "Ses ayarları (müzik/efekt)" },
+        { "sel": ".sec", "name": "Bölüm başlıkları" },
+        { "sel": ".actions .btn", "name": "Yedekleme (dışa/içe aktar)" }
+      ]
+    },
+    {
+      "id": "room-lobby",
+      "name": "Oda lobisi (giriş)",
+      "reach": "room",
+      "sections": [
+        { "sel": ".rs", "name": "Oda kabuğu" },
+        { "sel": ".hero", "name": "Karşılama alanı" },
+        { "sel": ".choose .big.primary", "name": "Oda Oluştur butonu" },
+        { "sel": ".choose .big", "name": "Oluştur / Katıl butonları" }
+      ]
+    }
+  ]
+}
