@@ -231,9 +231,10 @@ function adminHeaders(req, extra) {
     // Kendi kaynağı + gömülü stil/script (bağımsız tek sayfa). Çerçeveleme yok.
     'Content-Security-Policy':
       "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
-    ...(isSecureReq(req)
-      ? { 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains' }
-      : {}),
+    // HSTS: KISA max-age (300 sn) ile başla → bir sorun çıkarsa 5 dk'da geri döner.
+    // Her şey oturunca uzatılır (ör. 1 yıl + includeSubDomains + preload). nginx de
+    // statik oyun/koloni sayfalarına aynı 300 sn'yi ekler → tutarlı, tek karar.
+    ...(isSecureReq(req) ? { 'Strict-Transport-Security': 'max-age=300' } : {}),
     ...extra,
   };
 }
