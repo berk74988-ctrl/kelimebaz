@@ -28,18 +28,18 @@ denendi, sonucu yazıldı.
 
 Epic'in beklediği gibi, ilk kez gerçek koşullarda test edilince yüzeye çıktılar:
 
-1. **Yönetim paneli — 2 eksik (bu paket içinde çözüm hazırlandı, uygulanması Berk'te):**
-   - **nginx config açığı:** `/berk/rooms/` proxy'si `X-Forwarded-Proto` iletmiyordu → panel auth'u HTTPS'i göremeyip `400 https_required` dönüyordu (HTTPS'siz hiç test edilemediği için bugüne kadar gizliydi). Düzeltme: iki `/berk/rooms/` bloğuna `proxy_set_header X-Forwarded-Proto $scheme;`.
-   - **Kurulum:** `ADMIN_PASS_HASH` + `ADMIN_SESSION_SECRET` servise eklenmemişti → panel 503 (güvenle kapalı).
-   - **Çözüm:** `rooms-server/setup_admin_panel.py` (sunucuda `~/setup-admin-panel.py`) ikisini de yapar. Berk: `sudo python3 ~/setup-admin-panel.py 'PAROLA'` → sonra https://kelimebaz.aicirkit.com/berk/rooms/admin.
+1. **Yönetim paneli — ✅ ÇÖZÜLDÜ + CANLI (2 tuzak bulundu, ikisi de giderildi):**
+   - **nginx config açığı (yeni bug):** `/berk/rooms/` proxy'si `X-Forwarded-Proto` iletmiyordu → panel auth'u HTTPS'i göremeyip `400 https_required` dönüyordu (HTTPS'siz hiç test edilemediği için gizliydi). İki `/berk/rooms/` bloğuna `proxy_set_header X-Forwarded-Proto $scheme;` eklendi.
+   - **systemd `$` tuzağı (yeni bug):** scrypt hash'i `$` doludur; systemd `Environment=` bunları değişken sanıp bozuyordu + hint.env'deki eski hash EnvironmentFile en sonda yüklenip eziyordu. Çözüm: hash `hint.env`'e (EnvironmentFile, **literal**) yazılıyor, `.service`'ten bozuk satırlar temizleniyor. (Ders: `$`'lı sırlar EnvironmentFile'a konur.)
+   - **Sonuç:** `rooms-server/setup_admin_panel.py` çalıştırıldı → **uçtan uca doğrulandı:** login 200 + çerez → `/admin/summary` **gerçek veri** (43 oyun başlangıcı/13 tamam, mod+dil dağılımı) → `/admin/words` 200; oturumsuz/yanlış-parola 401. Panel: https://kelimebaz.aicirkit.com/berk/rooms/admin (yalnız parola). Telemetri de gerçek veri topluyor (doğrulandı).
 
 2. **Koloni online özellikleri (skor tablosu/klan/köy) hâlâ kapalı:** Koloni paketinden bekleyen `sudo python3 ~/nginx-koloni-api.py` HENÜZ çalıştırılmamış → `/api/leaderboard` 405. (Tekil-oyunculu koloni + kaydet/yükle çalışıyor; yalnız online kısım bekliyor.)
 
 3. **YZ ipucu ("Takıldım" LLM):** `ANTHROPIC_API_KEY` yok → kapalı (tasarım gereği; ücretsiz yerel ipucu zaten çalışıyor).
 
-## Berk'in elle tamamlayacağı testler
-- **Panel:** yukarıdaki scripti çalıştır → tarayıcıda panele parolayla gir → metrik panosu + kelime zorluk raporu + veri geliyor mu bak.
-- **PWA telefon:** `https://kelimebaz.aicirkit.com` telefonda aç → "ana ekrana ekle" → **uçak modu** → aç → bir oyun oyna.
+## Berk'in elle tamamlayacağı testler (fiziksel / çok-cihaz)
+- **Panel:** ✅ sunucu tarafında uçtan uca doğrulandı (login+veri). Berk tarayıcıda da açabilir: https://kelimebaz.aicirkit.com/berk/rooms/admin (parola ile).
+- **PWA telefon:** `https://kelimebaz.aicirkit.com` telefonda aç → "ana ekrana ekle" → **uçak modu** → aç → bir oyun oyna. (Mekanizma headless çevrimdışı testinde kanıtlandı.)
 - **Çok oyunculu tur:** iki cihaz/sekmeden oda kur+katıl → bir turu **sonuna kadar** oyna (otomatik test kurulum+SSE'yi doğruladı; tam tur oynanışı 2 cihazla).
 - **Sertifika (istenirse):** `sudo certbot renew --dry-run` (kurulumda geçmişti; timer zaten aktif).
 
