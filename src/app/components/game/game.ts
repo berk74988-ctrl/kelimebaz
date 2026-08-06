@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { guessAnnouncement, resultAnnouncement } from '../../core/a11y';
+import { localHint } from '../../core/local-hint';
 import { voiceToLetters } from '../../core/voice';
 import { GameMode } from '../../models/game.model';
 import { AiHintService } from '../../services/ai-hint.service';
@@ -21,6 +22,7 @@ import { LanguageService } from '../../services/language.service';
 import { StatsService } from '../../services/stats.service';
 import { ThemeService } from '../../services/theme.service';
 import { VoiceInputService } from '../../services/voice-input.service';
+import { WordService } from '../../services/word.service';
 import { Board } from '../board/board';
 import {
   DE_LETTERS,
@@ -53,6 +55,7 @@ export class Game {
   private readonly aiBehavior = inject(AiBehaviorService);
   private readonly stats = inject(StatsService);
   protected readonly voice = inject(VoiceInputService);
+  private readonly words = inject(WordService); // yerel ipucu aday havuzu
 
   // 🎤 SESLİ GİRİŞ (isteğe bağlı erişilebilirlik) — klavye/dokunmatik akışı hiç değişmez.
   private static readonly VOICE_NOTICE_KEY = 'kelimebaz:voice-notice';
@@ -149,10 +152,13 @@ export class Game {
   protected readonly aiHintError = signal('');
   protected readonly aiHintsUsedGame = signal(0);
 
-  /** "Takıldım" butonu görünsün mü? 4. tahminden sonra, tek kişilik modda, sunucu açıksa. */
+  /**
+   * "Takıldım" butonu görünsün mü? 4. tahminden sonra, tek kişilik modda.
+   * Sunucu YZ ipucu (LLM) AÇIKSA onu, DEĞİLSE ücretsiz yerel (kural-tabanlı)
+   * ipucu kullanılır → özellik her zaman çalışır (API anahtarı olmasa da).
+   */
   protected stuckAvailable(): boolean {
     return (
-      this.aiHint.available() &&
       this.aiBehavior.hint().enabled && // panelden ipucu koçu kapatılabilir
       !this.game.isOver() &&
       !this.isRoom() &&
@@ -162,7 +168,11 @@ export class Game {
     );
   }
 
-  /** İpucu iste: altınla öde, sunucudan al; hata olursa altını İADE et. */
+  /**
+   * İpucu iste: altınla öde. Sunucu YZ ipucu AÇIKSA (anahtar tanımlı) ondan
+   * kişisel LLM ipucu alınır; DEĞİLSE ücretsiz YEREL ipucu anında hesaplanır
+   * (tahminlerden aday süzme + strateji). Hata olursa altın İADE edilir.
+   */
   protected async askStuck(): Promise<void> {
     if (this.aiHintLoading() || !this.stuckAvailable()) return;
     if (!this.gold.spend(this.HINT_COST)) {
@@ -173,17 +183,29 @@ export class Game {
     this.aiHintError.set('');
     this.aiHintText.set('');
     try {
-      const guesses = this.game.guesses().map((g) => ({
-        word: g.word,
-        pattern: g.tiles
-          .map((t) => (t.state === 'correct' ? '2' : t.state === 'present' ? '1' : '0'))
-          .join(''),
-      }));
-      const hint = await this.aiHint.requestHint({
-        length: this.game.wordLength(),
-        guesses,
-        answer: this.game.answer(),
-      });
+      let hint: string;
+      if (this.aiHint.available()) {
+        // Sunucu YZ ipucu (LLM, kişisel) — anahtar tanımlıysa
+        const guesses = this.game.guesses().map((g) => ({
+          word: g.word,
+          pattern: g.tiles
+            .map((t) => (t.state === 'correct' ? '2' : t.state === 'present' ? '1' : '0'))
+            .join(''),
+        }));
+        hint = await this.aiHint.requestHint({
+          length: this.game.wordLength(),
+          guesses,
+          answer: this.game.answer(),
+        });
+      } else {
+        // Ücretsiz yerel ipucu (LLM yok) — anında, cevabı ele vermeden
+        hint = localHint({
+          answer: this.game.answer(),
+          guesses: this.game.guesses().map((g) => g.word),
+          pool: this.words.answersOfLength(this.game.wordLength()),
+          lang: this.i18n.lang(),
+        });
+      }
       this.aiHintText.set(hint);
       this.aiHintsUsedGame.update((n) => n + 1);
       this.stats.recordAiHint();
