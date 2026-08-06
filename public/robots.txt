@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: http://34.158.136.9/berk/kelimebaz/sitemap.xml
+Sitemap: https://kelimebaz.aicirkit.com/sitemap.xml

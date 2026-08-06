@@ -4,7 +4,7 @@
   "description": "Gizli kelimeyi 6 tahminde bul. Günün kelimesi, sınırsız serbest oyun ve yapay zekâya karşı düello — çevrimdışı da oynanır.",
   "lang": "tr",
   "dir": "ltr",
-  "id": "/berk/kelimebaz/",
+  "id": "/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

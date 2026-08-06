@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/berk74988-ctrl/kelimebaz/actions/workflows/ci.yml/badge.svg)](https://github.com/berk74988-ctrl/kelimebaz/actions/workflows/ci.yml)
 
-### ▶️ [**Oyna: 34.158.136.9/berk/kelimebaz**](http://34.158.136.9/berk/kelimebaz/)
+### ▶️ [**Oyna: kelimebaz.aicirkit.com**](https://kelimebaz.aicirkit.com/)
 
 ![Kelimebaz](docs/screenshots/2-oyun.png)
 
@@ -251,14 +251,16 @@ Kısaca: renk mantığı ve çözücü dilden bağımsız, çeviriler dil başı
 **Kurulabilir + çevrimdışı (PWA)** — oyun ana ekrana **uygulama gibi kurulabilir** ve internetsiz oynanabilir (`@angular/service-worker` / ngsw).
 
 - **Manifest** `public/manifest.webmanifest` (ad, kısa ad `Kelimebaz`, tema/arka plan `#10131a`, `display: standalone`, 192/512 px "any" + maskable ikonlar). İkonlar `public/favicon.svg`'den üretilir: `npm run build:icons` (playwright ile; logo değişirse yeniden çalıştır).
-- **Önbellek stratejisi** `ngsw-config.json`: **uygulama kabuğu** (index, main, css, manifest, ikonlar) `prefetch` — kurulumda iner. **Sözlük/veri chunk'ları** ve müzik `lazy` — ilk kullanımda önbelleğe girer (ilk çevrimiçi oyundan sonra o mod çevrimdışı çalışır). **Oda API'si (`/berk/rooms/`) servis worker kapsamı DIŞINDA** (`/berk/kelimebaz/`) → hiç önb: doğrudan ağ.
+  - ⚠️ **PWA kimliği (`id`)**: alan adına taşımada (kök `/`) `id` alanı `/berk/kelimebaz/`'den `/`'e değişti. **PWA kimliği `id`'den gelir**: bunu değiştirmek KURULU bir uygulamayı güncellemez — tarayıcı onu YENİ bir uygulama sayar (eski sürüm kuruluysa iki ikon). Bilinçli karar: taşıma, HTTPS'in yeni açıldığı (PWA'nın ancak yeni kurulabilir olduğu) ana denk geldi → pratikte kurulu taban ~yok, kimliği şimdi düzeltmek en doğru zaman. `start_url`/`scope` zaten göreli (`./`) — dokunulmadı.
+- **Önbellek stratejisi** `ngsw-config.json`: **uygulama kabuğu** (index, main, css, manifest, ikonlar) `prefetch` — kurulumda iner. **Sözlük/veri chunk'ları** ve müzik `lazy` — ilk kullanımda önbelleğe girer (ilk çevrimiçi oyundan sonra o mod çevrimdışı çalışır). **Oda API'si (`/berk/rooms/`) servis worker kapsamı DIŞINDA** (kapsam kök `/`; API mutlak yolla proxy'lenir) → hiç önb: doğrudan ağ.
 - **Çevrimdışı**: Günün Kelimesi · Serbest Oyna · YZ'ye Karşı çalışır; **oda modu kapatılır** ve nedeni gösterilir (`PwaService.online` → `navigator.onLine`; `title-screen`'de buton devre dışı).
 - **Güncelleme akışı**: yeni sürüm yayınlanınca ngsw indirir, `PwaService` (SwUpdate) "Yeni sürüm hazır → Yenile" çubuğunu gösterir (`components/pwa-prompt`).
 - **Kurulum istemi**: `beforeinstallprompt` yakalanır, "ana ekrana ekle" **ancak 2. oyundan sonra** ve tek "Şimdi değil"le kalıcı kapanır (ısrarcı değil).
-- **Deploy**: `kb-deploy.sh` artık `manifest.webmanifest` + `ngsw-worker.js` + `ngsw.json` + `icons/` + `music.ogg`/`music.mp3`'ü de kopyalar. **ngsw.json listelediği HER dosyayı prod'da bulmalı** — yeni bir statik dosya eklenince deploy'a da eklenmeli.
+- **Deploy**: `kb-deploy.sh` artık `manifest.webmanifest` + `ngsw-worker.js` + `ngsw.json` + `icons/` + `music.ogg`/`music.mp3` + `robots.txt`/`sitemap.xml`'i de kopyalar. **ngsw.json listelediği HER dosyayı prod'da bulmalı** — yeni bir statik dosya eklenince deploy'a da eklenmeli.
+- **Kök yayın (alan adı)**: `baseHref: "/"` (`angular.json`) → derleme kökten servis edilir; varlıklar `/main-*.js`, `/manifest.webmanifest`, `/sitemap.xml` … Yayın `https://kelimebaz.aicirkit.com/` (Let's Encrypt HTTPS). nginx `kelimebaz.aicirkit.com` vhost'u `root /var/www/berk/kelimebaz` + SPA fallback `/index.html`; oyunun backend çağrıları (`/berk/rooms/` → 4243, `/berk/api/` → 4242) aynı vhost'ta proxy'lenir (mutlak yol, kapsam dışı). Eski IP yolu `http://34.158.136.9/berk/kelimebaz/` alan adına **kalıcı yönlendirilir** (301, alt yol korunur → bookmark + `Kelimebaz.apk` linki çalışmaya devam eder). Not: yerel kayıtlar (localStorage) kökene bağlıdır; IP'de oynanan istatistikler alan adında görünmez (beklenen).
 
 **Müzik hafif + tembel** (`services/audio.service.ts`) — kaynak parça `audio-src/music-source.mp3` (repo'da, **yayına gitmez**); `npm run build:music` (ffmpeg-static) onu ikiye kodlar: `public/music.ogg` (Opus 96k, 1.44 MB, birincil) + `public/music.mp3` (MP3 96k, 1.47 MB, Safari/iOS yedeği) — **4.04 MB → ~1.45 MB, %64 küçük**. Outro fade + sondaki sessizlik kırpıldı (döngü için; fade tek seferlik bitiş demektir). **İlk açılışta İNDİRİLMEZ**: `<audio>` öğesi ancak müzik gerçekten çalacağı an (ilk kullanıcı etkileşimi ya da müziği açma) oluşturulur → dosya o zaman iner. Müzik kapalıysa hiç inmez. Tarayıcı Opus oynatabiliyorsa `.ogg`, yoksa `.mp3` seçilir (`canPlayType`).
-- ⚠️ **HTTPS şart**: servis worker ve "ana ekrana ekle" yalnızca **güvenli bağlamda** (HTTPS veya `localhost`) çalışır. Düz HTTP'de (`http://34.158.136.9/...`) SW kaydolmaz — kod zarar vermez, sessizce devre dışı kalır; site normal çalışır. Kurulum/çevrimdışı için sunucuya HTTPS (alan adı + Let's Encrypt ya da Cloudflare Tunnel) gerekir. Doğrulama `localhost`'ta yapıldı (SW aktif, manifest geçerli, uçak modunda kabuk + oyun açıldı).
+- ✅ **HTTPS canlı**: servis worker ve "ana ekrana ekle" yalnızca **güvenli bağlamda** (HTTPS veya `localhost`) çalışır. Yayın artık HTTPS'te (`https://kelimebaz.aicirkit.com`, Let's Encrypt — bkz. `docs/tls-sertifikalari.md`) → PWA katmanı **aktif**: kurulabilir + çevrimdışı çalışır. (Düz HTTP'de SW sessizce devre dışı kalırdı; kod zarar vermez.)
 
 ---
 

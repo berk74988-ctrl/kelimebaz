@@ -31,7 +31,7 @@ const ENV = {
   RL_JOIN: '3',
   RL_CHAT_IP: '100',
   RL_CHAT_PLAYER: '2',
-  ALLOWED_ORIGINS: 'http://34.158.136.9,http://localhost:4200',
+  ALLOWED_ORIGINS: 'https://kelimebaz.aicirkit.com,http://localhost:4200',
 };
 
 let fail = 0;
@@ -82,11 +82,13 @@ check('/create IP hız sınırı: ilk 3 kabul', created === 3, `${created} oluş
 check('/create sınır aşılınca 429 + rate_limited', got429);
 
 // --- 2) CORS izin listesi ---
-const allowed = await fetch(BASE + '/health', { headers: { Origin: 'http://34.158.136.9' } });
+const allowed = await fetch(BASE + '/health', {
+  headers: { Origin: 'https://kelimebaz.aicirkit.com' },
+});
 const disallowed = await fetch(BASE + '/health', { headers: { Origin: 'http://evil.example' } });
 check(
   'CORS izinli kökeni yansıtıyor',
-  allowed.headers.get('access-control-allow-origin') === 'http://34.158.136.9',
+  allowed.headers.get('access-control-allow-origin') === 'https://kelimebaz.aicirkit.com',
   allowed.headers.get('access-control-allow-origin'),
 );
 check(

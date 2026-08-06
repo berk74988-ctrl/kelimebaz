@@ -47,7 +47,7 @@ npm run check:rooms          # oda sunucusu güvenliği (rate-limit/CORS/küfür
 npm run check:rooms-flow     # oda akışı (katıl/ayrıl/sahiplik devri/yeniden bağlan)
 
 # canlı siteye karşı:
-npm run check:scenarios -- http://34.158.136.9/berk/kelimebaz/
+npm run check:scenarios -- https://kelimebaz.aicirkit.com/
 ```
 
 ---
