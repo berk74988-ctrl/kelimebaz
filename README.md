@@ -8,6 +8,8 @@
 
 ### ▶️ [**Oyna: kelimebaz.aicirkit.com**](https://kelimebaz.aicirkit.com/)
 
+<sub>HTTPS (Let's Encrypt, oto-yenileme) · PWA kurulabilir + çevrimdışı · canlı doğrulama: [`docs/canli-dogrulama.md`](docs/canli-dogrulama.md) · sertifika: [`docs/tls-sertifikalari.md`](docs/tls-sertifikalari.md)</sub>
+
 ![Kelimebaz](docs/screenshots/2-oyun.png)
 
 </div>
