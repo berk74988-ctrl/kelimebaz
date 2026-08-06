@@ -72,6 +72,48 @@
       </div>
     }
 
+    <!-- ── Detaylar: sade kalsın diye VARSAYILAN KAPALI açılır bölümler ── -->
+    <div class="details">
+      <!-- 📖 Kelime kartı (kendi içinde açılır; kart verisi yoksa hiç görünmez) -->
+      <app-word-card [word]="answer()" [openByDefault]="false" />
+
+      <!-- 🔎 Maç analizi -->
+      @if (analysis().length) {
+        <section class="analysis">
+          <button
+            class="an-toggle"
+            type="button"
+            (click)="toggleAnalysis()"
+            [attr.aria-expanded]="analysisOpen()"
+          >
+            <span>🔎 {{ i18n.t('analysis.title') }}</span>
+            <span class="an-acc">{{ i18n.t('analysis.accuracy', { n: accuracy() }) }}</span>
+            <span class="chev" aria-hidden="true">{{ analysisOpen() ? '▲' : '▼' }}</span>
+          </button>
+          @if (analysisOpen()) {
+            <ol class="an-list">
+              @for (a of analysis(); track $index) {
+                <li class="an-row" [class]="'q-' + a.quality">
+                  <span class="an-word">{{ a.word }}</span>
+                  <span class="an-badge">{{ i18n.t('analysis.q.' + a.quality) }}</span>
+                  <span class="an-meta"
+                    >{{
+                      i18n.t('analysis.eliminated', { n: a.eliminated, of: a.candidatesBefore })
+                    }}
+                    @if (!a.solved && a.quality !== 'optimal' && a.bestWord !== a.word) {
+                      <span class="an-best"
+                        >· {{ i18n.t('analysis.best', { w: a.bestWord }) }}</span
+                      >
+                    }
+                  </span>
+                </li>
+              }
+            </ol>
+          }
+        </section>
+      }
+    </div>
+
     <!-- ── Butonlar ── -->
     <div class="actions">
       <button class="btn primary" type="button" (click)="playAgain.emit()">

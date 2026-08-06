@@ -11,28 +11,35 @@ import {
   viewChild,
 } from '@angular/core';
 import { copyText, shareNative } from '../../core/clipboard';
+import { analyzeGuesses, GuessAnalysis } from '../../core/guess-analysis';
 import { GameStatus, MAX_ATTEMPTS } from '../../models/game.model';
 import { GameService } from '../../services/game.service';
 import { GoldService } from '../../services/gold.service';
 import { LanguageService } from '../../services/language.service';
 import { LeagueService } from '../../services/league.service';
+import { WordService } from '../../services/word.service';
 import { Countdown } from '../countdown/countdown';
+import { WordCardComponent } from '../word-card/word-card';
 
 /**
  * Oyun bitince açılan SONUÇ EKRANI — sade ve net.
  * Yalnız en önemli bilgiler: sonuç (kazan/kaybet) · doğru kelime · kazanılan
  * altın · ustalık puanı. Belirgin butonlar: Yeni Oyun · Ana Menü · Paylaş.
- * (Kelime kartı, istatistik grafiği ve maç analizi kaldırıldı — sadelik için.)
+ *
+ * "Kelime kartı" (📖) ve "Maç analizi" (🔎) sade görünümü bozmadan geri
+ * getirildi: butonların hemen üstünde, VARSAYILAN KAPALI açılır bölümler
+ * olarak. İsteyen açar; modal kısa kalır. (İstatistik grafiği 📊 modalında.)
  */
 @Component({
   selector: 'app-result-modal',
-  imports: [Countdown],
+  imports: [Countdown, WordCardComponent],
   templateUrl: './result-modal.html',
   styleUrl: './result-modal.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ResultModal implements AfterViewInit {
   private readonly game = inject(GameService);
+  private readonly words = inject(WordService);
   protected readonly gold = inject(GoldService);
   protected readonly league = inject(LeagueService);
   protected readonly i18n = inject(LanguageService);
@@ -67,6 +74,29 @@ export class ResultModal implements AfterViewInit {
 
   /** Bu maçta kazanılan/kaybedilen ustalık puanı (LP). */
   protected readonly lpDelta = this.game.lpDelta;
+
+  /** 🔎 Maç analizi — her tahminin ne kadar iyi eleme yaptığı. */
+  protected readonly analysis = computed<GuessAnalysis[]>(() => {
+    const ans = this.answer();
+    const words = this.game.guesses().map((g) => g.word);
+    if (!ans || !words.length) return [];
+    const pool = this.words.answersOfLength([...ans].length);
+    return analyzeGuesses(ans, words, pool, this.i18n.lang());
+  });
+
+  /** Analiz bölümü varsayılan KAPALI — modal kısa kalsın; isteyen açar. */
+  protected readonly analysisOpen = signal(false);
+  protected toggleAnalysis(): void {
+    this.analysisOpen.update((v) => !v);
+  }
+
+  /** Tahminlerin ortalama isabet yüzdesi (0–100), rozet olarak gösterilir. */
+  protected readonly accuracy = computed(() => {
+    const a = this.analysis();
+    if (!a.length) return 0;
+    const w = { optimal: 100, great: 85, good: 70, fair: 45, weak: 20 } as const;
+    return Math.round(a.reduce((s, x) => s + w[x.quality], 0) / a.length);
+  });
 
   /**
    * Sonucu paylaş: önce cihazın yerel paylaşımını dener (mobil),

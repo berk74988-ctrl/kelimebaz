@@ -50,6 +50,11 @@
   gap: 7px;
   animation: wcIn 0.2s ease;
 }
+// [hidden] özniteliği .wc-body'nin display:flex'ini yenmeli (yoksa kapalıyken
+// bile görünür kalır) → kapalı başlasın diye özniteliği açıkça gizle.
+.wc-body[hidden] {
+  display: none;
+}
 
 .wc-def {
   margin: 0;
