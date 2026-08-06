@@ -63,10 +63,18 @@ Güvenli ve tekrar çalıştırılabilir: nginx yapılandırmasını (3 site pay
 Encrypt'in haftalık 5 sertifika sınırını bosa harcamamak için önce `--dry-run`
 prova yapar, geçerli sertifika varsa yeniden almaz (`--keep-until-expiring`).
 
-## Bitiş tarihleri (kurulumdan sonra doldurulacak)
+## Bitiş tarihleri (canlı — 6 Ağustos 2026'da kuruldu, doğrulandı)
 
-> Kurulum çalıştırıldığında `sudo certbot certificates` çıktısından gerçek
-> tarihler buraya yazılacak. (İlk kurulum: _bekleniyor_.)
+İlk kurulum **6 Ağustos 2026** tamamlandı ve dışarıdan doğrulandı: iki alan da
+`https://` üzerinde uyarısız açılıyor (Let's Encrypt sertifikası, tarayıcı
+güveniyor), `http://` → `https://` 301 yönlendirmesi çalışıyor, `certbot.timer`
+**enabled + active**.
 
-- `kelimebaz.aicirkit.com` → bitiş: _—_
-- `koloni.aicirkit.com` → bitiş: _—_
+| Alan adı | Veren | Alındı | **Bitiş** |
+|---|---|---|---|
+| `kelimebaz.aicirkit.com` | Let's Encrypt (YE1) | 6 Ağu 2026 | **4 Kasım 2026** |
+| `koloni.aicirkit.com` | Let's Encrypt (YE2) | 6 Ağu 2026 | **4 Kasım 2026** |
+
+`certbot.timer` bitişe 30 günden az kalınca (≈ Ekim başı) otomatik yeniler;
+yenileme sonrası `renewal-hooks/deploy/reload-nginx.sh` nginx'i yeniden yükler.
+Elle iş gerekmez. Güncel durumu görmek için: `sudo certbot certificates`.
