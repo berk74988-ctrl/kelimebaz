@@ -23,6 +23,8 @@ denendi, sonucu yazıldı.
 | 7 | **Koloni: kökten aç + kaydet/yükle** | ✅ | https://koloni.aicirkit.com/ 200; kayıt olup girildi, reload sonrası localStorage kalıcı, canvas+ses çalışıyor (masaüstü+mobil) |
 | 8 | **PWA: kurulabilir + çevrimdışı** | ✅ (headless) | SW controller aktif; **çevrimdışı** (gerçek offline) reload'da kabuk açıldı, Serbest Oyna tahtası çevrimdışı çalıştı |
 | 9 | **SSL Labs dış tarama** | ✅ **A** | kelimebaz.aicirkit.com = **A**, koloni.aicirkit.com = **A** |
+| 10 | **HTTP → HTTPS 301** | ✅ | iki alan da `http://…` → `https://…` (certbot ekledi) |
+| 11 | **HSTS (tutarlı, kısa)** | ✅ | üç adres (game/koloni/panel) tek başlık `max-age=300`; includeSubDomains YOK. Panel eskiden 1 yıl hardcoded gönderiyordu (yeni bug) → 300 sn'ye indirildi. İleride her şey oturunca uzatılır (1 yıl + preload). |
 
 ## ⚠️ Bu doğrulamada ÇIKAN yeni işler (ayrı ele alınmalı)
 
