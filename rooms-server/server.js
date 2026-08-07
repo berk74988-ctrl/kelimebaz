@@ -330,9 +330,11 @@ const rlChatPlayer = rateLimiter(Number(process.env.RL_CHAT_PLAYER || 5), 10_000
 // --- İzin verilen CORS kökenleri (yayın kökeni + yerel geliştirme) ---
 // '*' YERİNE beyaz liste: yalnızca oyunun yayınlandığı köken ve geliştirme
 // sunucusu API'yi tarayıcıdan çağırabilir.
+// Native köken (https://localhost = Capacitor Android; capacitor/ionic = iOS)
+// listede OLMALI: native APK'nın istekleri çapraz kökendir, yoksa CORS engeller.
 const ALLOWED_ORIGINS = (
   process.env.ALLOWED_ORIGINS ||
-  'https://kelimebaz.aicirkit.com,http://localhost:4200,http://127.0.0.1:4200'
+  'https://kelimebaz.aicirkit.com,https://localhost,capacitor://localhost,ionic://localhost,http://localhost:4200,http://127.0.0.1:4200'
 )
   .split(',')
   .map((s) => s.trim())

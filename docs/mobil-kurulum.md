@@ -174,7 +174,8 @@ için ücretli geliştirici hesabı şart.
 
 Kelimebaz'ı Android'e paketlemek için **Capacitor** kullanıldı. Uygulama Angular
 (web) → WebView içinde çalışır; sunucuya bağlı özellikler (oda/ipucu/denge) gerçek
-sunucuya (34.158.136.9) gider.
+sunucuya (**`https://kelimebaz.aicirkit.com`**, HTTPS) gider. (6 Ağu 2026'da düz-HTTP
+IP'den HTTPS alan adına taşındı — aşağı bak.)
 
 ### Kurulum
 
@@ -184,15 +185,18 @@ npx cap init "Kelimebaz" "com.berk.kelimebaz" --web-dir "dist/kelimebaz/browser"
 npx cap add android
 ```
 
-`capacitor.config.ts` (kritik ayarlar):
+`capacitor.config.ts` (kritik ayarlar — 6 Ağu 2026'dan beri HTTPS):
 ```ts
 server: {
-  androidScheme: 'http',  // WebView kökeni http://localhost → http backend'e mixed-content YOK
-  cleartext: true,        // sunucu HTTPS değil
+  androidScheme: 'https',  // WebView kökeni https://localhost, backend de HTTPS → mixed-content yok
+  // cleartext YOK — tüm trafik şifreli (Play Store + güvenlik)
 }
 ```
-+ `android/app/src/main/AndroidManifest.xml` `<application>` içine
-`android:usesCleartextTraffic="true"` (http sunucuya izin).
+`AndroidManifest.xml`'den `android:usesCleartextTraffic` **kaldırıldı**. Native köken
+`https://localhost` çapraz-köken olduğundan rooms-server `ALLOWED_ORIGINS`'ına
+`https://localhost` (+ iOS için `capacitor://localhost`/`ionic://localhost`) eklendi.
+*(Eskiden http/cleartext/IP idi; gerekçe "sunucu HTTPS değil"di — alan adı epic'iyle
+o gerekçe ortadan kalktı.)*
 
 ### ⚠️ EN BÜYÜK TUZAK: base href (boş/koyu ekran)
 
@@ -209,10 +213,10 @@ Belirti: APK açılıyor ama boş/koyu ekran + logcat'te asset 404 → base href
 ### Kod tarafı değişiklikleri
 
 - **`src/app/core/server-base.ts` (YENİ):** tek kaynak `serverBase()`. Native APK'da
-  (`window.Capacitor.isNativePlatform()`) sunucuya **mutlak adres** (`http://34.158.136.9/berk/rooms`);
+  (`window.Capacitor.isNativePlatform()`) sunucuya **mutlak adres** (`https://kelimebaz.aicirkit.com/berk/rooms`);
   web'de eskisi gibi (`/berk/rooms` ya da `localhost:4243`). 6 servis (room, telemetry,
   word, balance, ai-hint, ai-behavior) buna bağlandı — yoksa APK'da göreli `/berk/rooms`
-  telefonda çözülemez.
+  telefonda çözülemez. Tek kaynak → adres değişince yalnız burası düzenlenir.
 - **Service worker native'de KAPALI** (`app.config.ts`, `isCapacitorNative()`): Capacitor
   içinde SW gereksiz + beyaz-ekran/güncelleme sorunu çıkarabilir.
 

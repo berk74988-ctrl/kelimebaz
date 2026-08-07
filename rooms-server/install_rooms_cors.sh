@@ -3,13 +3,11 @@
 # berk-rooms.service'e ALLOWED_ORIGINS (CORS beyaz listesi) ekler + servisi
 # alan adiyla guncel server.js ile yeniden baslatir.
 #
-# NEDEN: Oyun alan adina tasindiktan sonra rooms-server hala eski gomulu koken
-# listesini (http://34.158.136.9) kullaniyordu → domain'e yanlis ACAO donuyordu
-# (web ayni-koken oldugu icin calisiyor ama sunucu YANLIS basliyk donuyor;
-# mobil/capraz-koken kirilir). Bu script canli .service'e
-#   Environment=ALLOWED_ORIGINS=https://kelimebaz.aicirkit.com,http://localhost:4200,http://127.0.0.1:4200
-# ekler → daemon-reload → restart. server.js gomulu varsayilani da (scp'lendi)
-# alan adiyla guncel (yedek).
+# NEDEN: rooms-server CORS beyaz listesi (ALLOWED_ORIGINS) canli .service'te
+# ayarlanir; guncel liste alan adi + yerel gelistirme + NATIVE APK kokenleri
+# (https://localhost = Capacitor Android, capacitor/ionic = iOS) icerir. Native
+# APK istekleri capraz-kokendir → bu kokenler listede yoksa CORS engeller
+# (mobil oda/ipucu kirilir). server.js gomulu varsayilani da (scp'lendi) ayni.
 #
 # GUVENLI: yedek alir, idempotent (varsa gunceller), servisin ayaga kalktigini
 # ve /health'i dogrular.
@@ -18,7 +16,7 @@
 #     sudo bash install_rooms_cors.sh
 set -euo pipefail
 
-ORIGINS='https://kelimebaz.aicirkit.com,http://localhost:4200,http://127.0.0.1:4200'
+ORIGINS='https://kelimebaz.aicirkit.com,https://localhost,capacitor://localhost,ionic://localhost,http://localhost:4200,http://127.0.0.1:4200'
 
 FRAG=$(systemctl show berk-rooms -p FragmentPath --value)
 [ -n "$FRAG" ] && [ -f "$FRAG" ] || { echo "HATA: berk-rooms servis dosyasi bulunamadi ($FRAG)"; exit 1; }

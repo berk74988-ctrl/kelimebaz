@@ -5,12 +5,11 @@ const config: CapacitorConfig = {
   appName: 'Kelimebaz',
   webDir: 'dist/kelimebaz/browser',
   server: {
-    // WebView kökeni http://localhost olsun. Neden: rooms-server HTTP (34.158.136.9,
-    // HTTPS yok). https köken → http backend = "mixed content" engellenir. http köken
-    // ile bu sorun yok; localhost yine güvenli bağlam sayılır (crypto/localStorage çalışır).
-    androidScheme: 'http',
-    // Cleartext (şifresiz http) trafiğe izin — sunucu HTTPS değil (usesCleartextTraffic).
-    cleartext: true,
+    // WebView kökeni https://localhost. Sunucu artık HTTPS (kelimebaz.aicirkit.com)
+    // → iki taraf da HTTPS, "mixed content" yok. Cleartext KALDIRILDI (Play Store +
+    // güvenlik: telefondaki tüm trafik artık şifreli). Native istek çapraz köken →
+    // sunucu ALLOWED_ORIGINS'ta https://localhost olmali (rooms-server'da eklendi).
+    androidScheme: 'https',
   },
 };
 
