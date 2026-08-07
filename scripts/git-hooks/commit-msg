@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#
+# commit-msg kancasi — commit MESAJINA sizmis SIR DEGERINI engeller.
+#
+# Neden: panel parolasi bir kez commit mesajina duz metin yazildi ve halka acik
+# git gecmisine gecti (OYUN-*). Bu kanca tekrarini onler.
+#
+# TASARIM: "parola / password / secret" gibi KELIMELER serbest (mesajlarda dogal
+# gecer) — yalniz DEGER-benzeri kaliplar reddedilir: gercek anahtar/hash/atama ya
+# da tirnakli parola. Yanlis pozitif olmasin diye dar tutuldu.
+#
+# Kurulum: bu dosya `.git/hooks/commit-msg`'e kopyalanir (izlenmeyen). Yeniden
+# kurmak icin: bash scripts/install-git-hooks.sh
+#
+# Bilerek gecmek gerekirse (nadiren): git commit --no-verify
+set -u
+msg_file="$1"
+
+# Gercek-sir DEGER kaliplari (kelime degil, deger):
+patterns='sk-ant-[A-Za-z0-9]|scrypt\$[0-9]|(ADMIN_PASS_HASH|ADMIN_SESSION_SECRET|ANTHROPIC_API_KEY|ADMIN_PASS)=[^[:space:]]|verifyPassword\(['"'"'"]|(password|passwd|parola|sifre|pwd)[[:space:]]*[:=][[:space:]]*['"'"'"]?[^[:space:]'"'"'"]{5,}'
+
+# Yorum satirlarini (#) ele (git bunlari zaten atar) — grep tumune baksin, sorun degil.
+if grep -qiE "$patterns" "$msg_file"; then
+  {
+    echo ""
+    echo "🚫 commit-msg engeli: commit mesajinda SIR DEGERI kalibi var."
+    echo "   Eslesme(ler):"
+    grep -inE "$patterns" "$msg_file" | sed 's/^/     > /'
+    echo ""
+    echo "   Kural: sunucuya ait hicbir sir (parola/hash/anahtar) commit mesajina"
+    echo "   girmez. Kanit yazarken degeri yazma, 'dogrulandi' de."
+    echo "   Gercekten gerekiyorsa (nadiren): git commit --no-verify"
+    echo ""
+  } >&2
+  exit 1
+fi
+exit 0

@@ -51,9 +51,19 @@ def upsert(txt, key, val):
 
 def main():
     if len(sys.argv) < 2 or not sys.argv[1].strip():
-        die("kullanim: sudo python3 setup_admin_panel.py 'PAROLA'")
-    pw = sys.argv[1]
+        die("kullanim: sudo python3 setup_admin_panel.py 'PAROLA'  (veya --rotate)")
     ts = time.strftime('%Y%m%d-%H%M%S')
+
+    # --rotate: RASTGELE guclu parola uret (hicbir yere yazilmaz, sonda BIR KEZ
+    # gosterilir) + SESSION_SECRET'i de ZORLA dondur. Sizinti sonrasi rotasyon icin.
+    rotate = sys.argv[1] in ('--rotate', '--generate')
+    if rotate:
+        import secrets
+        import string
+        alphabet = string.ascii_letters + string.digits  # JSON/URL guvenli
+        pw = ''.join(secrets.choice(alphabet) for _ in range(24))
+    else:
+        pw = sys.argv[1]
 
     # --- 1) karma + oturum sirri ---
     try:
@@ -72,7 +82,9 @@ def main():
         with open(HINT_ENV) as f:
             env_txt = f.read()
     env_txt = upsert(env_txt, 'ADMIN_PASS_HASH', pass_hash)
-    if not re.search(r'(?m)^ADMIN_SESSION_SECRET=', env_txt):
+    # SESSION_SECRET: rotate modunda ZORLA yenile (mevcut cerezler dususun);
+    # normal modda yalniz yoksa ekle (oturumlar bozulmasin).
+    if rotate or not re.search(r'(?m)^ADMIN_SESSION_SECRET=', env_txt):
         env_txt = upsert(env_txt, 'ADMIN_SESSION_SECRET', secret)
     with open(HINT_ENV, 'w') as f:
         f.write(env_txt)
@@ -141,6 +153,13 @@ def main():
     print('  POST /admin/login (senin parolanla) → HTTP %s   (200 = GIRIS BASARILI!)' % login)
     print('\nOK: ADMIN_PANEL_SETUP_DONE')
     print('Panel: https://kelimebaz.aicirkit.com/berk/rooms/admin')
+    if rotate:
+        print('\n' + '=' * 56)
+        print('  YENI PANEL PAROLASI (yalniz BURADA gorunur — hemen kaydet):')
+        print('      ' + pw)
+        print('  Hicbir yere yapistirma/commit etme. Kaybedersen --rotate ile')
+        print('  yenisini uret. SESSION_SECRET de donduruldu (eski cerezler dustu).')
+        print('=' * 56)
     return 0
 
 
