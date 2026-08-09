@@ -75,8 +75,25 @@ export class ResultModal implements AfterViewInit {
   /** Bu maçta kazanılan/kaybedilen ustalık puanı (LP). */
   protected readonly lpDelta = this.game.lpDelta;
 
-  /** 🔎 Maç analizi — her tahminin ne kadar iyi eleme yaptığı. */
+  /** Analiz bölümü varsayılan KAPALI — modal kısa kalsın; isteyen açar. */
+  protected readonly analysisOpen = signal(false);
+  protected toggleAnalysis(): void {
+    this.analysisOpen.update((v) => !v);
+  }
+
+  /** Analiz bölümü GÖSTERİLSİN mi? (ucuz — hesaplama yapmaz). */
+  protected readonly hasAnalysis = computed(
+    () => !!this.answer() && this.game.guesses().length > 0,
+  );
+
+  /**
+   * 🔎 Maç analizi — her tahminin ne kadar iyi eleme yaptığı. TEMBEL: yalnız bölüm
+   * AÇIKKEN hesaplanır. Neden: analyzeGuesses ilk turda tüm cevap havuzu üstünde
+   * O(havuz²) entropi tarar (TR'de binlerce kelime) → modal her açılışta ana iş
+   * parçacığını dondururdu. Kapalıyken [] döner (sade tasarımın amacı buydu).
+   */
   protected readonly analysis = computed<GuessAnalysis[]>(() => {
+    if (!this.analysisOpen()) return [];
     const ans = this.answer();
     const words = this.game.guesses().map((g) => g.word);
     if (!ans || !words.length) return [];
@@ -84,16 +101,10 @@ export class ResultModal implements AfterViewInit {
     return analyzeGuesses(ans, words, pool, this.i18n.lang());
   });
 
-  /** Analiz bölümü varsayılan KAPALI — modal kısa kalsın; isteyen açar. */
-  protected readonly analysisOpen = signal(false);
-  protected toggleAnalysis(): void {
-    this.analysisOpen.update((v) => !v);
-  }
-
-  /** Tahminlerin ortalama isabet yüzdesi (0–100), rozet olarak gösterilir. */
-  protected readonly accuracy = computed(() => {
+  /** Tahminlerin ortalama isabet yüzdesi (0–100); açık değilse null (rozet gizli). */
+  protected readonly accuracy = computed<number | null>(() => {
     const a = this.analysis();
-    if (!a.length) return 0;
+    if (!a.length) return null;
     const w = { optimal: 100, great: 85, good: 70, fair: 45, weak: 20 } as const;
     return Math.round(a.reduce((s, x) => s + w[x.quality], 0) / a.length);
   });

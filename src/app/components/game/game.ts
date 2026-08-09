@@ -348,8 +348,10 @@ export class Game {
       typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) return 0;
 
-    // son kutu: 4 × 90ms gecikme + 550ms çevirme
-    return 950;
+    // Son kutu: (harf-1) × 90ms gecikme + 550ms çevirme + 40ms pay. Kelime 4-7 harf
+    // olduğu için SABİT değil uzunluğa bağlı — yoksa 6-7 harfte kutular bitmeden
+    // modal/ses gelir. 5 harf → 4×90+590 = 950 (eski sabit değerle aynı).
+    return (this.game.wordLength() - 1) * 90 + 590;
   }
 
   private lockInput(): void {
@@ -462,8 +464,9 @@ export class Game {
 
     if (this.game.isOver()) {
       const won = this.game.status() === 'won';
-      // Açılma animasyonu bitince çal — kutu tıklarının üstüne binmesin
-      setTimeout(() => this.audio.sfx(won ? 'win' : 'lose'), 900);
+      // Açılma animasyonu bitince (uzunluğa göre) — kutu tıklarının/çevirmenin üstüne binmesin
+      const reveal = this.revealMs();
+      setTimeout(() => this.audio.sfx(won ? 'win' : 'lose'), reveal);
 
       setTimeout(() => {
         this.announcement.set(resultAnnouncement(won, after, this.game.answer(), this.i18n.lang()));
@@ -471,7 +474,7 @@ export class Game {
         // 'guessed' akışıyla yönetir (burada sonuç ekranı AÇILMAZ). Diğer modlar → sonuç modalı.
         if (this.mode() === 'room') this.reportRoomResult();
         else if (this.mode() !== 'vsai') this.resultOpen.set(true);
-      }, 900); // açılma animasyonu bitsin
+      }, reveal); // açılma animasyonu bitsin
     }
   }
 

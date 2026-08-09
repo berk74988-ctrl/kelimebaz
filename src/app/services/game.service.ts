@@ -154,6 +154,10 @@ export class GameService {
       this._guesses.set(saved.guesses);
       this._status.set(saved.status);
       this._current.set('');
+      // Sürdürülen oyun: gameStart TEKRAR yayılmaz (çift sayım olmaz) ama süre sayacı
+      // bu oturumdan başlasın — yoksa _startAt önceki oyundan kalıp gameEnd süresini
+      // bozar (emitStart yalnız taze oyunda çağrılıyor).
+      this._startAt = Date.now();
       this.clearMessage();
       return;
     }
@@ -450,7 +454,7 @@ export class GameService {
 
   private save(): void {
     const mode = this._mode();
-    if (mode === 'room' || mode === 'vsai') return; // oda ve YZ oyunları geçicidir, diske yazılmaz
+    if (mode === 'room' || mode === 'vsai' || mode === 'theme') return; // oda/YZ/tema geçicidir, diske yazılmaz
 
     const data: SavedGame = {
       mode,

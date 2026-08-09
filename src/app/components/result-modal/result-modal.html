@@ -77,8 +77,8 @@
       <!-- 📖 Kelime kartı (kendi içinde açılır; kart verisi yoksa hiç görünmez) -->
       <app-word-card [word]="answer()" [openByDefault]="false" />
 
-      <!-- 🔎 Maç analizi -->
-      @if (analysis().length) {
+      <!-- 🔎 Maç analizi (tembel: içerik yalnız açılınca hesaplanır) -->
+      @if (hasAnalysis()) {
         <section class="analysis">
           <button
             class="an-toggle"
@@ -87,7 +87,9 @@
             [attr.aria-expanded]="analysisOpen()"
           >
             <span>🔎 {{ i18n.t('analysis.title') }}</span>
-            <span class="an-acc">{{ i18n.t('analysis.accuracy', { n: accuracy() }) }}</span>
+            @if (accuracy() !== null) {
+              <span class="an-acc">{{ i18n.t('analysis.accuracy', { n: accuracy()! }) }}</span>
+            }
             <span class="chev" aria-hidden="true">{{ analysisOpen() ? '▲' : '▼' }}</span>
           </button>
           @if (analysisOpen()) {
