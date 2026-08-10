@@ -77,8 +77,34 @@ export class ResultModal implements AfterViewInit {
 
   /** Analiz bölümü varsayılan KAPALI — modal kısa kalsın; isteyen açar. */
   protected readonly analysisOpen = signal(false);
+
+  /** Hesaplanan analiz satırları (bir kez, açılınca dolar; boşken hesaplanmadı). */
+  protected readonly analysis = signal<GuessAnalysis[]>([]);
+
+  /** Ağır hesap sürüyor mu → başlıkta/gövdede "Hesaplanıyor…" göster. */
+  protected readonly analysisComputing = signal(false);
+
+  /**
+   * Analizi aç/kapat. AÇARKEN ağır hesabı BİR SONRAKİ KAREYE erteler: analyzeGuesses
+   * ilk turda tüm cevap havuzu üstünde O(havuz²) entropi tarar (~460ms tek uzun görev).
+   * Önce "Hesaplanıyor…" boyansın (donma HİSSİ olmasın), sonra çift-rAF ile hesapla
+   * (tek setTimeout paint'i garantilemez). Bir kez hesaplanınca önbelleğe alınır.
+   */
   protected toggleAnalysis(): void {
-    this.analysisOpen.update((v) => !v);
+    const opening = !this.analysisOpen();
+    this.analysisOpen.set(opening);
+    if (!opening || this.analysis().length || this.analysisComputing()) return;
+    const ans = this.answer();
+    const words = this.game.guesses().map((g) => g.word);
+    if (!ans || !words.length) return;
+    this.analysisComputing.set(true);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const pool = this.words.answersOfLength([...ans].length);
+        this.analysis.set(analyzeGuesses(ans, words, pool, this.i18n.lang()));
+        this.analysisComputing.set(false);
+      }),
+    );
   }
 
   /** Analiz bölümü GÖSTERİLSİN mi? (ucuz — hesaplama yapmaz). */
@@ -87,21 +113,12 @@ export class ResultModal implements AfterViewInit {
   );
 
   /**
-   * 🔎 Maç analizi — her tahminin ne kadar iyi eleme yaptığı. TEMBEL: yalnız bölüm
-   * AÇIKKEN hesaplanır. Neden: analyzeGuesses ilk turda tüm cevap havuzu üstünde
-   * O(havuz²) entropi tarar (TR'de binlerce kelime) → modal her açılışta ana iş
-   * parçacığını dondururdu. Kapalıyken [] döner (sade tasarımın amacı buydu).
+   * Tahminlerin ortalama isabet yüzdesi (0–100). ROZET yalnız analiz HESAPLANMIŞSA
+   * (kullanıcı bölümü açınca) görünür; kapalıyken null. BİLİNÇLİ TAVİZ: isabeti
+   * hesaplamak tam analizi (O(havuz²)) gerektirir; bunu her modal açılışında yapmak,
+   * tembelleştirmeyle kaldırdığımız ~460ms donmayı GERİ getirirdi. Açınca
+   * "Hesaplanıyor…" ardından rozet + liste birlikte gelir.
    */
-  protected readonly analysis = computed<GuessAnalysis[]>(() => {
-    if (!this.analysisOpen()) return [];
-    const ans = this.answer();
-    const words = this.game.guesses().map((g) => g.word);
-    if (!ans || !words.length) return [];
-    const pool = this.words.answersOfLength([...ans].length);
-    return analyzeGuesses(ans, words, pool, this.i18n.lang());
-  });
-
-  /** Tahminlerin ortalama isabet yüzdesi (0–100); açık değilse null (rozet gizli). */
   protected readonly accuracy = computed<number | null>(() => {
     const a = this.analysis();
     if (!a.length) return null;

@@ -196,6 +196,7 @@
   "result.correctWord": "Das Wort",
   "analysis.title": "Spielanalyse",
   "analysis.accuracy": "{n}% Treffer",
+  "analysis.computing": "Wird berechnet…",
   "analysis.eliminated": "{n} von {of} ausgeschlossen",
   "analysis.best": "am besten: {w}",
   "analysis.q.optimal": "Optimal",

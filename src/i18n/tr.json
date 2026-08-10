@@ -196,6 +196,7 @@
   "result.correctWord": "Doğru kelime",
   "analysis.title": "Maç analizi",
   "analysis.accuracy": "isabet %{n}",
+  "analysis.computing": "Hesaplanıyor…",
   "analysis.eliminated": "{n}/{of} adayı eledi",
   "analysis.best": "en iyisi: {w}",
   "analysis.q.optimal": "En iyi",

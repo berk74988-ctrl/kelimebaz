@@ -196,6 +196,7 @@
   "result.correctWord": "The word",
   "analysis.title": "Match analysis",
   "analysis.accuracy": "{n}% accuracy",
+  "analysis.computing": "Calculating…",
   "analysis.eliminated": "ruled out {n} of {of}",
   "analysis.best": "best was: {w}",
   "analysis.q.optimal": "Optimal",

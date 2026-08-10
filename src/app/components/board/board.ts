@@ -64,4 +64,16 @@ export class Board {
   protected isWinRow(i: number): boolean {
     return this.status() === 'won' && i === this.submitted() - 1;
   }
+
+  /**
+   * Kazanma zıplaması (bounce) gecikmesi — kutu çevirmesi BİTİNCE başlasın.
+   * SABİT değil UZUNLUĞA bağlı (kelime 4-7 harf): son kutu (harf-1)×90ms sonra
+   * çevrilmeye başlar, çevirme ~550ms + 40ms pay. 5 harf → 950ms (eski sabit
+   * değerle aynı), 7 harf → 1130ms. Yoksa 6-7 harfte kutular çevrilirken zıplardı.
+   * (reduced-motion'da global CSS animation-delay'i 0'a düşürür → sorun yok.)
+   */
+  protected winDelayMs(): number {
+    const cols = this.rows()[0]?.length ?? 5;
+    return (cols - 1) * 90 + 590;
+  }
 }

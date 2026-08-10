@@ -93,24 +93,28 @@
             <span class="chev" aria-hidden="true">{{ analysisOpen() ? '▲' : '▼' }}</span>
           </button>
           @if (analysisOpen()) {
-            <ol class="an-list">
-              @for (a of analysis(); track $index) {
-                <li class="an-row" [class]="'q-' + a.quality">
-                  <span class="an-word">{{ a.word }}</span>
-                  <span class="an-badge">{{ i18n.t('analysis.q.' + a.quality) }}</span>
-                  <span class="an-meta"
-                    >{{
-                      i18n.t('analysis.eliminated', { n: a.eliminated, of: a.candidatesBefore })
-                    }}
-                    @if (!a.solved && a.quality !== 'optimal' && a.bestWord !== a.word) {
-                      <span class="an-best"
-                        >· {{ i18n.t('analysis.best', { w: a.bestWord }) }}</span
-                      >
-                    }
-                  </span>
-                </li>
-              }
-            </ol>
+            @if (analysisComputing()) {
+              <div class="an-loading" role="status">{{ i18n.t('analysis.computing') }}</div>
+            } @else {
+              <ol class="an-list">
+                @for (a of analysis(); track $index) {
+                  <li class="an-row" [class]="'q-' + a.quality">
+                    <span class="an-word">{{ a.word }}</span>
+                    <span class="an-badge">{{ i18n.t('analysis.q.' + a.quality) }}</span>
+                    <span class="an-meta"
+                      >{{
+                        i18n.t('analysis.eliminated', { n: a.eliminated, of: a.candidatesBefore })
+                      }}
+                      @if (!a.solved && a.quality !== 'optimal' && a.bestWord !== a.word) {
+                        <span class="an-best"
+                          >· {{ i18n.t('analysis.best', { w: a.bestWord }) }}</span
+                        >
+                      }
+                    </span>
+                  </li>
+                }
+              </ol>
+            }
           }
         </section>
       }

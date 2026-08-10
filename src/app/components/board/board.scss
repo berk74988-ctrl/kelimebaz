@@ -29,7 +29,10 @@
    * önce harfler açılır, sonra satır kutlar.
    */
   &.win {
-    animation: bounce 0.6s ease 0.95s; // flip bitince başlasın
+    // Gecikme SABİT değil — çalışma zamanında uzunluğa göre veriliyor
+    // ([style.animation-delay.ms]="winDelayMs()"), yoksa 6-7 harfte kutular
+    // çevrilmeden zıplardı. reduced-motion global CSS'te delay'i 0'a düşürür.
+    animation: bounce 0.6s ease;
   }
 }
 

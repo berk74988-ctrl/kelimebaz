@@ -6,6 +6,7 @@
       [style.--cols]="row.length"
       [class.shake]="shaking() && isActiveRow(r)"
       [class.win]="isWinRow(r)"
+      [style.animation-delay.ms]="isWinRow(r) ? winDelayMs() : null"
     >
       @for (tile of row; track $index; let c = $index) {
         <app-tile
